@@ -54,6 +54,10 @@ export default async function TurnajDetail({ params }: PageProps<"/turnaje/[slug
   const champion = winner(tournament);
   const stats = tournamentSummaryStats(tournament);
   const tables = buildTables(tournament);
+  // Starší turnaje můžou mít jen týmy a pořadí, bez zapsaných zápasů. Pak se
+  // statistiky, tabulka ani výsledky neukazují (žádné nuly ani prázdné tabulky).
+  const hasMatches = tournament.matches.length > 0;
+  const hasTable = tournament.matches.some((m) => m.countsForTable);
 
   return (
     <main className="pt-[var(--sp-8)] pb-[var(--section-y)]">
@@ -112,14 +116,18 @@ export default async function TurnajDetail({ params }: PageProps<"/turnaje/[slug
               <dt className="cl-stat__label">Týmů</dt>
               <dd className="cl-stat__val order-first">{stats.teams}</dd>
             </div>
-            <div className="cl-stat">
-              <dt className="cl-stat__label">Zápasů</dt>
-              <dd className="cl-stat__val order-first">{stats.matches}</dd>
-            </div>
-            <div className="cl-stat cl-stat--accent">
-              <dt className="cl-stat__label">Gólů na zápas</dt>
-              <dd className="cl-stat__val order-first">{stats.goalsPerMatch}</dd>
-            </div>
+            {hasMatches && (
+              <>
+                <div className="cl-stat">
+                  <dt className="cl-stat__label">Zápasů</dt>
+                  <dd className="cl-stat__val order-first">{stats.matches}</dd>
+                </div>
+                <div className="cl-stat cl-stat--accent">
+                  <dt className="cl-stat__label">Gólů na zápas</dt>
+                  <dd className="cl-stat__val order-first">{stats.goalsPerMatch}</dd>
+                </div>
+              </>
+            )}
             {stats.yellowCards + stats.redCards > 0 && (
               <div className="cl-stat">
                 <dt className="cl-stat__label">Žluté / červené</dt>
@@ -173,24 +181,26 @@ export default async function TurnajDetail({ params }: PageProps<"/turnaje/[slug
         )}
 
         {/* ---- tabulky skupin ---- */}
-        <section aria-labelledby="tabulka" className="flex flex-col gap-[var(--sp-6)]">
-          <div className="cl-sectionhead">
-            <span className="cl-sectionhead__over">Tabulka</span>
-            <h2 id="tabulka" style={sectionTitle}>
-              Skupinová fáze
-            </h2>
-            <p className="cl-sectionhead__sub">
-              Tabulka se počítá přímo ze zadaných výsledků. Výhra 3 body, remíza 1 bod.
-            </p>
-          </div>
-          <div className="cl-card">
-            <div className="cl-card__in">
-              <div className="cl-card__body">
-                <StandingsTable tables={tables} />
+        {hasTable && (
+          <section aria-labelledby="tabulka" className="flex flex-col gap-[var(--sp-6)]">
+            <div className="cl-sectionhead">
+              <span className="cl-sectionhead__over">Tabulka</span>
+              <h2 id="tabulka" style={sectionTitle}>
+                Skupinová fáze
+              </h2>
+              <p className="cl-sectionhead__sub">
+                Tabulka se počítá přímo ze zadaných výsledků. Výhra 3 body, remíza 1 bod.
+              </p>
+            </div>
+            <div className="cl-card">
+              <div className="cl-card__in">
+                <div className="cl-card__body">
+                  <StandingsTable tables={tables} />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* ---- střelci a karty ---- */}
         {(tournament.scorers.length > 0 || tournament.cards.length > 0) && (
@@ -216,28 +226,30 @@ export default async function TurnajDetail({ params }: PageProps<"/turnaje/[slug
         )}
 
         {/* ---- kompletní výsledky ---- */}
-        <section aria-labelledby="vysledky" className="flex flex-col gap-[var(--sp-6)]">
-          <div className="cl-sectionhead">
-            <span className="cl-sectionhead__over">Zápasy</span>
-            <h2 id="vysledky" style={sectionTitle}>
-              Kompletní výsledky
-            </h2>
-            <p className="cl-sectionhead__sub">
-              Všech {stats.matches} zápasů turnaje, od skupin po finále
-              {tournament.matches.some((m) => m.events.length > 0) ? " — se střelci a kartami." : "."}
-            </p>
-          </div>
-          <div className="cl-card">
-            <div className="cl-card__in">
-              <div className="cl-card__body">
-                <ResultsTable tournament={tournament} />
+        {hasMatches && (
+          <section aria-labelledby="vysledky" className="flex flex-col gap-[var(--sp-6)]">
+            <div className="cl-sectionhead">
+              <span className="cl-sectionhead__over">Zápasy</span>
+              <h2 id="vysledky" style={sectionTitle}>
+                Kompletní výsledky
+              </h2>
+              <p className="cl-sectionhead__sub">
+                Všech {stats.matches} zápasů turnaje, od skupin po finále
+                {tournament.matches.some((m) => m.events.length > 0) ? " — se střelci a kartami." : "."}
+              </p>
+            </div>
+            <div className="cl-card">
+              <div className="cl-card__in">
+                <div className="cl-card__body">
+                  <ResultsTable tournament={tournament} />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* ---- konečné pořadí ---- */}
-        {tournament.finalRanking.length > 0 && (
+        {/* ---- konečné pořadí (i týmy bez umístění) ---- */}
+        {tournament.teams.length > 0 && (
           <section aria-labelledby="poradi" className="flex flex-col gap-[var(--sp-6)]">
             <div className="cl-sectionhead">
               <span className="cl-sectionhead__over">Pořadí</span>

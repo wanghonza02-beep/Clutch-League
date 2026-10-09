@@ -65,14 +65,19 @@ export default async function PlayedTournamentsSection() {
                 <dt className="cl-stat__label">Odehraných turnajů</dt>
                 <dd className="cl-stat__val order-first">{played.total}</dd>
               </div>
-              <div className="cl-stat">
-                <dt className="cl-stat__label">Zápasů</dt>
-                <dd className="cl-stat__val order-first">{played.matches}</dd>
-              </div>
-              <div className="cl-stat">
-                <dt className="cl-stat__label">Gólů</dt>
-                <dd className="cl-stat__val order-first">{played.goals}</dd>
-              </div>
+              {/* Bez zapsaných zápasů by tu byly jen nuly. */}
+              {played.matches > 0 && (
+                <>
+                  <div className="cl-stat">
+                    <dt className="cl-stat__label">Zápasů</dt>
+                    <dd className="cl-stat__val order-first">{played.matches}</dd>
+                  </div>
+                  <div className="cl-stat">
+                    <dt className="cl-stat__label">Gólů</dt>
+                    <dd className="cl-stat__val order-first">{played.goals}</dd>
+                  </div>
+                </>
+              )}
             </dl>
 
             <ol className="trn-grid" aria-label="Poslední odehrané turnaje">

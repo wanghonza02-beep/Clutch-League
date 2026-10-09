@@ -57,14 +57,19 @@ export default async function Turnaje() {
                 <dt className="cl-stat__label">Turnajů</dt>
                 <dd className="cl-stat__val order-first">{tournaments.length}</dd>
               </div>
-              <div className="cl-stat">
-                <dt className="cl-stat__label">Odehraných zápasů</dt>
-                <dd className="cl-stat__val order-first">{totalMatches}</dd>
-              </div>
-              <div className="cl-stat">
-                <dt className="cl-stat__label">Vstřelených gólů</dt>
-                <dd className="cl-stat__val order-first">{totalGoals}</dd>
-              </div>
+              {/* Bez zapsaných zápasů by tu byly jen nuly. */}
+              {totalMatches > 0 && (
+                <>
+                  <div className="cl-stat">
+                    <dt className="cl-stat__label">Odehraných zápasů</dt>
+                    <dd className="cl-stat__val order-first">{totalMatches}</dd>
+                  </div>
+                  <div className="cl-stat">
+                    <dt className="cl-stat__label">Vstřelených gólů</dt>
+                    <dd className="cl-stat__val order-first">{totalGoals}</dd>
+                  </div>
+                </>
+              )}
             </dl>
 
             <ol className="trn-grid" aria-label="Odehrané turnaje">

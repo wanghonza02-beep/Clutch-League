@@ -31,7 +31,7 @@ export default function Podium({ tournament }: { tournament: Tournament }) {
                 {rank}
               </span>
               <span className="trn-podium__team">{team.name}</span>
-              <span className="trn-podium__city">{team.city}</span>
+              {team.city && <span className="trn-podium__city">{team.city}</span>}
             </div>
           </div>
         </li>

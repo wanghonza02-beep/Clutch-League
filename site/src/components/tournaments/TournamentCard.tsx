@@ -41,7 +41,8 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
               <span>{tournament.dateLabel}</span>
               <span>{tournament.venue}</span>
               <span>
-                {stats.teams} týmů · {stats.matches} zápasů
+                {stats.teams} týmů
+                {stats.matches > 0 && ` · ${stats.matches} zápasů`}
               </span>
             </span>
 

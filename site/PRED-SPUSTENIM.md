@@ -96,16 +96,16 @@ a jen pár zpráv za hodinu.
 ### Krok 7. Databáze a data
 - [ ] Všechny soubory spuštěné v pořadí: `20261005120000_init.sql`, `20261008120000_admin.sql`,
   `20261009120000_odhlaseni_tymu.sql`, `20261010120000_vysledky_bez_rozhodciho.sql`,
-  `20261011120000_role_jen_v_supabase.sql`, `seed.sql`
+  `20261011120000_role_jen_v_supabase.sql`, `20261012120000_mesto_tymu_nepovinne.sql`, `seed.sql`
   (ověř: v Table Editoru existuje tabulka `match_events`).
 - [x] **Ukázková data smazána** (9. 10. 2026, `supabase/smazat-ukazkova-data.sql`). Zůstal turnaj Winter Clutch 2027
   a 2 schválené týmy s kapitánem (ověřit, jestli nejsou zkušební).
   Archiv turnajů obsahuje vymyšlené týmy, výsledky a střelce. `seed.sql` už je bez nich (9. 10. 2026),
   takže se při novém spuštění nevrátí.
-- [ ] Skutečná data zadaná (týmy, výsledky). Pošli mi je a vložím je. Podklad: na Google Disku
-  ve složce „Cluth League“ je dokument „TÝMY KTERÉ HRÁLI 1. TURNAJ + UMÍSTĚNÍ“
-  (FC Prazharka 1., Grupac FC 2., Žlutý balet 3., FC Demonstav 4., dál bez pořadí: FK Zbirna,
-  Slow Panters, Storm MC, Strahovští Bombarďáci). Chybí datum, výsledky zápasů a střelci.
+- [ ] **Skutečný první turnaj** (`supabase/prvni-turnaj-2026.sql`): Clutch League Cup, 23. 8. 2026,
+  8 týmů s pořadím podle dokumentu „TÝMY KTERÉ HRÁLI 1. TURNAJ + UMÍSTĚNÍ“ (Google Disk). Zápasy,
+  góly ani střelci nejsou, web je u turnaje neukazuje. Týmy 5.–8. jsou v pořadí s pomlčkou.
+- [ ] Winter Clutch 2027 (10. 1. 2027) má otevřené přihlášky. Zápasy a výsledky se zapisují v Portálu.
 
 ### Krok 8. Účty a zkouška na ostré doméně
 - [ ] Tvůj účet má v Table Editoru (`profiles`) roli `admin` a v navigaci vidíš **Administraci**.

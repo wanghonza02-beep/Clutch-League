@@ -419,6 +419,14 @@ export function finalStandings(
   }));
 }
 
+/** Týmy, které hrály, ale konečné pořadí nemají (organizátor ho nezná). Podle názvu. */
+export function unrankedTeams(tournament: Tournament): TournamentTeam[] {
+  const ranked = new Set(tournament.finalRanking);
+  return tournament.teams
+    .filter((t) => !ranked.has(t.id))
+    .sort((a, b) => a.name.localeCompare(b.name, "cs"));
+}
+
 export function winner(tournament: Tournament): TournamentTeam | undefined {
   const first = tournament.finalRanking[0];
   return first ? findTeam(tournament, first) : undefined;
