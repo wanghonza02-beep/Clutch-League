@@ -1,0 +1,2 @@
+# PDF a obrázky jsou binární, git v nich nesmí měnit konce řádků
+*.pdf binary

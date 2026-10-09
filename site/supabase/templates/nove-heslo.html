@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="cs">
+  <body style="margin:0;padding:0;background:#000000;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#141414;border:1px solid #2a2a2a;">
+            <tr>
+              <td style="padding:32px 32px 0 32px;">
+                <div style="font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-style:italic;font-size:22px;line-height:1;text-transform:uppercase;color:#f2f2f0;">Clutch</div>
+                <div style="font-family:'Arial Narrow',Arial,sans-serif;font-weight:600;font-size:10px;letter-spacing:0.34em;text-transform:uppercase;color:#f5b300;">League</div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 0 32px;">
+                <h1 style="margin:0;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-style:italic;font-size:28px;line-height:1.05;text-transform:uppercase;color:#f2f2f0;">Nové heslo</h1>
+                <p style="margin:16px 0 0 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#dcdcda;">
+                  Přišla nám žádost o nové heslo k účtu {{ .Email }}. Klikni na tlačítko a nastav si nové. Odkaz platí hodinu a jde použít jen jednou.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px;">
+                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/nove-heslo" style="display:inline-block;padding:14px 28px;background:#f5b300;color:#0a0a0a;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:15px;letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;">Nastavit nové heslo</a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 32px 32px;">
+                <p style="margin:0;padding-top:20px;border-top:1px solid #2a2a2a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#a6a6a6;">
+                  Pokud tenhle e-mail nečekáš, ignoruj ho — heslo zůstane stejné.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

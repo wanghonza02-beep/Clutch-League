@@ -1,0 +1,2614 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Clutch League — design tokens & components.
+   Transcribed verbatim from clutch-league-design-system.md (source of truth).
+   Font <link> is replaced by next/font (see layout.tsx); variable names
+   --font-display / --font-body / --font-numeric are preserved.
+   ========================================================================== */
+
+:root {
+  --font-display: var(--font-chakra-petch), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-barlow), "Helvetica Neue", system-ui, sans-serif;
+  --font-numeric: var(--font-chakra-petch), "Arial Narrow", system-ui, sans-serif;
+
+  /* base palette */
+  --black: #000000;
+  --surface: #141414;
+  --surface-2: #1c1c1c;
+  --surface-3: #242424;
+  --line: #2a2a2a;
+  --line-strong: #3d3d3d;
+  --gold: #f5b300;
+  --gold-hot: #ffd34d;
+  --gold-deep: #c77a00;
+  --white: #f2f2f0;
+  --silver: #a6a6a6;
+  --silver-dim: #6e6e6e;
+
+  /* state */
+  --live: #ff2d16;
+  --win: #b7d43c;
+  --draw: #a6a6a6;
+  --loss: #6e6e6e;
+  --danger: #ff5a3c;
+  --warning: #f5b300;
+
+  /* semantic aliases */
+  --bg-page: var(--black);
+  --bg-elevated: var(--surface);
+  --bg-elevated-2: var(--surface-2);
+  --bg-inset: #0a0a0a;
+  --bg-accent: var(--gold);
+  --bg-accent-hover: var(--gold-hot);
+  --bg-accent-press: var(--gold-deep);
+
+  --text-heading: var(--white);
+  --text-body: #dcdcda;
+  --text-muted: var(--silver);
+  --text-faint: var(--silver-dim);
+  --text-accent: var(--gold);
+  --text-on-accent: #0a0a0a;
+  --text-link: var(--gold-hot);
+  --text-link-hover: var(--white);
+
+  --border-subtle: var(--line);
+  --border-strong: var(--line-strong);
+  --border-white: rgba(242, 242, 240, 0.85);
+  --border-accent: var(--gold);
+  --focus-ring: var(--gold-hot);
+
+  /* type scale */
+  --fs-display-1: clamp(44px, 8.5vw, 104px);
+  --fs-display-2: clamp(36px, 6vw, 72px);
+  --fs-h1: clamp(32px, 4.4vw, 56px);
+  --fs-h2: clamp(26px, 3.2vw, 40px);
+  --fs-h3: clamp(22px, 2.4vw, 30px);
+  --fs-h4: 20px;
+  --fs-h5: 17px;
+  --fs-h6: 15px;
+  --fs-body-lg: 19px;
+  --fs-body: 17px;
+  --fs-body-sm: 15px;
+  --fs-caption: 13px;
+  --fs-micro: 11px;
+  --fs-score: clamp(32px, 5vw, 64px);
+  --fs-stat: 26px;
+
+  --lh-display: 0.92;
+  --lh-heading: 1.05;
+  --lh-snug: 1.25;
+  --lh-body: 1.55;
+
+  --ls-display: -0.01em;
+  --ls-heading: 0.005em;
+  --ls-overline: 0.34em;
+  --ls-label: 0.16em;
+  --ls-body: 0;
+
+  --fw-body: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-display: 700;
+
+  --display-skew: -6deg;
+
+  /* spacing */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+  --sp-32: 128px;
+
+  --section-y: clamp(64px, 9vw, 128px);
+  --gutter: clamp(20px, 5vw, 48px);
+  --container: 1240px;
+  --container-narrow: 760px;
+  --grid-gap: 24px;
+
+  --control-h-sm: 34px;
+  --control-h-md: 44px;
+  --control-h-lg: 54px;
+
+  /* chamfers */
+  --chamfer-sm: 6px;
+  --chamfer-md: 12px;
+  --chamfer-lg: 20px;
+  --chamfer-xl: 32px;
+
+  --chamfer-btn: 10px;
+  --chamfer-btn-sm: 7px;
+  --chamfer-btn-lg: 14px;
+  --chamfer-iconbtn: 8px;
+  --chamfer-iconbtn-sm: 6px;
+  --chamfer-badge: 5px;
+  --chamfer-input: 8px;
+
+  --radius-none: 0;
+  --radius-pill: 999px;
+
+  --border-1: 1px;
+  --border-2: 2px;
+
+  /* shadows, glow, texture */
+  --glow-gold-sm: 0 0 12px rgba(245, 179, 0, 0.35);
+  --glow-gold: 0 0 0 1px rgba(245, 179, 0, 0.5), 0 0 24px rgba(245, 179, 0, 0.28),
+    0 0 64px rgba(245, 179, 0, 0.12);
+  --glow-gold-lg: 0 0 0 1px rgba(255, 211, 77, 0.6), 0 0 40px rgba(245, 179, 0, 0.4),
+    0 0 120px rgba(199, 122, 0, 0.25);
+  --glow-drop: drop-shadow(0 0 10px rgba(245, 179, 0, 0.5))
+    drop-shadow(0 0 32px rgba(245, 179, 0, 0.28));
+  --glow-live: 0 0 16px rgba(255, 45, 22, 0.45);
+  --glow-inset-gold: inset 0 0 0 1px rgba(245, 179, 0, 0.35),
+    inset 0 -24px 40px -24px rgba(245, 179, 0, 0.25);
+
+  --ray-gold: linear-gradient(
+    90deg,
+    transparent,
+    rgba(245, 179, 0, 0) 8%,
+    rgba(245, 179, 0, 0.85) 48%,
+    rgba(255, 211, 77, 1) 60%,
+    transparent 100%
+  );
+  --sheen-gold: linear-gradient(180deg, #ffd34d, #f5b300 45%, #c77a00);
+  --fade-bottom: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.92) 72%, #000);
+  --fade-top: linear-gradient(0deg, transparent, rgba(0, 0, 0, 0.9));
+  --scrim-photo: linear-gradient(180deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.85));
+
+  --halftone: radial-gradient(rgba(245, 179, 0, 0.5) 1px, transparent 1.4px);
+  --halftone-size: 7px 7px;
+  --grain-opacity: 0.16;
+
+  --overlay-hover: rgba(242, 242, 240, 0.06);
+  --overlay-press: rgba(0, 0, 0, 0.35);
+
+  /* motion */
+  --dur-instant: 80ms;
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+  --dur-hero: 900ms;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-in: cubic-bezier(0.5, 0, 1, 0.5);
+  --ease-strike: cubic-bezier(0.16, 1.02, 0.24, 1);
+  --ease-linear: linear;
+
+  --t-control: background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out), box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out), transform var(--dur-instant) var(--ease-out);
+}
+
+@keyframes cl-rays-ignite {
+  from {
+    opacity: 0;
+    transform: scaleX(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+@keyframes cl-headline-land {
+  from {
+    opacity: 0;
+    transform: translateY(-14%) scale(1.06);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cl-live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes cl-sweep {
+  from {
+    background-position: -140% 0;
+  }
+  to {
+    background-position: 240% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+html,
+body {
+  background: var(--bg-page);
+  color: var(--text-body);
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+/* ---- utilities ---- */
+
+.cl-chamfer {
+  --ch: var(--chamfer-md);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-chamfer-all {
+  --ch: var(--chamfer-md);
+  clip-path: polygon(
+    var(--ch) 0,
+    calc(100% - var(--ch)) 0,
+    100% var(--ch),
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    var(--ch) 100%,
+    0 calc(100% - var(--ch)),
+    0 var(--ch)
+  );
+}
+
+.cl-frame {
+  --ch: var(--chamfer-md);
+  padding: var(--border-1);
+  background: var(--border-subtle);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-frame > .cl-frame-in {
+  height: 100%;
+  background: var(--bg-elevated);
+  clip-path: polygon(
+    calc(var(--chamfer-md) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-md) + 1px),
+    calc(100% - var(--chamfer-md) + 1px) 100%,
+    0 100%,
+    0 calc(var(--chamfer-md) - 1px)
+  );
+}
+.cl-frame-gold {
+  background: var(--border-accent);
+}
+.cl-frame-white {
+  background: var(--border-white);
+}
+
+.cl-halftone {
+  background-image: var(--halftone);
+  background-size: var(--halftone-size);
+}
+.cl-grain {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.34) 0.7px, transparent 1.1px),
+    linear-gradient(var(--white), #d9d9d5);
+  background-size: 3px 3px, 100% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.cl-ray {
+  height: 1px;
+  background: var(--ray-gold);
+  filter: drop-shadow(0 0 6px rgba(245, 179, 0, 0.7));
+}
+.cl-glow {
+  box-shadow: var(--glow-gold);
+}
+
+.cl-overline {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  font-size: var(--fs-caption);
+  color: var(--text-accent);
+}
+.cl-display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.cl-num {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+:where(a) {
+  color: var(--text-link);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+:where(a):hover {
+  color: var(--text-link-hover);
+}
+:where(:focus-visible) {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---- components ---- */
+
+.cl-btn {
+  --ch: var(--chamfer-btn);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: var(--control-h-md);
+  padding: 0 var(--sp-6);
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  color: var(--text-heading);
+  transition: var(--t-control);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-btn > * {
+  position: relative;
+  z-index: 1;
+}
+.cl-btn::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  background: var(--bg-page);
+  clip-path: polygon(
+    calc(var(--ch) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--ch) + 1px),
+    calc(100% - var(--ch) + 1px) 100%,
+    0 100%,
+    0 calc(var(--ch) - 1px)
+  );
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.cl-btn--sm::before {
+  clip-path: polygon(
+    calc(var(--chamfer-btn-sm) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-btn-sm) + 1px),
+    calc(100% - var(--chamfer-btn-sm) + 1px) 100%,
+    0 100%,
+    0 calc(var(--chamfer-btn-sm) - 1px)
+  );
+}
+.cl-btn--sm {
+  clip-path: polygon(
+    var(--chamfer-btn-sm) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-btn-sm)),
+    calc(100% - var(--chamfer-btn-sm)) 100%,
+    0 100%,
+    0 var(--chamfer-btn-sm)
+  );
+  height: var(--control-h-sm);
+  padding: 0 var(--sp-4);
+  font-size: var(--fs-caption);
+}
+.cl-btn--lg::before {
+  clip-path: polygon(
+    calc(var(--chamfer-btn-lg) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-btn-lg) + 1px),
+    calc(100% - var(--chamfer-btn-lg) + 1px) 100%,
+    0 100%,
+    0 calc(var(--chamfer-btn-lg) - 1px)
+  );
+}
+.cl-btn--lg {
+  clip-path: polygon(
+    var(--chamfer-btn-lg) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-btn-lg)),
+    calc(100% - var(--chamfer-btn-lg)) 100%,
+    0 100%,
+    0 var(--chamfer-btn-lg)
+  );
+  height: var(--control-h-lg);
+  padding: 0 var(--sp-8);
+  font-size: var(--fs-h5);
+}
+.cl-btn--block {
+  display: flex;
+  width: 100%;
+}
+
+.cl-btn--primary {
+  background: var(--gold-deep);
+  color: var(--text-on-accent);
+}
+.cl-btn--primary::before {
+  background: var(--sheen-gold);
+}
+.cl-btn--primary:hover::before {
+  background: linear-gradient(180deg, #ffe08a, var(--gold-hot) 50%, var(--gold));
+}
+.cl-btn--primary:active {
+  transform: translateY(1px);
+}
+.cl-btn--primary:active::before {
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+}
+
+.cl-btn--secondary {
+  background: var(--border-white);
+}
+.cl-btn--secondary:hover {
+  background: var(--gold);
+}
+.cl-btn--secondary:hover::before {
+  background: #0e0e0e;
+}
+.cl-btn--secondary:hover {
+  color: var(--gold-hot);
+}
+.cl-btn--secondary:active {
+  transform: translateY(1px);
+}
+.cl-btn--secondary:active::before {
+  background: #080808;
+}
+
+.cl-btn--ghost {
+  background: transparent;
+  color: var(--text-muted);
+}
+.cl-btn--ghost::before {
+  background: transparent;
+}
+.cl-btn--ghost:hover {
+  color: var(--text-heading);
+}
+.cl-btn--ghost:hover::before {
+  background: var(--overlay-hover);
+}
+.cl-btn--ghost:active::before {
+  background: var(--overlay-press);
+}
+
+.cl-btn[disabled],
+.cl-btn[aria-disabled="true"] {
+  pointer-events: none;
+  background: var(--line);
+  color: var(--text-faint);
+  box-shadow: none;
+}
+.cl-btn[disabled]::before,
+.cl-btn[aria-disabled="true"]::before {
+  background: #101010;
+}
+
+.cl-btn--loading > .cl-btn-label {
+  opacity: 0.45;
+}
+
+.cl-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.cl-field__label {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cl-field__wrap {
+  position: relative;
+  background: var(--border-subtle);
+  transition: background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+  clip-path: polygon(
+    var(--chamfer-input) 0,
+    100% 0,
+    100% calc(100% - var(--chamfer-input)),
+    calc(100% - var(--chamfer-input)) 100%,
+    0 100%,
+    0 var(--chamfer-input)
+  );
+}
+.cl-field__wrap:focus-within {
+  background: var(--gold);
+  box-shadow: var(--glow-gold-sm);
+}
+.cl-field--error .cl-field__wrap {
+  background: var(--danger);
+}
+.cl-field__input,
+.cl-field__textarea {
+  display: block;
+  width: calc(100% - 2px);
+  height: var(--control-h-md);
+  margin: 1px;
+  padding: 0 var(--sp-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-heading);
+  background: var(--bg-inset);
+  border: 0;
+  outline: 0;
+  box-sizing: border-box;
+  clip-path: polygon(
+    7px 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%,
+    0 7px
+  );
+}
+.cl-field__textarea {
+  height: auto;
+  min-height: 104px;
+  padding: var(--sp-3) var(--sp-4);
+  line-height: var(--lh-body);
+  resize: vertical;
+}
+.cl-field__input::placeholder,
+.cl-field__textarea::placeholder {
+  color: var(--text-faint);
+}
+.cl-field__hint {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-faint);
+}
+.cl-field--error .cl-field__hint {
+  color: var(--danger);
+}
+/* Project addition: clip-path swallows box-shadow, so the focus glow is drawn
+   by a drop-shadow on an unclipped wrapper (design system rule for chamfers). */
+.cl-field__glow {
+  transition: filter var(--dur-base) var(--ease-out);
+}
+.cl-field__glow:focus-within {
+  filter: drop-shadow(var(--glow-gold-sm));
+}
+.cl-field--error .cl-field__glow:focus-within {
+  filter: none;
+}
+
+.cl-glow-wrap {
+  display: inline-flex;
+  filter: var(--glow-drop);
+}
+.cl-glow-wrap--block {
+  display: block;
+}
+
+.cl-iconbtn {
+  --ch: var(--chamfer-iconbtn);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  padding: 0;
+  cursor: pointer;
+  border: 0;
+  color: var(--text-muted);
+  background: var(--border-subtle);
+  transition: var(--t-control);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-iconbtn::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  background: var(--bg-elevated);
+  clip-path: polygon(
+    calc(var(--ch) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--ch) + 1px),
+    calc(100% - var(--ch) + 1px) 100%,
+    0 100%,
+    0 calc(var(--ch) - 1px)
+  );
+}
+.cl-iconbtn > * {
+  position: relative;
+  z-index: 1;
+}
+.cl-iconbtn:hover {
+  background: var(--gold);
+  color: var(--gold-hot);
+}
+.cl-iconbtn:active {
+  transform: translateY(1px);
+}
+.cl-iconbtn--bare {
+  background: transparent;
+}
+.cl-iconbtn--bare::before {
+  background: transparent;
+}
+.cl-iconbtn--bare:hover {
+  background: transparent;
+  color: var(--gold);
+}
+
+.cl-card {
+  --ch: var(--chamfer-md);
+  position: relative;
+  /* Spec 2.5: inner fill is inset 1px so the outline shows (missing from the source CSS). */
+  padding: var(--border-1);
+  background: var(--border-subtle);
+  transition: background var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-card__in {
+  position: relative;
+  height: 100%;
+  background: var(--bg-elevated);
+  clip-path: polygon(
+    calc(var(--ch) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--ch) + 1px),
+    calc(100% - var(--ch) + 1px) 100%,
+    0 100%,
+    0 calc(var(--ch) - 1px)
+  );
+}
+.cl-card__body {
+  position: relative;
+  z-index: 2;
+  padding: var(--sp-6);
+}
+.cl-card--gold {
+  background: var(--border-accent);
+}
+.cl-card--white {
+  background: var(--border-white);
+}
+.cl-card--flat {
+  background: var(--border-subtle);
+}
+.cl-card--flat .cl-card__in {
+  background: var(--bg-page);
+}
+.cl-card--interactive {
+  cursor: pointer;
+}
+.cl-card--interactive:hover {
+  background: var(--border-accent);
+}
+.cl-card--interactive:active {
+  transform: translateY(1px);
+}
+.cl-card__raster {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: var(--halftone);
+  background-size: var(--halftone-size);
+  -webkit-mask: radial-gradient(120% 80% at 50% 0, #000, transparent 70%);
+  mask: radial-gradient(120% 80% at 50% 0, #000, transparent 70%);
+}
+.cl-card__notch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 4px 18px 10px 10px;
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  line-height: 1;
+  color: var(--text-on-accent);
+  background: var(--gold);
+  clip-path: polygon(0 0, 100% 0, 72% 100%, 0 100%);
+}
+
+.cl-badge {
+  --ch: var(--chamfer-badge);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-on-accent);
+  background: var(--gold);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-badge--neutral {
+  background: var(--line-strong);
+  color: var(--text-body);
+}
+
+.cl-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  font-family: var(--font-body);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  transition: var(--t-control);
+}
+
+.cl-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cl-stat__val {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-stat);
+  line-height: 1;
+  color: var(--text-heading);
+}
+.cl-stat--accent .cl-stat__val {
+  color: var(--text-accent);
+}
+.cl-stat__label {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.cl-nav {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  height: 76px;
+  padding: 0 var(--gutter);
+  background: rgba(0, 0, 0, 0.92);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cl-nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-6);
+  margin-left: auto;
+}
+.cl-nav__link {
+  position: relative;
+  padding: var(--sp-2) 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.cl-nav__link:hover {
+  color: var(--text-heading);
+}
+.cl-nav__link.is-active {
+  color: var(--text-heading);
+}
+.cl-nav__link.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 2px;
+  background: var(--gold);
+  box-shadow: var(--glow-gold-sm);
+}
+.cl-nav__cta {
+  margin-left: var(--sp-4);
+}
+.cl-nav__burger {
+  display: none;
+  margin-left: auto;
+}
+.cl-nav__drawer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--gutter) var(--sp-8);
+  background: #080808;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cl-nav__drawer .cl-nav__link {
+  font-size: var(--fs-h4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* Project change: 6 odkazů + tlačítko se vejdou až od ~1180 px, pod tím hamburger. */
+@media (max-width: 1180px) {
+  .cl-nav .cl-nav__links {
+    display: none;
+  }
+  .cl-nav .cl-nav__burger {
+    display: inline-flex;
+  }
+}
+
+.cl-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  text-decoration: none;
+}
+.cl-logo__type {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.cl-logo__word {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.cl-logo__sub {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.cl-rays {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cl-rays__side {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+.cl-rays__side--l {
+  left: 0;
+  align-items: flex-start;
+}
+.cl-rays__side--r {
+  right: 0;
+  align-items: flex-end;
+  transform: scaleX(-1);
+}
+.cl-rays__ray {
+  height: 1px;
+  background: var(--ray-gold);
+  transform-origin: left center;
+}
+.cl-rays__dots {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 240px;
+  height: 60%;
+  opacity: 0.55;
+  background-image: var(--halftone);
+  background-size: var(--halftone-size);
+  -webkit-mask: linear-gradient(90deg, #000, transparent);
+  mask: linear-gradient(90deg, #000, transparent);
+}
+.cl-rays__dots--l {
+  left: 0;
+}
+.cl-rays__dots--r {
+  right: 0;
+  -webkit-mask: linear-gradient(270deg, #000, transparent);
+  mask: linear-gradient(270deg, #000, transparent);
+}
+
+.cl-sectionhead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.cl-sectionhead__over {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--ls-overline);
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.cl-sectionhead__title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-heading);
+  margin: 0;
+}
+.cl-sectionhead__sub {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+  max-width: 56ch;
+  margin: 0;
+}
+.cl-sectionhead--center {
+  align-items: center;
+  text-align: center;
+}
+
+.cl-rulecard {
+  --ch: var(--chamfer-lg);
+  position: relative;
+  aspect-ratio: 3 / 4.4;
+  background: var(--border-accent);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-rulecard__in {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-4);
+  padding: var(--sp-6);
+  background: radial-gradient(120% 70% at 50% 25%, #191919, #050505 70%);
+  clip-path: polygon(
+    calc(var(--ch) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--ch) + 1px),
+    calc(100% - var(--ch) + 1px) 100%,
+    0 100%,
+    0 calc(var(--ch) - 1px)
+  );
+}
+.cl-rulecard__raster {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  background-image: var(--halftone);
+  background-size: var(--halftone-size);
+  -webkit-mask: radial-gradient(90% 60% at 50% 40%, transparent 30%, #000);
+  mask: radial-gradient(90% 60% at 50% 40%, transparent 30%, #000);
+}
+.cl-rulecard__art {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  color: var(--gold);
+}
+.cl-rulecard__title {
+  position: relative;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h3);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+  text-align: center;
+}
+.cl-rulecard__desc {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: 1.45;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---- layout helpers (project-level, not in source doc) ---- */
+
+.cl-container {
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.cl-container-narrow {
+  max-width: var(--container-narrow);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+.cl-section {
+  padding-block: var(--section-y);
+}
+
+/* Back link on sub-pages: ghost button, pulled left so the arrow lines up with
+   the content edge; the arrow picks up the gold accent on hover. */
+.cl-back {
+  margin-left: calc(-1 * var(--sp-4));
+}
+.cl-back svg {
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.cl-back:hover svg {
+  color: var(--gold);
+}
+
+/* Footer meta text (copyright, legal links): caption scale, faint tone. */
+.cl-footer-meta {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+a.cl-footer-meta {
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+a.cl-footer-meta:hover {
+  color: var(--text-heading);
+}
+
+/* Scrollytelling (/vice-informaci). Static stacked layout by default and under
+   reduced motion; .is-scrolly (added by GSAP) overlays the lines for the pin. */
+.scrolly-stage {
+  position: relative;
+  min-height: calc(100dvh - 76px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-12);
+  padding: var(--section-y) var(--gutter);
+  overflow: hidden;
+  background: var(--black);
+  text-align: center;
+}
+.scrolly-line {
+  margin: 0;
+  font-style: italic;
+  line-height: var(--lh-heading);
+}
+.scrolly-line--run {
+  font-size: var(--fs-display-1);
+}
+.scrolly-line--ask {
+  font-size: var(--fs-display-2);
+  max-width: 16ch;
+  text-wrap: balance;
+}
+.scrolly-answer {
+  --ch: var(--chamfer-xl);
+  display: inline-block;
+  padding: var(--sp-4) var(--sp-8);
+  font-size: var(--fs-display-2);
+  line-height: var(--lh-heading);
+  color: var(--text-on-accent);
+  background: var(--sheen-gold);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.scrolly-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.scrolly-char {
+  display: inline-block;
+}
+.scrolly-stage.is-scrolly {
+  display: block;
+  height: 100dvh;
+  padding: 0;
+}
+.is-scrolly .scrolly-line {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+}
+.is-scrolly .scrolly-line--run {
+  left: 0;
+  white-space: nowrap;
+}
+.is-scrolly .scrolly-line--ask,
+.is-scrolly .scrolly-line--answer {
+  inset-inline: var(--gutter);
+  margin-inline: auto;
+}
+
+/* Hero fills the viewport below the 76px nav on every device. */
+.hero-stage {
+  height: calc(100dvh - 76px);
+  min-height: 360px;
+}
+
+/* ---- Page transition overlay ---- */
+
+.pt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: var(--black);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.pt-overlay[data-phase="enter"],
+.pt-overlay[data-phase="cover"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 320ms var(--ease-out);
+}
+.pt-overlay[data-phase="leave"] {
+  opacity: 0;
+  visibility: visible;
+  transition: opacity 480ms var(--ease-in);
+}
+.pt-overlay__logo {
+  width: clamp(200px, 32vw, 280px);
+  filter: var(--glow-drop);
+}
+/* The JPG is opaque; clipping to the emblem's ring lets the glow follow the circle. */
+.pt-overlay__logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  clip-path: circle(44.5% at 50% 50%);
+}
+/* Back/forward swaps the page before popstate fires, so a fade-in would reveal
+   the new page first: cover instantly instead. */
+.pt-overlay[data-phase="snap"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.pt-overlay:not([data-phase="idle"]) .pt-overlay__logo {
+  animation: pt-logo-in 900ms var(--ease-strike) both, pt-logo-pulse 1.6s ease-in-out 900ms infinite;
+}
+@keyframes pt-logo-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+@keyframes pt-logo-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: var(--glow-drop);
+  }
+  50% {
+    transform: scale(1.03);
+    filter: drop-shadow(0 0 16px rgba(245, 179, 0, 0.6)) drop-shadow(0 0 48px rgba(245, 179, 0, 0.35));
+  }
+}
+
+/* SplitText headings stay hidden until GSAP has split them, so the plain text
+   never flashes before its entrance. */
+@media (prefers-reduced-motion: no-preference) {
+  .split-parent:not([data-split]) {
+    visibility: hidden;
+  }
+}
+
+/* ---- History (timeline + gallery) ---- */
+
+.hist-timeline {
+  display: grid;
+  gap: var(--sp-5);
+}
+@media (min-width: 860px) {
+  .hist-timeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.hist-timeline__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  height: 100%;
+  padding-top: var(--sp-12);
+}
+.hist-timeline__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6) var(--sp-10);
+  margin-top: auto;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Rows are sized from the container width so every tile is exactly 3:4 and the
+   featured tile spans a clean 2x2 block. */
+.hist-grid-wrap {
+  container-type: inline-size;
+}
+.hist-grid {
+  --cols: 2;
+  --gap: var(--sp-3);
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  grid-auto-rows: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols) * 4 / 3);
+  gap: var(--gap);
+}
+@media (min-width: 640px) {
+  .hist-grid {
+    --cols: 3;
+  }
+}
+@media (min-width: 860px) {
+  .hist-grid {
+    --cols: 4;
+    --gap: var(--sp-4);
+  }
+}
+.hist-tile {
+  position: relative;
+}
+.hist-tile--featured {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+.hist-tile__btn {
+  display: block;
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.hist-tile__frame {
+  --ch: var(--chamfer-md);
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: var(--border-subtle);
+  transition: background var(--dur-base) var(--ease-out);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.hist-tile__btn:hover .hist-tile__frame,
+.hist-tile__btn:focus-visible .hist-tile__frame {
+  background: var(--border-accent);
+}
+.hist-tile__in {
+  position: absolute;
+  inset: 1px;
+  display: block;
+  overflow: hidden;
+  background: var(--bg-inset);
+  clip-path: polygon(
+    calc(var(--ch) - 1px) 0,
+    100% 0,
+    100% calc(100% - var(--ch) + 1px),
+    calc(100% - var(--ch) + 1px) 100%,
+    0 100%,
+    0 calc(var(--ch) - 1px)
+  );
+}
+/* Zoom stays inside the clipped frame: the tile itself never scales or lifts. */
+.hist-tile__img {
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.hist-tile__btn:hover .hist-tile__img,
+.hist-tile__btn:focus-visible .hist-tile__img {
+  transform: scale(1.04);
+}
+.hist-tile__scrim {
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.85));
+}
+.hist-tile__meta {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  text-align: left;
+}
+.hist-tile__caption {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-heading);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.hist-tile--featured .hist-tile__caption {
+  font-size: var(--fs-h4);
+}
+.hist-tile__in--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  text-align: center;
+  background: radial-gradient(120% 70% at 50% 25%, #191919, #050505 70%);
+}
+.hist-tile__raster {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  background-image: var(--halftone);
+  background-size: var(--halftone-size);
+  -webkit-mask: radial-gradient(90% 60% at 50% 40%, transparent 30%, #000);
+  mask: radial-gradient(90% 60% at 50% 40%, transparent 30%, #000);
+}
+.hist-tile__empty-title {
+  position: relative;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-stat);
+  line-height: 1;
+  color: var(--text-heading);
+}
+.hist-tile__empty-note {
+  position: relative;
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+html:has(.hist-lightbox[open]) {
+  overflow: hidden;
+}
+.hist-lightbox {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: var(--sp-4) var(--gutter);
+  border: 0;
+  background: transparent;
+  color: var(--text-body);
+}
+.hist-lightbox[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: hist-fade var(--dur-base) var(--ease-out);
+}
+.hist-lightbox::backdrop {
+  background: var(--black);
+}
+@keyframes hist-fade {
+  from {
+    opacity: 0;
+  }
+}
+.hist-lightbox__bar,
+.hist-lightbox__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.hist-lightbox__nav {
+  justify-content: center;
+}
+.hist-lightbox__count {
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-label);
+  color: var(--text-muted);
+}
+.hist-lightbox__figure {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.hist-lightbox__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.hist-lightbox__img {
+  object-fit: contain;
+}
+.hist-lightbox__caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-heading);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+
+/* ---- Testimonials ---- */
+
+.testi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--sp-5);
+}
+/* Glow on a chamfered shape has to come from a drop-shadow on an unclipped wrapper. */
+.testi-wrap {
+  transition: filter var(--dur-base) var(--ease-out);
+}
+.testi-wrap:hover {
+  filter: drop-shadow(var(--glow-gold-sm));
+}
+.testi-card {
+  height: 100%;
+  margin: 0;
+}
+.testi-wrap:hover .testi-card {
+  background: var(--border-accent);
+}
+.testi-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  height: 100%;
+}
+.testi-stars {
+  display: flex;
+  gap: 2px;
+  color: var(--gold);
+}
+.testi-card__mark {
+  flex: none;
+  color: var(--line-strong);
+}
+.testi-card__quote {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+}
+.testi-card__author {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.testi-card__avatar {
+  --ch: var(--chamfer-iconbtn);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.testi-card__name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h5);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.testi-card__role {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+/* ==========================================================================
+   Turnaje — přehled, detail, tabulky.
+   Staví výhradně na tokenech výše; žádné nové barvy ani fonty.
+   ========================================================================== */
+
+/* Mřížka odehraných turnajů. */
+.trn-grid {
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Dlaždice turnaje: celá plocha je odkaz do detailu. */
+.trn-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+}
+.trn-card__media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--bg-inset);
+}
+.trn-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.01);
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.cl-card--interactive:hover .trn-card__img,
+.trn-card:focus-visible .trn-card__img {
+  transform: scale(1.06);
+}
+.trn-card__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--fade-bottom);
+}
+.trn-card__raster {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image: var(--halftone);
+  background-size: var(--halftone-size);
+  -webkit-mask: radial-gradient(90% 70% at 50% 30%, #000, transparent 75%);
+  mask: radial-gradient(90% 70% at 50% 30%, #000, transparent 75%);
+}
+.trn-card__badge {
+  position: absolute;
+  left: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: 2;
+}
+.trn-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+}
+.trn-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.trn-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-faint);
+}
+.trn-card__desc {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+}
+.trn-card__winner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: auto;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+.trn-card__go {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.cl-card--interactive:hover .trn-card__go,
+.trn-card:focus-visible .trn-card__go {
+  color: var(--text-heading);
+  transform: translateX(3px);
+}
+
+/* Stupně vítězů v detailu turnaje. */
+.trn-podium {
+  display: grid;
+  gap: var(--grid-gap);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.trn-podium__rank {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-score);
+  line-height: 0.9;
+  color: var(--text-faint);
+}
+.trn-podium__item--1 .trn-podium__rank {
+  color: var(--gold);
+}
+.trn-podium__item--2 .trn-podium__rank {
+  color: var(--silver);
+}
+.trn-podium__team {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-heading);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.trn-podium__city {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-faint);
+}
+
+/* Karta ocenění (nejlepší střelec, MVP, brankář). */
+.trn-award {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+.trn-award__icon {
+  flex: none;
+  color: var(--gold);
+}
+.trn-award__value {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-stat);
+  line-height: 1;
+  color: var(--text-accent);
+}
+
+/* ---- tabulky (pořadí i výsledky) ---- */
+
+/* Vodorovné posouvání na úzkém displeji místo zalomení buněk. */
+.cl-tablewrap {
+  /* relative: skryté texty pro čtečky (.sr-only) uvnitř tabulky pak nevytékají
+     mimo rolovací rámeček a nerozšiřují stránku na mobilu. */
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.cl-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+}
+.cl-table caption {
+  padding-bottom: var(--sp-3);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--text-accent);
+}
+.cl-table th,
+.cl-table td {
+  padding: var(--sp-3);
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* Zarovnání buněk (Tailwind utility by výchozí text-align výše nepřebily). */
+.cl-table .text-right {
+  text-align: right;
+}
+.cl-table .text-center {
+  text-align: center;
+}
+.cl-table thead th {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+  border-bottom-color: var(--border-strong);
+}
+.cl-table tbody tr:last-child th,
+.cl-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.cl-table tbody tr {
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.cl-table tbody tr:hover {
+  background: var(--overlay-hover);
+}
+.cl-table__num {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+.cl-table__rank {
+  width: 1%;
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.cl-table__team {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-body-sm);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.cl-table__pts {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  text-align: right;
+  color: var(--text-accent);
+}
+/* Postupová místa ze skupiny. */
+.cl-table__row--qualified .cl-table__rank {
+  color: var(--gold);
+  box-shadow: inset 2px 0 0 0 var(--gold);
+}
+
+/* Výsledkový řádek: skóre uprostřed, týmy po stranách. */
+.cl-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+.cl-score__sep {
+  color: var(--text-faint);
+}
+.cl-side--win {
+  color: var(--text-heading);
+}
+.cl-side--loss {
+  color: var(--text-faint);
+}
+
+/* Zápas jako vlastní tbody: řádek výsledku + řádek gólů a karet. */
+.cl-table tbody.match-block:not(:last-of-type) tr:last-child td {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cl-table tbody.match-block tr:not(:last-child) td {
+  border-bottom: 0;
+}
+.cl-table tbody.match-block:hover > tr {
+  background: var(--overlay-hover);
+}
+.match-events td {
+  padding-top: 0;
+  vertical-align: top;
+}
+.match-events__side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+.match-events__side--home {
+  align-items: flex-end;
+}
+.match-ev {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.match-events__side--home .match-ev {
+  flex-direction: row-reverse;
+}
+.match-ev__min {
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+/* Gól = míč (kolečko), karta = obdélník v barvě karty. */
+.match-ev__mark {
+  flex: none;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-heading);
+}
+.match-ev__mark--yellow_card,
+.match-ev__mark--red_card {
+  width: 7px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--gold-hot);
+}
+.match-ev__mark--red_card {
+  background: var(--danger);
+}
+.match-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: var(--sp-3);
+  white-space: nowrap;
+}
+
+/* Forma: výsledky skupiny jako řada štítků. */
+.cl-form {
+  display: inline-flex;
+  gap: 3px;
+}
+.cl-form__dot {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-micro);
+  line-height: 1;
+  color: var(--text-on-accent);
+  background: var(--loss);
+}
+.cl-form__dot--W {
+  background: var(--win);
+}
+.cl-form__dot--D {
+  background: var(--draw);
+}
+.cl-form__dot--L {
+  background: var(--loss);
+  color: var(--text-body);
+}
+
+/* ==========================================================================
+   Portál — přihlášení a správa týmu.
+   ========================================================================== */
+
+.portal-shell {
+  display: grid;
+  gap: var(--sp-10);
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .portal-shell {
+    grid-template-columns: 240px 1fr;
+    gap: var(--sp-12);
+  }
+}
+.portal-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+@media (min-width: 900px) {
+  .portal-aside {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--sp-6));
+  }
+}
+.portal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+@media (min-width: 900px) {
+  .portal-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+}
+.portal-nav__link {
+  --ch: var(--chamfer-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted);
+  background: transparent;
+  transition: var(--t-control);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.portal-nav__link:hover {
+  color: var(--text-heading);
+  background: var(--overlay-hover);
+}
+.portal-nav__link.is-active {
+  color: var(--text-on-accent);
+  background: var(--gold);
+}
+.portal-ident {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.portal-ident__name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+
+/* Hlášky nad formuláři. */
+.cl-notice {
+  --ch: var(--chamfer-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+  background: var(--bg-elevated-2);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.cl-notice__icon {
+  flex: none;
+  color: var(--text-muted);
+}
+.cl-notice--ok {
+  box-shadow: inset 0 0 0 1px var(--win);
+}
+.cl-notice--ok .cl-notice__icon {
+  color: var(--win);
+}
+.cl-notice--error {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+.cl-notice--error .cl-notice__icon {
+  color: var(--danger);
+}
+.cl-notice--accent {
+  box-shadow: inset 0 0 0 1px var(--border-accent);
+}
+.cl-notice--accent .cl-notice__icon {
+  color: var(--gold);
+}
+
+/* Select a checkbox — doplnění k .cl-field z design systému. */
+.cl-field__selectwrap {
+  position: relative;
+}
+.cl-field__select {
+  display: block;
+  width: calc(100% - 2px);
+  height: var(--control-h-md);
+  margin: 1px;
+  padding: 0 var(--sp-10) 0 var(--sp-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  color: var(--text-heading);
+  background: var(--bg-inset);
+  border: 0;
+  outline: 0;
+  box-sizing: border-box;
+  cursor: pointer;
+  appearance: none;
+  clip-path: polygon(
+    7px 0,
+    100% 0,
+    100% calc(100% - 7px),
+    calc(100% - 7px) 100%,
+    0 100%,
+    0 7px
+  );
+}
+.cl-field__selecticon {
+  position: absolute;
+  top: 50%;
+  right: var(--sp-4);
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-muted);
+}
+.cl-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+}
+.cl-check input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+/* Soupiska: řádek hráče. */
+.roster-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.roster-row:last-child {
+  border-bottom: 0;
+}
+.roster-row__num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  color: var(--gold);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.roster-row__name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h6);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.roster-row__meta {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-faint);
+}
+.roster-row__actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   Účet kapitána a přihláška týmu.
+   ========================================================================== */
+
+/* Postup: účet kapitána → přihláška týmu → soupiska. */
+.reg-steps {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: 1fr;
+  padding: var(--sp-5) 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+@media (min-width: 640px) {
+  .reg-steps {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sp-6);
+  }
+}
+.reg-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+.reg-step__num {
+  --ch: var(--chamfer-iconbtn-sm);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  color: var(--text-faint);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.reg-step--current .reg-step__num {
+  color: var(--text-on-accent);
+  background: var(--gold);
+  box-shadow: none;
+}
+.reg-step--done .reg-step__num {
+  color: var(--gold);
+  box-shadow: inset 0 0 0 1px var(--border-accent);
+}
+.reg-step__title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h6);
+  letter-spacing: var(--ls-label);
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.reg-step--upcoming .reg-step__title {
+  color: var(--text-faint);
+}
+.reg-step__desc {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+
+/* Karta „přihlášený kapitán“ nad přihláškou týmu. */
+.captain-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+}
+.captain-card__avatar {
+  --ch: var(--chamfer-iconbtn);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--control-h-md);
+  height: var(--control-h-md);
+  color: var(--gold);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.captain-card__who {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.captain-card__contact {
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Checkbox s víceřádkovým popiskem: zaškrtávátko drží u první řádky. */
+.cl-check--top {
+  align-items: flex-start;
+  line-height: var(--lh-body);
+}
+.cl-check--top input {
+  margin-top: 3px;
+}
+.cl-check__error {
+  padding-left: calc(18px + var(--sp-3));
+  color: var(--danger);
+}
+.cl-check input[aria-invalid="true"] {
+  outline: 1px solid var(--danger);
+  outline-offset: 1px;
+}
+
+/* ==========================================================================
+   Administrace — mřížky formulářů a řádky seznamů.
+   ========================================================================== */
+
+.adm-grid {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+.adm-grid--wide {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.adm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.adm-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.adm-item:first-child {
+  padding-top: 0;
+}
+.adm-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.adm-item__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+}
+.adm-item__title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.adm-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+.adm-meta a {
+  color: var(--text-muted);
+}
+.adm-meta a:hover {
+  color: var(--text-heading);
+}
+.adm-sub {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+
+/* Zápis výsledku — skóre vedle sebe, řádky gólů a karet. */
+.res-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--sp-3);
+}
+.res-picker > .cl-field {
+  flex: 1 1 260px;
+  max-width: 480px;
+}
+.res-score {
+  display: grid;
+  grid-template-columns: minmax(0, 200px) auto minmax(0, 200px);
+  justify-content: start;
+  align-items: end;
+  gap: var(--sp-3);
+}
+.res-score .cl-field__input {
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  text-align: center;
+}
+.res-score__sep {
+  padding-bottom: var(--sp-3);
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h3);
+  color: var(--text-muted);
+}
+.res-event {
+  display: grid;
+  grid-template-columns: 150px minmax(140px, 1fr) minmax(110px, 1fr) minmax(110px, 1fr) 84px auto;
+  align-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-4);
+  border-left: 3px solid var(--gold);
+  background: var(--bg-elevated-2);
+}
+.res-event--yellow_card {
+  border-left-color: var(--gold-hot);
+}
+.res-event--red_card {
+  border-left-color: var(--danger);
+}
+.res-event__remove {
+  align-self: center;
+  margin-top: var(--sp-5);
+}
+.res-clear {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+@media (max-width: 900px) {
+  .res-event {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    position: relative;
+    padding-right: var(--sp-12);
+  }
+  .res-event__remove {
+    position: absolute;
+    top: var(--sp-2);
+    right: var(--sp-2);
+    margin: 0;
+  }
+}
+@media (max-width: 480px) {
+  .res-event {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .res-score {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+}
+
+/* Výběr data/času: ikona kalendáře a vyskakovací okno ve tmavém provedení. */
+.cl-field__input[type="date"],
+.cl-field__input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Lepící navigace (project change). Lišta zůstává nahoře při scrollu; skok na
+   sekci se zastaví pod ní (scroll-padding), mobilní menu se rozbalí přes obsah.
+   ========================================================================== */
+:root {
+  --nav-h: 76px; /* = výška .cl-nav */
+}
+html {
+  scroll-padding-top: var(--nav-h);
+}
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.site-header .cl-nav__drawer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: calc(100dvh - var(--nav-h));
+  overflow-y: auto;
+}
+
+/* ==========================================================================
+   Winter Clutch League — náhled rozpisu a soupisek.
+   ========================================================================== */
+.wcl-teamlink {
+  display: inline-flex;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 4px;
+  transition: color var(--dur-fast) var(--ease-out), text-decoration-color var(--dur-fast) var(--ease-out);
+}
+.wcl-teamlink:hover {
+  color: var(--text-link);
+  text-decoration-color: currentColor;
+}
+.wcl-teams {
+  display: grid;
+  gap: var(--sp-3);
+  grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wcl-teamcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-5);
+  text-decoration: none;
+}
+.wcl-teamcard__go {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-top: auto;
+  padding-top: var(--sp-2);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.cl-card--interactive:hover .wcl-teamcard__go,
+.wcl-teamcard:focus-visible .wcl-teamcard__go {
+  color: var(--text-heading);
+  transform: translateX(3px);
+}
+.wcl-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
