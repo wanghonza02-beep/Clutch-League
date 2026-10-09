@@ -102,7 +102,7 @@ a jen pár zpráv za hodinu.
   a 2 schválené týmy s kapitánem (ověřit, jestli nejsou zkušební).
   Archiv turnajů obsahuje vymyšlené týmy, výsledky a střelce. `seed.sql` už je bez nich (9. 10. 2026),
   takže se při novém spuštění nevrátí.
-- [ ] **Skutečný první turnaj** (`supabase/prvni-turnaj-2026.sql`): Clutch League Cup, 23. 8. 2026,
+- [x] **Skutečný první turnaj** (9. 10. 2026, `supabase/prvni-turnaj-2026.sql`): Clutch League Cup, 23. 8. 2026,
   8 týmů s pořadím podle dokumentu „TÝMY KTERÉ HRÁLI 1. TURNAJ + UMÍSTĚNÍ“ (Google Disk). Zápasy,
   góly ani střelci nejsou, web je u turnaje neukazuje. Týmy 5.–8. jsou v pořadí s pomlčkou.
 - [ ] Winter Clutch 2027 (10. 1. 2027) má otevřené přihlášky. Zápasy a výsledky se zapisují v Portálu.
