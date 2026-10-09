@@ -64,7 +64,7 @@ na GitHubu nasadí novou verzi sám.
 ### Krok 4. Supabase: adresy webu
 Zatím (9. 10. 2026) nastavené na `https://clutch-league.vercel.app`, ať odkazy v e-mailech
 fungují už teď. Ve Vercelu je `NEXT_PUBLIC_SITE_URL` = `https://clutch-league.vercel.app`.
-- [ ] Mezikrok: **Site URL** = `https://clutch-league.vercel.app`, **Redirect URLs** obsahují
+- [x] Mezikrok (9. 10. 2026): **Site URL** = `https://clutch-league.vercel.app`, **Redirect URLs** obsahují
   `https://clutch-league.vercel.app/**` a `http://localhost:3000/**`.
 - [ ] S doménou: Authentication → URL Configuration → **Site URL** přepsat na `https://tvoje-domena.cz`.
 - [ ] S doménou: **Redirect URLs**: přidat `https://tvoje-domena.cz/**` (vercel.app a localhost můžou zůstat).
