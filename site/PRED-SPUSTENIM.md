@@ -3,7 +3,7 @@
 Tenhle soubor je kontrolní seznam. Až se rozhodneš web pustit na internet, projdeme
 ho spolu odshora dolů. Odškrtávej `[x]`, co je hotové.
 
-_Naposledy aktualizováno: 9. 10. 2026 (postup nasazení na Vercel a napojení domény krok za krokem)_
+_Naposledy aktualizováno: 9. 10. 2026 (kód na GitHubu, nasazení na Vercel z GitHubu, napojení domény krok za krokem)_
 
 ---
 
@@ -26,20 +26,19 @@ Kroky jdou v pořadí, ve kterém se dělají. Každý stojí na tom předchozí
   e-maily bude posílat Resend.
 
 ### Krok 2. Nahrát web na Vercel
-Web se nahrává z tvého počítače příkazem `vercel` (Vercel CLI je nainstalované).
-Produkční build je ověřený, prochází bez chyb.
-- [ ] **Přihlásit se do Vercelu (jen ty, jednou):** ve VS Code otevři terminál
-  (menu Terminal → New Terminal) a napiš:
-  ```
-  cd site
-  vercel login
-  ```
-  Otevře se prohlížeč, potvrdíš přihlášení. Pak mi napiš, že je hotovo.
-- [ ] **Zbytek udělám já:** založím na Vercelu projekt `clutch-league`, vložím do něj
-  proměnné prostředí a web nahraju. Dostaneš adresu ve tvaru `https://clutch-league.vercel.app`.
-  - `NEXT_PUBLIC_SUPABASE_URL` (ze `.env.local`)
-  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (ze `.env.local`)
-  - `NEXT_PUBLIC_SITE_URL` až v kroku 3, až bude doména napojená
+Kód je na GitHubu: `github.com/wanghonza02-beep/Clutch-League` (veřejný repozitář).
+Vercel si ho odtud vezme sám. Produkční build je ověřený, prochází bez chyb.
+- [ ] Na **vercel.com** → **Add New… → Project** → u GitHubu zvolit **Clutch-League** → **Import**.
+  Pokud ho v seznamu nevidíš, klikni na „Adjust GitHub App Permissions“ a povol Vercelu přístup k repozitáři.
+- [ ] Na stránce nastavení projektu:
+  - **Project Name:** `clutch-league`
+  - **Root Directory:** klikni na **Edit** a vyber složku **`site`** (důležité, web je v ní, ne v hlavní složce)
+  - **Framework Preset:** Next.js (Vercel ho pozná sám)
+  - **Environment Variables:** přidat dvě proměnné, hodnoty zkopíruj ze souboru `site/.env.local`:
+    - `NEXT_PUBLIC_SUPABASE_URL`
+    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  - `NEXT_PUBLIC_SITE_URL` zatím nepřidávej, přijde v kroku 3, až bude doména napojená.
+- [ ] Kliknout na **Deploy**. Za 1–2 minuty dostaneš adresu ve tvaru `https://clutch-league.vercel.app`.
 - [ ] **Nikdy** nevkládat klíč `service_role` / secret. Web ho nepotřebuje.
 - [ ] **Region serveru u Supabase:** web se při každém přihlášení ptá databáze. Když server
   Vercelu běží v USA a databáze v Evropě, je to zbytečně pomalé. Zjisti v Supabase region
@@ -63,8 +62,9 @@ Produkční build je ověřený, prochází bez chyb.
 - [ ] Počkat. Wedos změny zveřejňuje po pár minutách, celkem to trvá od 10 minut do pár hodin.
   Až Vercel u domény ukáže **Valid Configuration**, je hotovo. Zabezpečení (https, zámek
   v prohlížeči) Vercel zařídí sám.
-- [ ] Dát mi vědět. Nastavím ve Vercelu `NEXT_PUBLIC_SITE_URL` = `https://tvoje-domena.cz`
-  a web nahraju znovu (proměnná se do webu vloží až při nahrání).
+- [ ] Ve Vercelu: **Settings → Environment Variables** → přidat `NEXT_PUBLIC_SITE_URL` =
+  `https://tvoje-domena.cz`. Pak **Deployments** → u posledního nasazení tři tečky → **Redeploy**
+  (proměnná se do webu vloží až při novém nasazení).
 
 ### Krok 4. Supabase: adresy webu
 - [ ] Authentication → URL Configuration → **Site URL** přepsat z `http://localhost:3000`
@@ -114,17 +114,17 @@ a jen pár zpráv za hodinu.
 - [ ] Projít celý web na mobilu i na počítači.
 
 ### Další změny webu po spuštění
-Když web později upravíme, stačí mi napsat „nahraj to online“. Nahraju ho příkazem
-`vercel --prod` a za minutu je změna na doméně. Data v databázi (týmy, výsledky)
+Když web později upravíme, stačí mi napsat „nahraj to online“. Změny pošlu na GitHub
+a Vercel je za 1–2 minuty sám nasadí na doménu. Data v databázi (týmy, výsledky)
 se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
 
 ---
 
 ## B. Důležité. Doporučuju vyřešit před spuštěním
 
-- [ ] **Záloha kódu webu.** Projekt je zatím jen na tvém počítači (není na GitHubu). Když se
-  disk pokazí, web zmizí. Doporučuju soukromý repozitář na GitHubu. Vercel pak umí web
-  nahrávat sám po každé změně.
+- [x] **Záloha kódu webu.** Celá složka je na GitHubu (`wanghonza02-beep/Clutch-League`, 9. 10. 2026).
+  Repozitář je **veřejný**, včetně fotek a videa z prvního turnaje. Přepnout na soukromý jde kdykoli:
+  GitHub → repozitář → Settings → dole „Change visibility“.
 - [ ] **Bezplatný Vercel (Hobby) je jen pro nekomerční použití.** Pokud liga vybírá startovné,
   má sponzory nebo reklamu, podmínky Vercelu chtějí placený tarif Pro (asi 20 $ měsíčně).
 - [ ] **Texty k osobním údajům (GDPR).** Web sbírá jméno, e-mail a telefon. Registrace má souhlas se
