@@ -3,7 +3,7 @@
 Tenhle soubor je kontrolní seznam. Až se rozhodneš web pustit na internet, projdeme
 ho spolu odshora dolů. Odškrtávej `[x]`, co je hotové.
 
-_Naposledy aktualizováno: 9. 10. 2026 (kód na GitHubu, nasazení na Vercel z GitHubu, napojení domény krok za krokem)_
+_Naposledy aktualizováno: 9. 10. 2026 (web běží na clutch-league.vercel.app, další je doména)_
 
 ---
 
@@ -25,27 +25,21 @@ Kroky jdou v pořadí, ve kterém se dělají. Každý stojí na tom předchozí
   Hosting ani e-mailovou schránku k ní kupovat netřeba. Web poběží na Vercelu,
   e-maily bude posílat Resend.
 
-### Krok 2. Nahrát web na Vercel
-Kód je na GitHubu: `github.com/wanghonza02-beep/Clutch-League` (veřejný repozitář).
-Vercel si ho odtud vezme sám. Produkční build je ověřený, prochází bez chyb.
-- [ ] Na **vercel.com** → **Add New… → Project** → u GitHubu zvolit **Clutch-League** → **Import**.
-  Pokud ho v seznamu nevidíš, klikni na „Adjust GitHub App Permissions“ a povol Vercelu přístup k repozitáři.
-- [ ] Na stránce nastavení projektu:
-  - **Project Name:** `clutch-league`
-  - **Root Directory:** klikni na **Edit** a vyber složku **`site`** (důležité, web je v ní, ne v hlavní složce)
-  - **Framework Preset:** Next.js (Vercel ho pozná sám)
-  - **Environment Variables:** přidat dvě proměnné, hodnoty zkopíruj ze souboru `site/.env.local`:
-    - `NEXT_PUBLIC_SUPABASE_URL`
-    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-  - `NEXT_PUBLIC_SITE_URL` zatím nepřidávej, přijde v kroku 3, až bude doména napojená.
-- [ ] Kliknout na **Deploy**. Za 1–2 minuty dostaneš adresu ve tvaru `https://clutch-league.vercel.app`.
-- [ ] **Nikdy** nevkládat klíč `service_role` / secret. Web ho nepotřebuje.
-- [ ] **Region serveru u Supabase:** web se při každém přihlášení ptá databáze. Když server
-  Vercelu běží v USA a databáze v Evropě, je to zbytečně pomalé. Zjisti v Supabase region
-  projektu (Project Settings → General, např. „Central EU (Frankfurt)“) a řekni mi ho.
-  Nastavím Vercel do stejného místa.
-- [ ] Na adrese `.vercel.app` web prohlédnout. Přihlášení funguje, ale odkazy v e-mailech
-  ještě ne (to vyřeší kroky 3–5).
+### Krok 2. Nahrát web na Vercel (hotovo 9. 10. 2026)
+Web běží na **https://clutch-league.vercel.app**. Kód je na GitHubu
+(`github.com/wanghonza02-beep/Clutch-League`, veřejný repozitář) a Vercel po každé změně
+na GitHubu nasadí novou verzi sám.
+- [x] Projekt `clutch-league` ve Vercelu (tým „honzis“) napojený na GitHub, větev `main`.
+- [x] **Root Directory:** `site`, **Framework:** Next.js. Bez toho Vercel nahrál hlavní složku
+  a web hlásil „page doesn't exist“.
+- [x] **Environment Variables** (Production, Preview, Development):
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+  `NEXT_PUBLIC_SITE_URL` přijde v kroku 3, až bude doména napojená.
+- [x] **Region serveru:** Dublin (`dub1`), stejně jako databáze Supabase (Irsko, AWS eu-west-1).
+- [x] **Nikdy** nevkládat klíč `service_role` / secret. Web ho nepotřebuje. (Ve Vercelu není.)
+- [x] Ověřeno: všechny veřejné stránky, archiv turnajů z databáze, přihlášení, registrace, PDF, obrázky.
+- [ ] Odkazy v e-mailech (zapomenuté heslo, potvrzení účtu) na `.vercel.app` zatím nefungují.
+  Vyřeší je kroky 3–5.
 
 ### Krok 3. Napojit doménu na web
 - [ ] **Ve Vercelu:** projekt `clutch-league` → **Settings → Domains → Add Domain** →
