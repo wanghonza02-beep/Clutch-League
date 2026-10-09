@@ -98,7 +98,8 @@ a jen pár zpráv za hodinu.
   `20261009120000_odhlaseni_tymu.sql`, `20261010120000_vysledky_bez_rozhodciho.sql`,
   `20261011120000_role_jen_v_supabase.sql`, `seed.sql`
   (ověř: v Table Editoru existuje tabulka `match_events`).
-- [ ] **Ukázková data smazána** (`supabase/smazat-ukazkova-data.sql` v Supabase → SQL Editor).
+- [x] **Ukázková data smazána** (9. 10. 2026, `supabase/smazat-ukazkova-data.sql`). Zůstal turnaj Winter Clutch 2027
+  a 2 schválené týmy s kapitánem (ověřit, jestli nejsou zkušební).
   Archiv turnajů obsahuje vymyšlené týmy, výsledky a střelce. `seed.sql` už je bez nich (9. 10. 2026),
   takže se při novém spuštění nevrátí.
 - [ ] Skutečná data zadaná (týmy, výsledky). Pošli mi je a vložím je. Podklad: na Google Disku
