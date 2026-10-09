@@ -1,5 +1,5 @@
 -- =============================================================================
--- Smazání UKÁZKOVÝCH dat archivu (z seed.sql, část 2)
+-- Smazání UKÁZKOVÝCH dat archivu (vložila je dřívější verze seed.sql)
 --
 -- Spusť, až budeš chtít web bez vymyšlených výsledků: Supabase → SQL Editor →
 -- New query → vlož → Run. Skutečná data to nezasáhne:

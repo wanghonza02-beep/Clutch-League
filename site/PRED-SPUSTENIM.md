@@ -3,7 +3,7 @@
 Tenhle soubor je kontrolní seznam. Až se rozhodneš web pustit na internet, projdeme
 ho spolu odshora dolů. Odškrtávej `[x]`, co je hotové.
 
-_Naposledy aktualizováno: 9. 10. 2026 (web běží na clutch-league.vercel.app, další je doména)_
+_Naposledy aktualizováno: 9. 10. 2026 (odkazy v e-mailech na vercel.app, pryč vymyšlená data, fotky podle pravidla)_
 
 ---
 
@@ -56,14 +56,18 @@ na GitHubu nasadí novou verzi sám.
 - [ ] Počkat. Wedos změny zveřejňuje po pár minutách, celkem to trvá od 10 minut do pár hodin.
   Až Vercel u domény ukáže **Valid Configuration**, je hotovo. Zabezpečení (https, zámek
   v prohlížeči) Vercel zařídí sám.
-- [ ] Ve Vercelu: **Settings → Environment Variables** → přidat `NEXT_PUBLIC_SITE_URL` =
-  `https://tvoje-domena.cz`. Pak **Deployments** → u posledního nasazení tři tečky → **Redeploy**
-  (proměnná se do webu vloží až při novém nasazení).
+- [ ] Ve Vercelu: **Settings → Environment Variables** → `NEXT_PUBLIC_SITE_URL` přepsat
+  z `https://clutch-league.vercel.app` na `https://tvoje-domena.cz`. Pak **Deployments** →
+  u posledního nasazení tři tečky → **Redeploy** (proměnná se do webu vloží až při novém nasazení).
+  Nebo mi napiš a udělám to já.
 
 ### Krok 4. Supabase: adresy webu
-- [ ] Authentication → URL Configuration → **Site URL** přepsat z `http://localhost:3000`
-  na `https://tvoje-domena.cz`.
-- [ ] **Redirect URLs**: přidat `https://tvoje-domena.cz/**` (localhost nech na vývoj).
+Zatím (9. 10. 2026) nastavené na `https://clutch-league.vercel.app`, ať odkazy v e-mailech
+fungují už teď. Ve Vercelu je `NEXT_PUBLIC_SITE_URL` = `https://clutch-league.vercel.app`.
+- [ ] Mezikrok: **Site URL** = `https://clutch-league.vercel.app`, **Redirect URLs** obsahují
+  `https://clutch-league.vercel.app/**` a `http://localhost:3000/**`.
+- [ ] S doménou: Authentication → URL Configuration → **Site URL** přepsat na `https://tvoje-domena.cz`.
+- [ ] S doménou: **Redirect URLs**: přidat `https://tvoje-domena.cz/**` (vercel.app a localhost můžou zůstat).
 
 ### Krok 5. E-maily (kapitáni musí dostat potvrzení účtu a nové heslo)
 Dokud tohle není hotové, e-mail dostane jen člověk z týmu tvého Supabase projektu
@@ -94,9 +98,13 @@ a jen pár zpráv za hodinu.
   `20261009120000_odhlaseni_tymu.sql`, `20261010120000_vysledky_bez_rozhodciho.sql`,
   `20261011120000_role_jen_v_supabase.sql`, `seed.sql`
   (ověř: v Table Editoru existuje tabulka `match_events`).
-- [ ] **Ukázková data smazána** (`supabase/smazat-ukazkova-data.sql`). Archiv turnajů dnes obsahuje
-  vymyšlené týmy, výsledky a střelce, které by na ostrém webu vypadaly jako pravdivé.
-- [ ] Skutečná data zadaná (týmy, výsledky) přes Portál → Turnaje.
+- [ ] **Ukázková data smazána** (`supabase/smazat-ukazkova-data.sql` v Supabase → SQL Editor).
+  Archiv turnajů obsahuje vymyšlené týmy, výsledky a střelce. `seed.sql` už je bez nich (9. 10. 2026),
+  takže se při novém spuštění nevrátí.
+- [ ] Skutečná data zadaná (týmy, výsledky). Pošli mi je a vložím je. Podklad: na Google Disku
+  ve složce „Cluth League“ je dokument „TÝMY KTERÉ HRÁLI 1. TURNAJ + UMÍSTĚNÍ“
+  (FC Prazharka 1., Grupac FC 2., Žlutý balet 3., FC Demonstav 4., dál bez pořadí: FK Zbirna,
+  Slow Panters, Storm MC, Strahovští Bombarďáci). Chybí datum, výsledky zápasů a střelci.
 
 ### Krok 8. Účty a zkouška na ostré doméně
 - [ ] Tvůj účet má v Table Editoru (`profiles`) roli `admin` a v navigaci vidíš **Administraci**.
@@ -117,27 +125,33 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
 ## B. Důležité. Doporučuju vyřešit před spuštěním
 
 - [x] **Záloha kódu webu.** Celá složka je na GitHubu (`wanghonza02-beep/Clutch-League`, 9. 10. 2026).
-  Repozitář je **veřejný**, včetně fotek a videa z prvního turnaje. Přepnout na soukromý jde kdykoli:
-  GitHub → repozitář → Settings → dole „Change visibility“.
+- [ ] **Veřejný GitHub obsahuje všechny původní fotky z turnaje** (složka „Fotky z prvního turnaje…“),
+  tedy i obličeje a jména hráčů jiných týmů. To odporuje pravidlu pro fotky níže. Nejjednodušší řešení:
+  přepnout repozitář na **soukromý** (GitHub → repozitář → Settings → dole „Change visibility“).
+  Na web to nemá vliv, Vercel k soukromému repozitáři přístup má.
+- [x] **Pravidlo pro fotky na webu** (9. 10. 2026): hráči **Žlutého baletu** (černožluté pruhované dresy,
+  brankář v oranžovém) smějí být vidět celí, s obličejem, jménem i číslem. Hráči ostatních týmů jen
+  s číslem, **bez obličeje a bez příjmení** na dresu. Galerie je podle toho prověřená, 3 fotky vyměněné
+  (soupeř se jménem PECHA, brankář jiného týmu, hráči se jmény CZINA P. a POLHEIS).
 - [ ] **Bezplatný Vercel (Hobby) je jen pro nekomerční použití.** Pokud liga vybírá startovné,
   má sponzory nebo reklamu, podmínky Vercelu chtějí placený tarif Pro (asi 20 $ měsíčně).
 - [ ] **Texty k osobním údajům (GDPR).** Web sbírá jméno, e-mail a telefon. Registrace má souhlas se
   zpracováním, ale chybí stránka **Zásady ochrany osobních údajů** a odkaz na ni. Konkrétní znění
   je na tobě (nebo právníkovi), já jen připravím místo a odkaz.
-- [ ] **PDF s pravidly kampaně Winter Clutch League.** Na webu je zatím **zástupný soubor**
-  (`public/docs/pravidla-kampan-zastupny-soubor.pdf`) s viditelným označením „Zástupný soubor“.
-  Skutečné PDF nahrát do `public/docs/`, v `src/content/campaign.ts` přepsat `href`, `fileName`, `meta`
-  a nastavit `placeholder: false`. Zástupný soubor pak smazat. Při další kampani se mění jen tenhle soubor.
+- [ ] **PDF s pravidly kampaně Winter Clutch League.** Zástupný soubor je smazaný, web píše
+  „Pravidla Winter Clutch League zveřejníme před turnajem“. Až bude skutečné PDF, pošli mi ho
+  (nahraju do `public/docs/` a doplním v `src/content/campaign.ts`).
 - [ ] **Obecná pravidla** jsou PDF pojmenované „Pravidla Clutch League Cup 2026“. Pokud má být obecné
   bez vazby na Cup, přejmenovat / vyměnit soubor (`src/components/RulesSection.tsx`).
-- [ ] **Náhled Winter Clutch League** (`/winter-clutch`) ukazuje **ukázkové týmy, hráče a časy**
-  s viditelným označením „Ukázková data“. Skutečný rozpis a soupisky přepsat v
-  `src/content/winter-clutch-preview.ts` (návod je nahoře v souboru) a nastavit `placeholder: false`.
-  Jména hráčů na veřejné stránce = osobní údaje: zveřejnit jen se souhlasem hráčů.
+- [ ] **Rozpis Winter Clutch League** (`/winter-clutch`): ukázkové týmy a časy jsou pryč, stránka píše
+  „Rozpis zápasů a soupisky týmů zveřejníme po uzávěrce přihlášek“. Skutečný rozpis a soupisky
+  doplním do `src/content/winter-clutch-preview.ts`, až mi je pošleš. Odkaz „Rozpis zápasů a týmy“
+  se pak v Pravidlech a v archivu objeví sám. Jména hráčů = osobní údaje: jen se souhlasem hráčů.
 - [ ] **Minimální soupiska** u Winter Clutch je nastavená na 3 hráče (3 na 3). Ověřit podle pravidel
   (Portál → Turnaje → Winter Clutch → „Nejmenší soupiska“).
-- [ ] **Recenze hráčů** na úvodní stránce jsou ukázkové texty (`src/components/TestimonialsSection.tsx`).
-  Nahradit skutečnými, schválenými citacemi, nebo sekci skrýt.
+- [ ] **Recenze hráčů:** vymyšlené recenze jsou pryč a sekce „Proč zrovna Clutch League“ i odkaz
+  „Proč my“ v navigaci jsou schované. Až budou skutečné, schválené citace, doplním je do
+  `src/content/reviews.ts` a sekce se ukáže sama.
 - [ ] **Obrázek úvodní stránky má datum nakreslené přímo v grafice** (10. 1. 2027). Když se termín
   změní, text na webu se přepíše sám z administrace, ale obrázek je nutné vyměnit.
 - [ ] **Ochrana proti falešným registracím:** Supabase → Authentication → Attack Protection → zapnout CAPTCHA.

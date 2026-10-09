@@ -1,21 +1,21 @@
 // Winter Clutch League — náhled: kdo s kým hraje, kdy a soupisky týmů.
 // Stránky: /winter-clutch (rozpis + týmy) a /winter-clutch/[tym] (soupiska).
 //
-// ⚠️ ZÁSTUPNÁ (UKÁZKOVÁ) DATA. Týmy, hráči i časy jsou vymyšlené jen proto,
-// aby stránka měla co ukázat. Dokud je `placeholder: true`, web nad rozpisem
-// i u každé soupisky ukazuje výrazné upozornění „Ukázková data“.
+// Zatím prázdné: rozpis a soupisky se zveřejní po uzávěrce přihlášek. Dokud
+// je `teams` prázdné, stránka /winter-clutch to jen oznámí a odkazy na rozpis
+// (sekce Pravidla, archiv turnajů) se neukazují.
 //
 // Jak doplnit skutečná data (stačí upravit jen tenhle soubor):
-//   1. V `teams` přepiš názvy týmů, skupiny a soupisky. `slug` je kousek
-//      adresy (/winter-clutch/<slug>) — malá písmena bez diakritiky a mezer.
-//   2. Soupisku napiš místo `placeholderRoster()` jako seznam, např.:
-//        players: [
+//   1. Do `teams` napiš týmy, skupiny a soupisky. `slug` je kousek
+//      adresy (/winter-clutch/<slug>) — malá písmena bez diakritiky a mezer:
+//        { slug: "zluty-balet", name: "Žlutý balet", group: "A", players: [
 //          { number: 1, name: "Jan Novák", position: "goalkeeper" },
 //          { number: 7, name: "Petr Svoboda", position: "forward", captain: true },
-//        ],
+//        ] },
 //      Pozice: goalkeeper (brankář), defender, midfielder, forward.
-//   3. V `matches` uprav kola, časy a dvojice (home/away = slug týmu).
-//   4. Nakonec nastav `placeholder: false`.
+//      Jména hráčů jsou na veřejné stránce = osobní údaje, jen se souhlasem hráčů.
+//   2. Do `matches` napiš kola, časy a dvojice (home/away = slug týmu).
+//   3. `placeholder: true` nastav jen pro zkušební data — web je pak výrazně označí.
 
 import type { Position } from "@/lib/portal/types";
 
@@ -58,50 +58,12 @@ export type WinterPreview = {
   matches: PreviewMatch[];
 };
 
-/** ⚠️ Zástupná soupiska — stejná pro všechny týmy, dokud nebudou skutečné. */
-function placeholderRoster(): PreviewPlayer[] {
-  return [
-    { number: 1, name: "Hráč 1", position: "goalkeeper" },
-    { number: 2, name: "Hráč 2", position: "defender", captain: true },
-    { number: 3, name: "Hráč 3", position: "midfielder" },
-    { number: 4, name: "Hráč 4", position: "forward" },
-    { number: 5, name: "Hráč 5", position: "forward" },
-  ];
-}
-
 export const WINTER_PREVIEW: WinterPreview = {
-  placeholder: true,
+  placeholder: false,
   name: "Winter Clutch League",
   venue: "",
-
-  teams: [
-    { slug: "tym-a1", name: "Tým A1", group: "A", players: placeholderRoster() },
-    { slug: "tym-a2", name: "Tým A2", group: "A", players: placeholderRoster() },
-    { slug: "tym-a3", name: "Tým A3", group: "A", players: placeholderRoster() },
-    { slug: "tym-a4", name: "Tým A4", group: "A", players: placeholderRoster() },
-    { slug: "tym-b1", name: "Tým B1", group: "B", players: placeholderRoster() },
-    { slug: "tym-b2", name: "Tým B2", group: "B", players: placeholderRoster() },
-    { slug: "tym-b3", name: "Tým B3", group: "B", players: placeholderRoster() },
-    { slug: "tym-b4", name: "Tým B4", group: "B", players: placeholderRoster() },
-  ],
-
-  // Každý s každým ve skupině: 3 kola po 2 zápasech v každé skupině.
-  matches: [
-    { round: "1. kolo", group: "A", date: "2027-01-10", time: "10:00", home: "tym-a1", away: "tym-a2" },
-    { round: "1. kolo", group: "A", date: "2027-01-10", time: "10:20", home: "tym-a3", away: "tym-a4" },
-    { round: "1. kolo", group: "B", date: "2027-01-10", time: "10:40", home: "tym-b1", away: "tym-b2" },
-    { round: "1. kolo", group: "B", date: "2027-01-10", time: "11:00", home: "tym-b3", away: "tym-b4" },
-
-    { round: "2. kolo", group: "A", date: "2027-01-10", time: "11:20", home: "tym-a1", away: "tym-a3" },
-    { round: "2. kolo", group: "A", date: "2027-01-10", time: "11:40", home: "tym-a2", away: "tym-a4" },
-    { round: "2. kolo", group: "B", date: "2027-01-10", time: "12:00", home: "tym-b1", away: "tym-b3" },
-    { round: "2. kolo", group: "B", date: "2027-01-10", time: "12:20", home: "tym-b2", away: "tym-b4" },
-
-    { round: "3. kolo", group: "A", date: "2027-01-10", time: "12:40", home: "tym-a1", away: "tym-a4" },
-    { round: "3. kolo", group: "A", date: "2027-01-10", time: "13:00", home: "tym-a2", away: "tym-a3" },
-    { round: "3. kolo", group: "B", date: "2027-01-10", time: "13:20", home: "tym-b1", away: "tym-b4" },
-    { round: "3. kolo", group: "B", date: "2027-01-10", time: "13:40", home: "tym-b2", away: "tym-b3" },
-  ],
+  teams: [],
+  matches: [],
 };
 
 /* -------------------------------------------------------------------------- */

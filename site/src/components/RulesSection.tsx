@@ -42,14 +42,11 @@ function PdfCard({
   meta,
   href,
   fileName,
-  badge,
 }: {
   title: string;
   meta: string;
   href: string;
   fileName: string;
-  /** Štítek nad názvem, např. „Zástupný soubor“. */
-  badge?: string;
 }) {
   return (
     <div className="cl-card w-full">
@@ -57,7 +54,6 @@ function PdfCard({
         <div className="cl-card__body flex flex-col items-center gap-[var(--sp-6)] text-center sm:flex-row sm:text-left">
           <FileText size={40} strokeWidth={2} color="var(--gold)" aria-hidden className="flex-none" />
           <div className="flex flex-1 flex-col items-center gap-[var(--sp-1)] sm:items-start">
-            {badge && <span className="cl-badge cl-badge--neutral">{badge}</span>}
             <span style={fileTitle}>{title}</span>
             <span className="cl-footer-meta">{meta}</span>
           </div>
@@ -83,20 +79,16 @@ function CampaignRules({ campaign }: { campaign: Campaign }) {
         </p>
       </div>
 
-      {pdf.placeholder && (
-        <Notice tone="accent">
-          <strong>Zástupný soubor.</strong> Kompletní pravidla {campaign.name} zveřejníme před
-          turnajem, zatím je tu jen dočasné PDF.
-        </Notice>
+      {pdf ? (
+        <PdfCard
+          title={`Pravidla ${campaign.name}`}
+          href={pdf.href}
+          fileName={pdf.fileName}
+          meta={pdf.meta}
+        />
+      ) : (
+        <Notice tone="info">Pravidla {campaign.name} zveřejníme před turnajem.</Notice>
       )}
-
-      <PdfCard
-        title={`Pravidla ${campaign.name}`}
-        href={pdf.href}
-        fileName={pdf.fileName}
-        meta={pdf.meta}
-        badge={pdf.placeholder ? "Zástupný soubor" : undefined}
-      />
 
       {campaign.preview && (
         <div className="cl-card cl-card--flat w-full">

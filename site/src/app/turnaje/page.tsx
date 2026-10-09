@@ -74,7 +74,7 @@ export default async function Turnaje() {
             </ol>
           </>
         ) : isSupabaseConfigured() ? (
-          <Notice tone="info">Zatím tu není žádný odehraný turnaj. Výsledky přibudou po turnaji.</Notice>
+          <Notice tone="info">Výsledky odehraných turnajů sem brzy doplníme.</Notice>
         ) : (
           <Notice tone="accent">
             Archiv se načítá z databáze, která ještě není připojená. Doplň klíče Supabase do

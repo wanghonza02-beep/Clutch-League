@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LogIn, Menu, ShieldCheck, Users, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import SectionLink from "@/components/SectionLink";
+import { REVIEWS } from "@/content/reviews";
 import { recordPath } from "@/lib/navHistory";
 import { PATHS } from "@/lib/portal/paths";
 import type { Role } from "@/lib/portal/types";
@@ -25,7 +26,8 @@ type NavLink = {
 const LINKS: NavLink[] = [
   { section: "jak-to-funguje", label: "Jak to funguje" },
   { section: "pravidla", label: "Pravidla" },
-  { section: "proc-clutch-league", label: "Proč my" },
+  // Sekce s recenzemi se bez nich neukazuje, tak ani odkaz na ni.
+  ...(REVIEWS.length > 0 ? [{ section: "proc-clutch-league", label: "Proč my" }] : []),
   { section: "odehrane-zapasy", label: "Odehrané zápasy", match: ["/turnaje"] },
   { section: "fotky", label: "Fotky" },
   { href: "/kontakt", label: "Kontakt", match: ["/kontakt"] },

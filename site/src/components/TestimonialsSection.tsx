@@ -1,52 +1,6 @@
 import { Quote, Star } from "lucide-react";
 import SplitText from "@/components/ui/SplitText";
-
-type Review = {
-  name: string;
-  role: string;
-  quote: string;
-};
-
-// ⚠️ UKÁZKOVÉ RECENZE (placeholder): nahraď skutečnými, schválenými citacemi
-// hráčů před spuštěním webu (viz PRED-SPUSTENIM.md).
-const REVIEWS: Review[] = [
-  {
-    name: "Tomáš K.",
-    role: "Kapitán týmu",
-    quote:
-      "Organizace na jedničku. Harmonogram seděl na minutu, rozhodčí byli v obraze a nikdo nečekal hodinu na další zápas. Takhle si amatérský turnaj představuju.",
-  },
-  {
-    name: "Ondřej V.",
-    role: "Brankář",
-    quote:
-      "Clutch Time je chaos v tom nejlepším smyslu. Padlo No Hands a já tři minuty chytal jen nohama. Tolik adrenalinu jsem v brance ještě nezažil.",
-  },
-  {
-    name: "Jakub M.",
-    role: "Útočník",
-    quote:
-      "Hraje se naplno, ale férově. Rozhodčí pískali v klidu a jasně, žádné zbytečné hádky. Po zápase jsme si se soupeřem podali ruce a šli spolu na pivo.",
-  },
-  {
-    name: "Adam Š.",
-    role: "Kapitán týmu",
-    quote:
-      "Přihláška přes Instagram zabrala pět minut a všechny info nám přišly včas. Na místě bylo připravené všechno, od rozlišováků po náhradní míče u branek.",
-  },
-  {
-    name: "Marek D.",
-    role: "Hráč v poli",
-    quote:
-      "Úroveň byla vyrovnaná, skoro každý zápas se lámal v posledních minutách. Kostka ti dokáže otočit výsledek, takže nic není rozhodnuté do konce.",
-  },
-  {
-    name: "Filip H.",
-    role: "Záložník",
-    quote:
-      "Skvělá atmosféra kolem hřiště, lidi fandili i cizím týmům. Na Winter Clutch jdeme zas, tentokrát si pro ten pohár dojdeme.",
-  },
-];
+import { REVIEWS } from "@/content/reviews";
 
 const initials = (name: string) =>
   name
@@ -66,6 +20,9 @@ function Stars() {
 }
 
 export default function TestimonialsSection() {
+  // Bez skutečných recenzí se sekce neukazuje (viz src/content/reviews.ts).
+  if (REVIEWS.length === 0) return null;
+
   return (
     <section
       id="proc-clutch-league"

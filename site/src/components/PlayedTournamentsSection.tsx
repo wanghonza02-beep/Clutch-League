@@ -89,7 +89,7 @@ export default async function PlayedTournamentsSection() {
             </div>
           </>
         ) : (
-          <Notice tone="info">Výsledky odehraných turnajů tu přibudou po prvním turnaji.</Notice>
+          <Notice tone="info">Výsledky odehraných turnajů sem brzy doplníme.</Notice>
         )}
       </div>
     </section>

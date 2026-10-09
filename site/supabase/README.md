@@ -30,10 +30,10 @@ SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen j
 4. `migrations/20261010120000_vysledky_bez_rozhodciho.sql` — zápis výsledků adminem (góly,
    karty, postup), zrušení role rozhodčí. Na konci vypíše, kdo byl z rozhodčího převeden na admina.
 5. `migrations/20261011120000_role_jen_v_supabase.sql` — role už nejde měnit z webu, jen v Supabase
-6. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací a ukázkový archiv
+6. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
 
-Ukázkový archiv (vymyšlené týmy a výsledky) před spuštěním webu smaž:
-spusť `smazat-ukazkova-data.sql`. Skutečné týmy a turnaje nezasáhne.
+Pokud databáze ještě obsahuje ukázkový archiv ze starší verze `seed.sql` (vymyšlené
+týmy a výsledky), smaž ho: spusť `smazat-ukazkova-data.sql`. Skutečné týmy a turnaje nezasáhne.
 
 ## 2. První organizátor
 

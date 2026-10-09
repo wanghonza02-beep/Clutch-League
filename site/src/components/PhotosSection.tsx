@@ -2,10 +2,13 @@ import SplitText from "@/components/ui/SplitText";
 import { loadUpcoming } from "@/lib/upcoming";
 import HistoryGallery, { type GalleryPhoto } from "./HistoryGallery";
 
+// Pravidlo pro fotky: hráči našeho týmu (Žlutý balet, černožluté pruhované dresy
+// a brankář v oranžovém) smějí být vidět celí, i s obličejem a jménem. Hráči
+// ostatních týmů jen s číslem: bez obličeje a bez příjmení na dresu.
 const PHOTOS: GalleryPhoto[] = [
   {
     src: "/history/cup-2026-vyhlaseni-tym.jpg",
-    alt: "Tým v černožlutých dresech s medailemi a trofejemi před brankou",
+    alt: "Tým Žlutý balet s medailemi a trofejí před brankou",
     caption: "Vyhlášení výsledků",
     badge: "Cup 2026",
   },
@@ -17,19 +20,19 @@ const PHOTOS: GalleryPhoto[] = [
   },
   {
     src: "/history/cup-2026-sprint.jpg",
-    alt: "Hráč s číslem 95 v černožlutém dresu sprintuje po umělé trávě",
+    alt: "Hráč Žlutého baletu s číslem 95 sprintuje po umělé trávě",
     caption: "Plné tempo",
     badge: "Zápas",
   },
   {
-    src: "/history/cup-2026-souboj.jpg",
-    alt: "Hráč s číslem 17 a soupeř s číslem 11 se vracejí do hry u branky",
-    caption: "Souboj u branky",
+    src: "/history/cup-2026-hra.jpg",
+    alt: "Hráč Žlutého baletu s číslem 13 čeká na přihrávku, v pozadí spoluhráči",
+    caption: "Čeká na přihrávku",
     badge: "Zápas",
   },
   {
     src: "/history/cup-2026-brankar.jpg",
-    alt: "Brankář v oranžovém dresu a rukavicích diriguje obranu",
+    alt: "Brankář Žlutého baletu v oranžovém dresu a rukavicích diriguje obranu",
     caption: "Brankář diriguje",
     badge: "Zápas",
   },
@@ -40,15 +43,15 @@ const PHOTOS: GalleryPhoto[] = [
     badge: "Zápas",
   },
   {
-    src: "/history/cup-2026-oceneni.jpg",
-    alt: "Brankář v tmavém dresu drží individuální ocenění turnaje",
-    caption: "Individuální ocenění",
+    src: "/history/cup-2026-nejlepsi-hrac.jpg",
+    alt: "Hráč Žlutého baletu drží cenu pro nejlepšího hráče turnaje",
+    caption: "Nejlepší hráč turnaje",
     badge: "Cup 2026",
   },
   {
-    src: "/history/cup-2026-akce.jpg",
-    alt: "Hráč s číslem 7 v bílém dresu vede míč mezi soupeři",
-    caption: "Míč u nohy",
+    src: "/history/cup-2026-rozehravka.jpg",
+    alt: "Hráč Žlutého baletu s číslem 99 sleduje míč při rozehrávce",
+    caption: "Rozehrávka",
     badge: "Zápas",
   },
 ];
