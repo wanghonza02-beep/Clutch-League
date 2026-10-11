@@ -1,14 +1,22 @@
+import { stageLabel } from "@/i18n/data";
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt } from "@/i18n/format";
+import { getDictionary } from "@/i18n/server";
 import { matchPoints } from "@/lib/admin/result";
 import { findTeam, matchesByStage, type MatchEvent, type Tournament } from "@/lib/tournaments";
 
-const EVENT_TEXT: Record<MatchEvent["kind"], string> = {
-  goal: "gól",
-  yellow_card: "žlutá karta",
-  red_card: "červená karta",
-};
-
 /** Góly a karty jednoho týmu v zápase, seřazené podle minuty. */
-function EventList({ events, label, align }: { events: MatchEvent[]; label: string; align: "home" | "away" }) {
+function EventList({
+  events,
+  label,
+  align,
+  eventText,
+}: {
+  events: MatchEvent[];
+  label: string;
+  align: "home" | "away";
+  eventText: Dictionary["tournament"]["eventText"];
+}) {
   if (events.length === 0) return <div className={`match-events__side match-events__side--${align}`} />;
   return (
     <ul className={`match-events__side match-events__side--${align}`} aria-label={label}>
@@ -17,7 +25,7 @@ function EventList({ events, label, align }: { events: MatchEvent[]; label: stri
           <span className={`match-ev__mark match-ev__mark--${e.kind}`} aria-hidden />
           <span className="match-ev__min cl-num">{e.minute}′</span>
           <span>{e.player}</span>
-          <span className="sr-only">, {EVENT_TEXT[e.kind]}</span>
+          <span className="sr-only">, {eventText[e.kind]}</span>
         </li>
       ))}
     </ul>
@@ -25,7 +33,9 @@ function EventList({ events, label, align }: { events: MatchEvent[]; label: stri
 }
 
 /** Kompletní výsledky turnaje, seskupené po fázích v pořadí odehrání. */
-export default function ResultsTable({ tournament }: { tournament: Tournament }) {
+export default async function ResultsTable({ tournament }: { tournament: Tournament }) {
+  const dict = await getDictionary();
+  const t = dict.tournament;
   const stages = matchesByStage(tournament);
 
   return (
@@ -33,19 +43,19 @@ export default function ResultsTable({ tournament }: { tournament: Tournament })
       {stages.map(({ stage, matches }) => (
         <div key={stage} className="cl-tablewrap">
           <table className="cl-table">
-            <caption>{stage}</caption>
+            <caption>{stageLabel(stage, dict)}</caption>
             <thead>
               <tr>
-                <th scope="col">Výkop</th>
+                <th scope="col">{t.kickoff}</th>
                 <th scope="col" className="text-right">
-                  Domácí
+                  {t.home}
                 </th>
                 <th scope="col" className="text-center">
-                  Skóre
+                  {t.scoreCol}
                 </th>
-                <th scope="col">Hosté</th>
+                <th scope="col">{t.away}</th>
                 <th scope="col" className="text-center">
-                  Body
+                  {t.pointsCol}
                 </th>
                 <th scope="col">Clutch Time</th>
               </tr>
@@ -82,7 +92,7 @@ export default function ResultsTable({ tournament }: { tournament: Tournament })
                         </span>
                       ) : (
                         <span className="cl-score cl-score__sep">
-                          –<span className="sr-only">bez výsledku</span>
+                          –<span className="sr-only">{t.noResult}</span>
                         </span>
                       )}
                     </td>
@@ -97,7 +107,12 @@ export default function ResultsTable({ tournament }: { tournament: Tournament })
                           {points[0]}:{points[1]}
                           <span className="sr-only">
                             {" "}
-                            bodů ({home.name} {points[0]}, {away.name} {points[1]})
+                            {fmt(t.pointsSr, {
+                              home: home.name,
+                              homePoints: points[0],
+                              away: away.name,
+                              awayPoints: points[1],
+                            })}
                           </span>
                         </>
                       ) : (
@@ -114,16 +129,18 @@ export default function ResultsTable({ tournament }: { tournament: Tournament })
                       <td>
                         <EventList
                           events={match.events.filter((e) => e.teamId === match.homeId)}
-                          label={`Góly a karty: ${home.name}`}
+                          label={fmt(t.eventsOf, { team: home.name })}
                           align="home"
+                          eventText={t.eventText}
                         />
                       </td>
                       <td />
                       <td>
                         <EventList
                           events={match.events.filter((e) => e.teamId === match.awayId)}
-                          label={`Góly a karty: ${away.name}`}
+                          label={fmt(t.eventsOf, { team: away.name })}
                           align="away"
+                          eventText={t.eventText}
                         />
                       </td>
                       <td colSpan={2} />
@@ -136,17 +153,17 @@ export default function ResultsTable({ tournament }: { tournament: Tournament })
         </div>
       ))}
       <div className="flex flex-col gap-[var(--sp-2)]">
-        <p className="cl-footer-meta">Body za zápas: výhra 3, remíza 1, prohra 0.</p>
+        <p className="cl-footer-meta">{t.pointsRule}</p>
         {tournament.matches.some((m) => m.events.length > 0) && (
           <p className="cl-footer-meta" aria-hidden>
             <span className="match-legend">
-              <span className="match-ev__mark match-ev__mark--goal" /> gól
+              <span className="match-ev__mark match-ev__mark--goal" /> {t.eventText.goal}
             </span>
             <span className="match-legend">
-              <span className="match-ev__mark match-ev__mark--yellow_card" /> žlutá karta
+              <span className="match-ev__mark match-ev__mark--yellow_card" /> {t.eventText.yellow_card}
             </span>
             <span className="match-legend">
-              <span className="match-ev__mark match-ev__mark--red_card" /> červená karta
+              <span className="match-ev__mark match-ev__mark--red_card" /> {t.eventText.red_card}
             </span>
           </p>
         )}

@@ -3,15 +3,11 @@
 // Stejné kontroly hlídá i databáze (admin_save_match_result), tohle je
 // hlavně kvůli srozumitelným hláškám u konkrétního pole.
 
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt } from "@/i18n/format";
 import type { MatchEventKind } from "@/lib/supabase/database.types";
 
 export const EVENT_KINDS: MatchEventKind[] = ["goal", "yellow_card", "red_card"];
-
-export const EVENT_LABEL: Record<MatchEventKind, string> = {
-  goal: "Gól",
-  yellow_card: "Žlutá karta",
-  red_card: "Červená karta",
-};
 
 export type Side = "home" | "away";
 
@@ -65,16 +61,18 @@ function parseGoals(raw: string): number | null | undefined {
 
 export function validateResult(
   input: { homeGoals: string; awayGoals: string; events: EventInput[] },
-  limit: number
+  limit: number,
+  t: Dictionary
 ): ResultValidation {
+  const v = t.validation;
   const errors: Record<string, string> = {};
   const homeGoals = parseGoals(input.homeGoals);
   const awayGoals = parseGoals(input.awayGoals);
 
-  if (homeGoals === undefined) errors.homeGoals = "Zadej 0 až 99.";
-  if (awayGoals === undefined) errors.awayGoals = "Zadej 0 až 99.";
+  if (homeGoals === undefined) errors.homeGoals = v.goalsRange;
+  if (awayGoals === undefined) errors.awayGoals = v.goalsRange;
   if (homeGoals !== undefined && awayGoals !== undefined && (homeGoals === null) !== (awayGoals === null)) {
-    errors[homeGoals === null ? "homeGoals" : "awayGoals"] = "Doplň skóre obou týmů.";
+    errors[homeGoals === null ? "homeGoals" : "awayGoals"] = v.scoreBoth;
   }
 
   const events: ValidEvent[] = [];
@@ -82,19 +80,19 @@ export function validateResult(
     const key = (field: string) => `event.${i}.${field}`;
     const kind = row.kind as MatchEventKind;
     const side = row.side as Side;
-    if (!EVENT_KINDS.includes(kind)) errors[key("kind")] = "Vyber typ.";
-    if (side !== "home" && side !== "away") errors[key("side")] = "Vyber tým.";
+    if (!EVENT_KINDS.includes(kind)) errors[key("kind")] = v.kindMissing;
+    if (side !== "home" && side !== "away") errors[key("side")] = v.teamMissing;
 
     const firstName = row.firstName.trim();
     const lastName = row.lastName.trim();
-    if (!firstName) errors[key("firstName")] = "Chybí jméno.";
-    else if (firstName.length > 60) errors[key("firstName")] = "Nejvýš 60 znaků.";
-    if (!lastName) errors[key("lastName")] = "Chybí příjmení.";
-    else if (lastName.length > 60) errors[key("lastName")] = "Nejvýš 60 znaků.";
+    if (!firstName) errors[key("firstName")] = v.firstNameMissing;
+    else if (firstName.length > 60) errors[key("firstName")] = v.max60;
+    if (!lastName) errors[key("lastName")] = v.lastNameMissing;
+    else if (lastName.length > 60) errors[key("lastName")] = v.max60;
 
     const minute = Number(row.minute.trim());
     if (row.minute.trim() === "" || !Number.isInteger(minute) || minute < 1 || minute > limit) {
-      errors[key("minute")] = `1 až ${limit}.`;
+      errors[key("minute")] = fmt(v.minuteRange, { limit });
     }
 
     events.push({ kind, side, firstName, lastName, minute });
@@ -106,8 +104,8 @@ export function validateResult(
 
   if (!hasErrors && scoreHome === null && events.length > 0) {
     return {
-      errors: { homeGoals: "Nejdřív zadej skóre." },
-      message: "Bez skóre nejde zapsat góly ani karty.",
+      errors: { homeGoals: v.scoreFirst },
+      message: v.noScoreEvents,
       homeGoals: null,
       awayGoals: null,
       events,
@@ -124,7 +122,7 @@ export function validateResult(
       if (home !== scoreHome || away !== scoreAway) {
         return {
           errors: { goals: "mismatch" },
-          message: `Góly nesedí se skóre ${scoreHome}:${scoreAway} — zapsané góly dávají ${home}:${away}.`,
+          message: fmt(v.goalsMismatch, { score: `${scoreHome}:${scoreAway}`, goals: `${home}:${away}` }),
           homeGoals: scoreHome,
           awayGoals: scoreAway,
           events,
@@ -135,7 +133,7 @@ export function validateResult(
 
   return {
     errors,
-    message: hasErrors ? "Zkontroluj zvýrazněná pole." : undefined,
+    message: hasErrors ? t.actions.checkFields : undefined,
     homeGoals: scoreHome,
     awayGoals: scoreAway,
     events,

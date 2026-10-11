@@ -1,25 +1,27 @@
+import { getDictionary } from "@/i18n/server";
 import { findTeam, type Tournament } from "@/lib/tournaments";
 
 /** Žluté a červené karty turnaje po hráčích (z karet zapsaných u zápasů). */
-export default function CardsTable({ tournament }: { tournament: Tournament }) {
+export default async function CardsTable({ tournament }: { tournament: Tournament }) {
+  const t = (await getDictionary()).tournament;
   return (
     <div className="cl-tablewrap">
       <table className="cl-table" style={{ minWidth: "420px" }}>
-        <caption>Karty</caption>
+        <caption>{t.cardsCaption}</caption>
         <thead>
           <tr>
-            <th scope="col">Hráč</th>
-            <th scope="col">Tým</th>
+            <th scope="col">{t.player}</th>
+            <th scope="col">{t.team}</th>
             <th scope="col" className="cl-table__num">
               <span className="match-legend" style={{ margin: 0 }}>
                 <span className="match-ev__mark match-ev__mark--yellow_card" aria-hidden />
-                Žluté
+                {t.yellow}
               </span>
             </th>
             <th scope="col" className="cl-table__num">
               <span className="match-legend" style={{ margin: 0 }}>
                 <span className="match-ev__mark match-ev__mark--red_card" aria-hidden />
-                Červené
+                {t.red}
               </span>
             </th>
           </tr>

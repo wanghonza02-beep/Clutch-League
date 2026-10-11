@@ -1,10 +1,12 @@
+import { getDictionary } from "@/i18n/server";
 import { finalStandings, unrankedTeams, type Tournament } from "@/lib/tournaments";
 
 /**
  * Konečné pořadí celého startovního pole, od vítěze po poslední tým. Týmy bez
  * zadaného umístění jsou na konci s pomlčkou místo čísla.
  */
-export default function FinalStandings({ tournament }: { tournament: Tournament }) {
+export default async function FinalStandings({ tournament }: { tournament: Tournament }) {
+  const t = (await getDictionary()).tournament;
   const rows = [
     ...finalStandings(tournament),
     ...unrankedTeams(tournament).map((team) => ({ rank: null, team })),
@@ -17,13 +19,13 @@ export default function FinalStandings({ tournament }: { tournament: Tournament 
   return (
     <div className="cl-tablewrap">
       <table className="cl-table" style={{ minWidth: hasCity || hasGroups ? "420px" : undefined }}>
-        <caption>Konečné pořadí</caption>
+        <caption>{t.standingsTitle}</caption>
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Tým</th>
-            {hasCity && <th scope="col">Město</th>}
-            {hasGroups && <th scope="col">Skupina</th>}
+            <th scope="col">{t.team}</th>
+            {hasCity && <th scope="col">{t.city}</th>}
+            {hasGroups && <th scope="col">{t.group}</th>}
           </tr>
         </thead>
         <tbody>
@@ -31,7 +33,7 @@ export default function FinalStandings({ tournament }: { tournament: Tournament 
             <tr key={team.id} className={rank !== null && rank <= 3 ? "cl-table__row--qualified" : undefined}>
               <td className="cl-table__rank">
                 {rank ?? (
-                  <span style={{ color: "var(--text-faint)" }} aria-label="bez umístění">
+                  <span style={{ color: "var(--text-faint)" }} aria-label={t.unranked}>
                     –
                   </span>
                 )}

@@ -4,15 +4,20 @@ import { useActionState } from "react";
 import { Send } from "lucide-react";
 import Notice from "@/components/ui/Notice";
 import RegistrationConfirmations from "./RegistrationConfirmations";
+import { useT } from "@/i18n/client";
+import { fmt } from "@/i18n/format";
+import LocaleField from "@/i18n/LocaleField";
 import { enterTournamentAction } from "@/lib/portal/actions";
 import { IDLE } from "@/lib/portal/validation";
 
 /** Přihláška týmu, který už existuje (hrál dřív), na nový turnaj. */
 export default function EnterTournamentForm({ tournament }: { tournament: string }) {
+  const t = useT().teamForms;
   const [state, action, pending] = useActionState(enterTournamentAction, IDLE);
 
   return (
     <form action={action} noValidate className="flex flex-col gap-[var(--sp-6)]">
+      <LocaleField />
       {state.status === "error" && state.message && (
         <Notice tone="error" live>
           {state.message}
@@ -29,7 +34,7 @@ export default function EnterTournamentForm({ tournament }: { tournament: string
           aria-busy={pending || undefined}
         >
           <Send size={18} strokeWidth={2} aria-hidden />
-          <span className="cl-btn-label">Přihlásit na {tournament}</span>
+          <span className="cl-btn-label">{fmt(t.enterTournament, { tournament })}</span>
         </button>
       </div>
     </form>

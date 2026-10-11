@@ -1,9 +1,13 @@
 "use server";
 
 import type { AuthError, PostgrestError } from "@supabase/supabase-js";
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { formI18n } from "@/i18n/action";
+import type { Locale } from "@/i18n/config";
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt, plural } from "@/i18n/format";
+import { revalidateRoute } from "@/lib/revalidate";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -20,7 +24,7 @@ import {
 } from "./data";
 import { PATHS, safeNext } from "./paths";
 import { requireRole, requireUser } from "./session";
-import type { Position } from "./types";
+import { DEFAULT_MAX_ROSTER, type Position } from "./types";
 import {
   accountFormValues,
   confirmationValues,
@@ -44,13 +48,14 @@ import {
   type PlayerValues,
 } from "./validation";
 
+// Každý formulář posílá ve skrytém poli jazyk stránky (LocaleField). Podle
+// něj akce vrací hlášky a přesměrovává — formI18n(formData).
+
 /* -------------------------------------------------------------------------- */
 /*  Pomocníci                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const NOT_CONFIGURED = fail(
-  "Databáze ještě není připojená. Doplň klíče Supabase do souboru .env.local (viz supabase/README.md)."
-);
+type Messages = Dictionary["actions"];
 
 /**
  * Adresa webu pro odkazy v e-mailech (potvrzení účtu, nové heslo). Supabase
@@ -65,65 +70,77 @@ async function siteOrigin(): Promise<string> {
   return host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : "http://localhost:3000";
 }
 
+/** Odkaz z e-mailu vede přes /auth/confirm (mimo jazyky) na `next` v jazyce stránky. */
 function confirmUrl(origin: string, next: string): string {
   return `${origin}/auth/confirm?next=${encodeURIComponent(next)}`;
 }
 
-/** Chyby Supabase Auth → česká hláška pro uživatele. */
-function authMessage(error: AuthError): string {
+/** Chyby Supabase Auth → hláška pro uživatele. */
+function authMessage(error: AuthError, m: Messages): string {
   switch (error.code) {
     case "invalid_credentials":
-      return "Přihlášení se nepovedlo. Zkontroluj e-mail a heslo.";
+      return m.authInvalid;
     case "email_not_confirmed":
-      return "Účet ještě není potvrzený. Klikni na odkaz v e-mailu, který jsme ti poslali.";
+      return m.authUnconfirmed;
     case "user_already_exists":
     case "email_exists":
-      return "Účet s tímhle e-mailem už existuje. Přihlas se, nebo si obnov heslo.";
+      return m.authExists;
     case "weak_password":
-      return "Heslo je moc slabé. Zkus delší, třeba s číslem nebo znakem.";
+      return m.authWeak;
     case "same_password":
-      return "Nové heslo musí být jiné než to současné.";
+      return m.authSame;
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":
-      return "Moc pokusů za sebou. Zkus to prosím za pár minut.";
+      return m.authRateLimit;
     case "email_address_invalid":
-      return "Tenhle e-mail nejde použít. Zkontroluj ho.";
+      return m.authEmailInvalid;
     case "signup_disabled":
-      return "Registrace je teď vypnutá. Napiš nám, prosím.";
+      return m.authSignupDisabled;
     case "email_address_not_authorized":
-      return "Potvrzovací e-mail se nepodařilo odeslat. Zkus to později, nebo nám napiš.";
+      return m.authEmailFailed;
     default:
       console.error("[auth]", error.code ?? error.status, error.message);
-      return "Něco se pokazilo. Zkus to prosím znovu.";
+      return m.authUnknown;
   }
 }
 
-/** Chyby databáze → česká hláška, případně chyba u konkrétního pole. */
-function dbFailure(error: PostgrestError, values?: Record<string, string>): FormState {
+/** Chyby databáze → hláška, případně chyba u konkrétního pole. */
+function dbFailure(
+  error: PostgrestError,
+  { t, locale }: { t: Dictionary; locale: Locale },
+  values?: Record<string, string>
+): FormState {
+  const m = t.actions;
   const constraint = error.message.match(/constraint "([^"]+)"/)?.[1];
   if (error.code === "23505" && constraint === "players_team_shirt_number_key") {
-    return fail("Zkontroluj zvýrazněná pole.", { number: "Tohle číslo už má jiný hráč." }, values);
+    return fail(m.checkFields, { number: m.numberTaken }, values);
   }
   if (error.code === "23505" && constraint === "teams_owner_id_key") {
-    return fail("Už máš přihlášený tým — jeden kapitán spravuje jeden tým.", {}, values);
+    return fail(m.oneTeam, {}, values);
   }
   if (error.code === "23505" && constraint === "tournament_entries_pkey") {
-    return fail("Tým už je na tenhle turnaj přihlášený.", {}, values);
+    return fail(m.alreadyEntered, {}, values);
   }
   if (error.message.includes("registration_closed")) {
-    return fail("Přihlášky na turnaj jsou teď zavřené.", {}, values);
+    return fail(m.registrationClosed, {}, values);
   }
-  if (error.code === "42501") return fail("Na tohle nemáš oprávnění.", {}, values);
-  if (error.code === "23514") return fail("Některý údaj má neplatnou hodnotu.", {}, values);
+  // Trigger players_roster_limit: „roster_full:10“ — číslo je limit soupisky.
+  const rosterFull = error.message.match(/roster_full:(\d+)/);
+  if (rosterFull) {
+    const max = Number(rosterFull[1]);
+    return fail(fmt(m.rosterFull, { max: plural(locale, max, t.counts.players) }), {}, values);
+  }
+  if (error.code === "42501") return fail(m.forbidden, {}, values);
+  if (error.code === "23514") return fail(m.invalidValue, {}, values);
 
   console.error("[db]", error.code, error.message);
-  return fail("Uložení se nepovedlo. Zkus to prosím znovu.", {}, values);
+  return fail(m.saveFailed, {}, values);
 }
 
-/** Po změně týmu nebo soupisky překreslí portál i stránku přihlášky. */
+/** Po změně týmu nebo soupisky překreslí portál i stránku přihlášky ve všech jazycích. */
 function refreshTeamViews() {
-  revalidatePath(PATHS.portal, "layout");
-  revalidatePath(PATHS.teamRegistration);
+  revalidateRoute(PATHS.portal, "layout");
+  revalidateRoute(PATHS.teamRegistration);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -131,17 +148,18 @@ function refreshTeamViews() {
 /* -------------------------------------------------------------------------- */
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  const { t, href } = formI18n(formData);
+  if (!isSupabaseConfigured()) return fail(t.common.notConfigured);
 
   const email = text(formData, "email").toLowerCase();
   const password = rawText(formData, "password");
   const values = { email };
 
   const errors: Record<string, string> = {};
-  const emailError = validateEmail(email);
+  const emailError = validateEmail(email, t.validation);
   if (emailError) errors.email = emailError;
-  if (!password) errors.password = "Zadej heslo.";
-  if (Object.keys(errors).length > 0) return fail("Vyplň e-mail i heslo.", errors, values);
+  if (!password) errors.password = t.actions.passwordMissing;
+  if (Object.keys(errors).length > 0) return fail(t.actions.loginMissing, errors, values);
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -149,49 +167,47 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
     // Nepotvrzený účet: formulář nabídne poslat potvrzovací e-mail znovu.
     const unconfirmed: Record<string, string> =
       error.code === "email_not_confirmed" ? { unconfirmed: "on" } : {};
-    return fail(authMessage(error), {}, { ...values, ...unconfirmed });
+    return fail(authMessage(error, t.actions), {}, { ...values, ...unconfirmed });
   }
 
-  redirect(safeNext(formData.get("next"), PATHS.portal));
+  redirect(href(safeNext(formData.get("next"), PATHS.portal)));
 }
 
 export async function signupAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  const { locale, t, href } = formI18n(formData);
+  if (!isSupabaseConfigured()) return fail(t.common.notConfigured);
 
   const values = readAccount(formData);
-  const errors = validateAccount(values);
+  const errors = validateAccount(values, t.validation);
   if (Object.keys(errors).length > 0) {
-    return fail("Zkontroluj zvýrazněná pole.", errors, accountFormValues(values));
+    return fail(t.actions.checkFields, errors, accountFormValues(values));
   }
 
   // Nový kapitán ještě nemá tým, takže výchozí další krok je přihláška týmu.
-  const next = safeNext(formData.get("next"), PATHS.teamRegistration);
+  const next = href(safeNext(formData.get("next"), PATHS.teamRegistration));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: values.email,
     password: values.password,
     options: {
       // Profil (jméno, telefon) založí v databázi trigger handle_new_user.
-      data: { full_name: values.name, phone: values.phone.replace(/[\s-]/g, "") },
+      // Jazyk si pamatují e-mailové šablony (supabase/templates).
+      data: { full_name: values.name, phone: values.phone.replace(/[\s-]/g, ""), locale },
       emailRedirectTo: confirmUrl(await siteOrigin(), next),
     },
   });
 
   if (error) {
     const fieldError: Record<string, string> =
-      error.code === "email_address_invalid" ? { email: "Tenhle e-mail nejde použít." } : {};
-    return fail(authMessage(error), fieldError, accountFormValues(values));
+      error.code === "email_address_invalid" ? { email: t.actions.emailUnusable } : {};
+    return fail(authMessage(error, t.actions), fieldError, accountFormValues(values));
   }
 
   // Při zapnutém potvrzování e-mailu Supabase u už registrovaného e-mailu
   // nevrací chybu, ale uživatele bez identit. Tady to prozradit musíme,
   // jinak by kapitán nevěděl, proč mu nepřišel e-mail.
   if (data.user && data.user.identities?.length === 0) {
-    return fail(
-      "Účet s tímhle e-mailem už existuje. Přihlas se, nebo si obnov heslo.",
-      { email: "Tenhle e-mail už má účet." },
-      accountFormValues(values)
-    );
+    return fail(t.actions.authExists, { email: t.actions.emailHasAccount }, accountFormValues(values));
   }
 
   // Potvrzování e-mailu vypnuté → Supabase rovnou přihlásí.
@@ -209,12 +225,13 @@ export async function resendConfirmationAction(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  const { t, href } = formI18n(formData);
+  if (!isSupabaseConfigured()) return fail(t.common.notConfigured);
 
   const email = text(formData, "email").toLowerCase();
-  if (validateEmail(email)) return fail("Chybí e-mail.");
+  if (validateEmail(email, t.validation)) return fail(t.validation.emailMissing);
 
-  const next = safeNext(formData.get("next"), PATHS.teamRegistration);
+  const next = href(safeNext(formData.get("next"), PATHS.teamRegistration));
   const supabase = await createClient();
   const { error } = await supabase.auth.resend({
     type: "signup",
@@ -222,11 +239,11 @@ export async function resendConfirmationAction(
     options: { emailRedirectTo: confirmUrl(await siteOrigin(), next) },
   });
   if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
-    return fail(authMessage(error));
+    return fail(authMessage(error, t.actions));
   }
   if (error) console.error("[auth] resend", error.code, error.message);
 
-  return ok("Pokud účet čeká na potvrzení, poslali jsme odkaz znovu. Mrkni i do spamu.");
+  return ok(t.actions.resendSent);
 }
 
 /** Zapomenuté heslo. Odpověď je stejná, ať účet existuje, nebo ne. */
@@ -234,18 +251,19 @@ export async function forgotPasswordAction(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  const { t, href } = formI18n(formData);
+  if (!isSupabaseConfigured()) return fail(t.common.notConfigured);
 
   const email = text(formData, "email").toLowerCase();
-  const emailError = validateEmail(email);
-  if (emailError) return fail("Zkontroluj e-mail.", { email: emailError }, { email });
+  const emailError = validateEmail(email, t.validation);
+  if (emailError) return fail(t.actions.checkEmail, { email: emailError }, { email });
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: confirmUrl(await siteOrigin(), PATHS.newPassword),
+    redirectTo: confirmUrl(await siteOrigin(), href(PATHS.newPassword)),
   });
   if (error?.code === "over_email_send_rate_limit" || error?.code === "over_request_rate_limit") {
-    return fail(authMessage(error), {}, { email });
+    return fail(authMessage(error, t.actions), {}, { email });
   }
   if (error) console.error("[auth] reset", error.code, error.message);
 
@@ -257,28 +275,30 @@ export async function updatePasswordAction(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
-  await requireUser();
+  const { locale, t, href } = formI18n(formData);
+  if (!isSupabaseConfigured()) return fail(t.common.notConfigured);
+  await requireUser(locale);
 
   const password = rawText(formData, "password");
-  const errors = validatePassword(password, rawText(formData, "passwordConfirm"));
-  if (Object.keys(errors).length > 0) return fail("Zkontroluj zvýrazněná pole.", errors);
+  const errors = validatePassword(password, rawText(formData, "passwordConfirm"), t.validation);
+  if (Object.keys(errors).length > 0) return fail(t.actions.checkFields, errors);
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) return fail(authMessage(error));
+  if (error) return fail(authMessage(error, t.actions));
 
-  redirect(`${PATHS.portal}?heslo=zmeneno`);
+  redirect(`${href(PATHS.portal)}?heslo=zmeneno`);
 }
 
 /** Úprava jména a telefonu přihlášeného uživatele (kterékoli role). */
 export async function updateProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
-  const user = await requireUser();
+  const { locale, t } = formI18n(formData);
+  if (!isSupabaseConfigured()) return fail(t.common.notConfigured);
+  const user = await requireUser(locale);
 
   const values = { name: text(formData, "name"), phone: text(formData, "phone") };
-  const errors = validateProfile(values);
-  if (Object.keys(errors).length > 0) return fail("Zkontroluj zvýrazněná pole.", errors, values);
+  const errors = validateProfile(values, t.validation);
+  if (Object.keys(errors).length > 0) return fail(t.actions.checkFields, errors, values);
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -286,19 +306,20 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
     .update({ full_name: values.name, phone: values.phone.replace(/[\s-]/g, "") })
     .eq("id", user.id)
     .select("id");
-  if (error) return dbFailure(error, values);
-  if (data.length === 0) return fail("Účet se nepodařilo uložit.", {}, values);
+  if (error) return dbFailure(error, { t, locale }, values);
+  if (data.length === 0) return fail(t.actions.accountSaveFailed, {}, values);
 
   refreshTeamViews();
-  return ok("Údaje jsou uložené.");
+  return ok(t.actions.profileSaved);
 }
 
-export async function logoutAction(): Promise<void> {
+export async function logoutAction(formData: FormData): Promise<void> {
+  const { href } = formI18n(formData);
   if (isSupabaseConfigured()) {
     const supabase = await createClient();
     await supabase.auth.signOut();
   }
-  redirect("/");
+  redirect(href("/"));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -310,21 +331,22 @@ export async function registerTeamAction(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireRole("captain");
+  const { locale, t, href } = formI18n(formData);
+  const user = await requireRole("captain", locale);
 
   const values = readTeam(formData);
   const formValues = { ...values, ...confirmationValues(formData) };
-  const errors = { ...validateTeam(values), ...validateConfirmations(formData) };
-  if (Object.keys(errors).length > 0) return fail("Zkontroluj zvýrazněná pole.", errors, formValues);
+  const errors = { ...validateTeam(values, t.validation), ...validateConfirmations(formData, t.validation) };
+  if (Object.keys(errors).length > 0) return fail(t.actions.checkFields, errors, formValues);
 
   // Druhé odeslání (dvojklik, zpět v prohlížeči) tým nezaloží podruhé.
-  if (await getCaptainTeam(user.id)) redirect(PATHS.teamRegistration);
+  if (await getCaptainTeam(user.id)) redirect(href(PATHS.teamRegistration));
 
   const { error } = await registerTeam({ ...values, foundedYear: foundedYearValue(values) });
-  if (error) return dbFailure(error, formValues);
+  if (error) return dbFailure(error, { t, locale }, formValues);
 
   refreshTeamViews();
-  redirect(PATHS.teamRegistration);
+  redirect(href(PATHS.teamRegistration));
 }
 
 /** Přihláška už existujícího týmu na další turnaj. */
@@ -332,63 +354,62 @@ export async function enterTournamentAction(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireRole("captain");
+  const { locale, t, href } = formI18n(formData);
+  const user = await requireRole("captain", locale);
 
-  const errors = validateConfirmations(formData);
+  const errors = validateConfirmations(formData, t.validation);
   if (Object.keys(errors).length > 0) {
-    return fail("Zkontroluj potvrzení.", errors, confirmationValues(formData));
+    return fail(t.actions.checkConfirmations, errors, confirmationValues(formData));
   }
 
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
-  if (!team) redirect(PATHS.teamRegistration);
-  if (!tournament) return fail("Přihlášky na turnaj jsou teď zavřené.");
+  if (!team) redirect(href(PATHS.teamRegistration));
+  if (!tournament) return fail(t.actions.registrationClosed);
 
   const { error } = await enterTournament(team.id, tournament.id);
-  if (error) return dbFailure(error, confirmationValues(formData));
+  if (error) return dbFailure(error, { t, locale }, confirmationValues(formData));
 
   refreshTeamViews();
-  redirect(PATHS.teamRegistration);
+  redirect(href(PATHS.teamRegistration));
 }
 
 /** Odhlášení týmu z turnaje, na který se právě přihlašuje. */
 export async function withdrawTeamAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireRole("captain");
+  const { locale, t, href } = formI18n(formData);
+  const user = await requireRole("captain", locale);
 
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
-  if (!team) redirect(PATHS.teamRegistration);
+  if (!team) redirect(href(PATHS.teamRegistration));
   // Formulář nese turnaj, který měl kapitán na obrazovce. Kdyby mezitím
   // organizátor otevřel přihlášky jinde, neodhlásíme ho z něčeho jiného.
   if (!tournament || tournament.id !== text(formData, "tournamentId")) {
-    return fail("Přihlášky jsou už zavřené. Odhlášení týmu vyřeš s organizátorem přes Kontakt.");
+    return fail(t.actions.withdrawClosed);
   }
 
   const { error, removed } = await withdrawEntry(team.id, tournament.id);
-  if (error) return dbFailure(error);
-  if (!removed) {
-    return fail(
-      "Tým už má naplánované zápasy, takže ho odhlásit nejde. Napiš organizátorovi přes Kontakt."
-    );
-  }
+  if (error) return dbFailure(error, { t, locale });
+  if (!removed) return fail(t.actions.withdrawHasMatches);
 
   refreshTeamViews();
-  redirect(PATHS.teamRegistration);
+  redirect(href(PATHS.teamRegistration));
 }
 
 /** Úprava údajů týmu. */
 export async function saveTeamAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireRole("captain");
+  const { locale, t, href } = formI18n(formData);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
-  if (!team) redirect(PATHS.teamRegistration);
+  if (!team) redirect(href(PATHS.teamRegistration));
 
   const values = readTeam(formData);
-  const errors = validateTeam(values);
-  if (Object.keys(errors).length > 0) return fail("Zkontroluj zvýrazněná pole.", errors, values);
+  const errors = validateTeam(values, t.validation);
+  if (Object.keys(errors).length > 0) return fail(t.actions.checkFields, errors, values);
 
   const { error } = await updateTeam(team.id, { ...values, foundedYear: foundedYearValue(values) });
-  if (error) return dbFailure(error, values);
+  if (error) return dbFailure(error, { t, locale }, values);
 
   refreshTeamViews();
-  return ok("Údaje týmu jsou uložené.");
+  return ok(t.actions.teamSaved);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -411,49 +432,64 @@ function takenNumbers(players: { id: string; number: number | null }[], exceptId
 }
 
 export async function addPlayerAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  const user = await requireRole("captain");
-  const team = await getCaptainTeam(user.id);
-  if (!team) return fail("Nejdřív přihlas tým.");
+  const { locale, t } = formI18n(formData);
+  const user = await requireRole("captain", locale);
+  const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
+  if (!team) return fail(t.actions.registerTeamFirst);
 
   const values = readPlayer(formData);
-  const errors = validatePlayer(values, takenNumbers(team.players));
+
+  // Největší soupiska podle turnaje s otevřenými přihláškami (Winter Clutch: 10).
+  // Stejný limit hlídá i databáze, tohle je kvůli srozumitelné hlášce.
+  const maxRoster = tournament?.maxRoster ?? DEFAULT_MAX_ROSTER;
+  if (team.players.length >= maxRoster) {
+    return fail(
+      fmt(t.actions.rosterFull, { max: plural(locale, maxRoster, t.counts.players) }),
+      {},
+      playerFormValues(values)
+    );
+  }
+
+  const errors = validatePlayer(values, takenNumbers(team.players), t.validation);
   if (Object.keys(errors).length > 0) {
-    return fail("Zkontroluj zvýrazněná pole.", errors, playerFormValues(values));
+    return fail(t.actions.checkFields, errors, playerFormValues(values));
   }
 
   const { error } = await addPlayer(team.id, toPlayerInput(values));
-  if (error) return dbFailure(error, playerFormValues(values));
+  if (error) return dbFailure(error, { t, locale }, playerFormValues(values));
 
   refreshTeamViews();
-  return ok(`${values.firstName} ${values.lastName} je na soupisce.`);
+  return ok(fmt(t.actions.playerAdded, { name: `${values.firstName} ${values.lastName}` }));
 }
 
 export async function updatePlayerAction(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
-  const user = await requireRole("captain");
+  const { locale, t } = formI18n(formData);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
-  if (!team) return fail("Nejdřív přihlas tým.");
+  if (!team) return fail(t.actions.registerTeamFirst);
 
   const playerId = text(formData, "playerId");
-  if (!team.players.some((p) => p.id === playerId)) return fail("Hráč na soupisce není.");
+  if (!team.players.some((p) => p.id === playerId)) return fail(t.actions.playerMissing);
 
   const values = readPlayer(formData);
-  const errors = validatePlayer(values, takenNumbers(team.players, playerId));
+  const errors = validatePlayer(values, takenNumbers(team.players, playerId), t.validation);
   if (Object.keys(errors).length > 0) {
-    return fail("Zkontroluj zvýrazněná pole.", errors, playerFormValues(values));
+    return fail(t.actions.checkFields, errors, playerFormValues(values));
   }
 
   const { error } = await updatePlayer(team.id, playerId, toPlayerInput(values));
-  if (error) return dbFailure(error, playerFormValues(values));
+  if (error) return dbFailure(error, { t, locale }, playerFormValues(values));
 
   refreshTeamViews();
-  return ok("Hráč je upravený.");
+  return ok(t.actions.playerUpdated);
 }
 
 export async function removePlayerAction(formData: FormData): Promise<void> {
-  const user = await requireRole("captain");
+  const { locale } = formI18n(formData);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
   if (!team) return;
 
@@ -461,4 +497,3 @@ export async function removePlayerAction(formData: FormData): Promise<void> {
   if (error) console.error("[db] remove player", error.code, error.message);
   refreshTeamViews();
 }
-

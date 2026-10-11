@@ -1,11 +1,17 @@
 import Image from "next/image";
-import Link from "next/link";
 import { ArrowRight, Trophy } from "lucide-react";
+import { czechOnly, editionLabel } from "@/i18n/data";
+import { fmt, plural } from "@/i18n/format";
+import Link from "@/i18n/Link";
+import { getI18n } from "@/i18n/server";
+import { formatDate } from "@/lib/format";
 import { tournamentSummaryStats, winner, type Tournament } from "@/lib/tournaments";
 
-export default function TournamentCard({ tournament }: { tournament: Tournament }) {
+export default async function TournamentCard({ tournament }: { tournament: Tournament }) {
+  const { locale, t } = await getI18n();
   const champion = winner(tournament);
   const stats = tournamentSummaryStats(tournament);
+  const date = formatDate(tournament.dateIso, locale);
 
   return (
     <li className="cl-card cl-card--interactive">
@@ -14,7 +20,7 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
         <Link
           href={`/turnaje/${tournament.slug}`}
           className="trn-card"
-          aria-label={`${tournament.name} ${tournament.dateLabel} — zobrazit výsledky`}
+          aria-label={fmt(t.tournament.cardAria, { name: tournament.name, date })}
         >
           <span className="trn-card__media">
             {tournament.photo ? (
@@ -30,7 +36,7 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
             )}
             <span className="trn-card__scrim" aria-hidden />
             <span className="cl-badge cl-badge--neutral trn-card__badge">
-              {tournament.edition}
+              {editionLabel(tournament.edition, t)}
             </span>
           </span>
 
@@ -38,15 +44,17 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
             <h3 className="trn-card__title">{tournament.name}</h3>
 
             <span className="trn-card__meta cl-num">
-              <span>{tournament.dateLabel}</span>
+              <span>{date}</span>
               <span>{tournament.venue}</span>
               <span>
-                {stats.teams} týmů
-                {stats.matches > 0 && ` · ${stats.matches} zápasů`}
+                {plural(locale, stats.teams, t.counts.teams)}
+                {stats.matches > 0 && ` · ${plural(locale, stats.matches, t.counts.matches)}`}
               </span>
             </span>
 
-            <p className="trn-card__desc">{tournament.summary}</p>
+            {czechOnly(tournament.summary, locale) && (
+              <p className="trn-card__desc">{tournament.summary}</p>
+            )}
 
             <span className="trn-card__winner">
               {champion ? (
@@ -55,7 +63,7 @@ export default function TournamentCard({ tournament }: { tournament: Tournament 
                   {champion.name}
                 </>
               ) : (
-                "Výsledky"
+                t.tournament.cardResults
               )}
               <span className="trn-card__go" aria-hidden>
                 <ArrowRight size={18} strokeWidth={2} />

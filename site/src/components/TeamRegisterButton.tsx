@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useT } from "@/i18n/client";
+import Link from "@/i18n/Link";
 import { PATHS } from "@/lib/portal/paths";
 
 /**
@@ -14,6 +15,7 @@ import { PATHS } from "@/lib/portal/paths";
  * statická. Než odpověď dorazí, ukazuje se „Přihlásit tým“.
  */
 export default function TeamRegisterButton({ className }: { className: string }) {
+  const t = useT();
   const [entered, setEntered] = useState(false);
 
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function TeamRegisterButton({ className }: { className: string })
 
   return (
     <Link href={entered ? `${PATHS.teamRegistration}#odhlasit` : PATHS.teamRegistration} className={className}>
-      <span>{entered ? "Odhlásit tým z turnaje" : "Přihlásit tým"}</span>
+      <span>{entered ? t.teamButton.withdraw : t.teamButton.register}</span>
     </Link>
   );
 }

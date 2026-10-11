@@ -1,5 +1,7 @@
 import { Goal, Hand, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { plural } from "@/i18n/format";
+import { getI18n } from "@/i18n/server";
 import { findTeam, topScorer, type Tournament } from "@/lib/tournaments";
 
 function AwardCard({
@@ -44,25 +46,27 @@ function AwardCard({
 }
 
 /** Individuální ocenění turnaje: nejlepší střelec, MVP, brankář. */
-export default function Awards({ tournament }: { tournament: Tournament }) {
+export default async function Awards({ tournament }: { tournament: Tournament }) {
+  const { locale, t: dict } = await getI18n();
+  const t = dict.tournament;
   const scorer = topScorer(tournament);
 
   return (
-    <ul className="trn-podium" aria-label="Individuální ocenění">
+    <ul className="trn-podium" aria-label={t.awardsLabel}>
       {scorer && (
         <AwardCard
           icon={Goal}
-          label="Nejlepší střelec"
+          label={t.topScorer}
           player={scorer.player}
           team={findTeam(tournament, scorer.teamId).name}
           value={String(scorer.goals)}
-          valueLabel="gólů"
+          valueLabel={plural(locale, scorer.goals, dict.counts.goalsUnit)}
         />
       )}
       {tournament.mvp && (
         <AwardCard
           icon={Star}
-          label="Hráč turnaje"
+          label={t.mvp}
           player={tournament.mvp.player}
           team={findTeam(tournament, tournament.mvp.teamId).name}
         />
@@ -70,7 +74,7 @@ export default function Awards({ tournament }: { tournament: Tournament }) {
       {tournament.bestKeeper && (
         <AwardCard
           icon={Hand}
-          label="Nejlepší brankář"
+          label={t.bestKeeper}
           player={tournament.bestKeeper.player}
           team={findTeam(tournament, tournament.bestKeeper.teamId).name}
         />

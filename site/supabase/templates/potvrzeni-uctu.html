@@ -1,5 +1,10 @@
-<!doctype html>
-<html lang="cs">
+{{ $l := "cs" }}{{ with .Data.locale }}{{ if or (eq . "en") (eq . "uk") (eq . "sk") }}{{ $l = . }}{{ end }}{{ end }}<!doctype html>
+<html lang="{{ $l }}">
+  <!--
+    Potvrzení účtu (Supabase → Authentication → Emails → Confirm sign up).
+    Jazyk podle toho, ve kterém jazyce webu se kapitán registroval
+    (user_metadata.locale = cs / en / uk / sk). Bez jazyka česky.
+  -->
   <body style="margin:0;padding:0;background:#000000;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000;">
       <tr>
@@ -13,21 +18,21 @@
             </tr>
             <tr>
               <td style="padding:28px 32px 0 32px;">
-                <h1 style="margin:0;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-style:italic;font-size:28px;line-height:1.05;text-transform:uppercase;color:#f2f2f0;">Potvrď svůj účet</h1>
+                <h1 style="margin:0;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-style:italic;font-size:28px;line-height:1.05;text-transform:uppercase;color:#f2f2f0;">{{ if eq $l "en" }}Confirm your account{{ else if eq $l "uk" }}Підтвердь свій акаунт{{ else if eq $l "sk" }}Potvrď svoj účet{{ else }}Potvrď svůj účet{{ end }}</h1>
                 <p style="margin:16px 0 0 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#dcdcda;">
-                  Díky za registraci. Klikni na tlačítko a účet se potvrdí — pak tě pustíme rovnou k přihlášce týmu.
+                  {{ if eq $l "en" }}Thanks for signing up. Click the button to confirm your account — then we'll take you straight to the team registration.{{ else if eq $l "uk" }}Дякуємо за реєстрацію. Натисни кнопку, щоб підтвердити акаунт, — і ми одразу відкриємо тобі заявку команди.{{ else if eq $l "sk" }}Vďaka za registráciu. Klikni na tlačidlo a účet sa potvrdí — potom ťa pustíme rovno k prihláške tímu.{{ else }}Díky za registraci. Klikni na tlačítko a účet se potvrdí — pak tě pustíme rovnou k přihlášce týmu.{{ end }}
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding:28px 32px;">
-                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/prihlasit-tym" style="display:inline-block;padding:14px 28px;background:#f5b300;color:#0a0a0a;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:15px;letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;">Potvrdit účet</a>
+                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next={{ if eq $l "cs" }}/prihlasit-tym{{ else }}/{{ $l }}/prihlasit-tym{{ end }}" style="display:inline-block;padding:14px 28px;background:#f5b300;color:#0a0a0a;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:15px;letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;">{{ if eq $l "en" }}Confirm account{{ else if eq $l "uk" }}Підтвердити акаунт{{ else if eq $l "sk" }}Potvrdiť účet{{ else }}Potvrdit účet{{ end }}</a>
               </td>
             </tr>
             <tr>
               <td style="padding:0 32px 32px 32px;">
                 <p style="margin:0;padding-top:20px;border-top:1px solid #2a2a2a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#a6a6a6;">
-                  Pokud tenhle e-mail nečekáš, klidně ho ignoruj. Účet bez potvrzení nevznikne.
+                  {{ if eq $l "en" }}If you weren't expecting this email, just ignore it. No account is created without confirmation.{{ else if eq $l "uk" }}Якщо цей лист для тебе несподіваний, просто проігноруй його. Без підтвердження акаунт не створюється.{{ else if eq $l "sk" }}Ak tento e-mail nečakáš, pokojne ho ignoruj. Účet bez potvrdenia nevznikne.{{ else }}Pokud tenhle e-mail nečekáš, klidně ho ignoruj. Účet bez potvrzení nevznikne.{{ end }}
                 </p>
               </td>
             </tr>

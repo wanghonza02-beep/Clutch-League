@@ -3,11 +3,14 @@
 import { createContext, useActionState, useContext, useState, type ReactNode } from "react";
 import Field, { SelectField } from "@/components/ui/Field";
 import Notice from "@/components/ui/Notice";
+import { useT } from "@/i18n/client";
+import LocaleField from "@/i18n/LocaleField";
 import { IDLE, type FormState } from "@/lib/portal/validation";
 
 // Obecný formulář administrace. Stránka (serverová) skládá formulář z polí
 // níže; ta si z kontextu berou chyby a hodnoty po neúspěšném odeslání, takže
-// se do nich nepředávají funkce (to by ze server komponenty nešlo).
+// se do nich nepředávají funkce (to by ze server komponenty nešlo). Jazyk
+// stránky posílá formulář sám (LocaleField) — akce podle něj vrací hlášky.
 
 type Ctx = {
   errors: Record<string, string>;
@@ -47,6 +50,7 @@ export default function ActionForm({
       value={{ errors: state.errors ?? {}, values: state.values ?? {}, pending, idPrefix }}
     >
       <form action={formAction} noValidate className={className}>
+        <LocaleField />
         {hidden &&
           Object.entries(hidden).map(([name, value]) => (
             <input key={name} type="hidden" name={name} value={value} />
@@ -62,27 +66,35 @@ export default function ActionForm({
   );
 }
 
-/** Tlačítko odeslání. `confirm` ho změní na dvoukrokové (Opravdu? Ano / Zrušit). */
+/**
+ * Tlačítko odeslání. `confirm` ho změní na dvoukrokové (Opravdu? Ano / Zrušit).
+ * `flush`: průhledné tlačítko na začátku řádku lícuje s textem nad ním.
+ */
 export function SubmitButton({
   children,
   variant = "primary",
   size = "md",
   confirm,
   icon,
+  flush = false,
 }: {
   children: ReactNode;
   variant?: "primary" | "secondary" | "ghost";
   size?: "sm" | "md";
   confirm?: string;
   icon?: ReactNode;
+  flush?: boolean;
 }) {
   const { pending } = useForm();
+  const t = useT().common;
   const [asking, setAsking] = useState(false);
   const cls = `cl-btn cl-btn--${variant}${size === "sm" ? " cl-btn--sm" : ""}${pending ? " cl-btn--loading" : ""}`;
+  // Při potvrzení začíná řádek otázkou, ne tlačítkem — tam se nezarovnává.
+  const flushCls = flush ? " cl-btn--flush" : "";
 
   if (confirm && !asking) {
     return (
-      <button type="button" className={cls} onClick={() => setAsking(true)}>
+      <button type="button" className={cls + flushCls} onClick={() => setAsking(true)}>
         {icon}
         <span>{children}</span>
       </button>
@@ -94,7 +106,7 @@ export function SubmitButton({
       {confirm && <span className="roster-row__meta">{confirm}</span>}
       <button
         type="submit"
-        className={cls}
+        className={confirm ? cls : cls + flushCls}
         aria-disabled={pending || undefined}
         aria-busy={pending || undefined}
         onClick={() => {
@@ -103,11 +115,11 @@ export function SubmitButton({
         }}
       >
         {icon}
-        <span className="cl-btn-label">{confirm ? "Ano" : children}</span>
+        <span className="cl-btn-label">{confirm ? t.yes : children}</span>
       </button>
       {confirm && (
         <button type="button" className="cl-btn cl-btn--ghost cl-btn--sm" onClick={() => setAsking(false)}>
-          <span>Zrušit</span>
+          <span>{t.cancel}</span>
         </button>
       )}
     </span>

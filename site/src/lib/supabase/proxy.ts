@@ -1,5 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest, NextResponse } from "next/server";
 import { isSupabaseConfigured, supabaseKey, supabaseUrl } from "./env";
 
 /**
@@ -7,9 +7,12 @@ import { isSupabaseConfigured, supabaseKey, supabaseUrl } from "./env";
  * požadavku i odpovědi. Bez toho by Supabase uživatele po čase odhlásil.
  * Postup je převzatý z oficiální šablony Supabase — mezi createServerClient
  * a getClaims() nesmí běžet žádný jiný kód.
+ *
+ * `respond` vyrobí odpověď (NextResponse.next nebo rewrite na jazyk) — po
+ * zápisu cookies se vyrobí znovu, aby nesla aktualizovaný požadavek.
  */
-export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+export async function updateSession(request: NextRequest, respond: () => NextResponse) {
+  let response = respond();
   if (!isSupabaseConfigured()) return response;
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
@@ -19,7 +22,7 @@ export async function updateSession(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = respond();
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
         );

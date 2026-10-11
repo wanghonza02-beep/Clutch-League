@@ -12,7 +12,7 @@
 // zůstávají statické a obnovují se po pár minutách (ISR).
 
 import { cache } from "react";
-import { formatDate, formatTime } from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { MatchEventKind } from "@/lib/supabase/database.types";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -78,8 +78,8 @@ export type Tournament = {
   name: string;
   /** "Léto 2026" — sezónní označení pro přehled. */
   edition: string;
+  /** Datum "RRRR-MM-DD" — formátuje se podle jazyka stránky (formatDate). */
   dateIso: string;
-  dateLabel: string;
   venue: string;
   format: string;
   matchLength: string;
@@ -98,13 +98,30 @@ export type Tournament = {
   bestKeeper?: Award;
 };
 
+/** Zápas z rozpisu nadcházejícího turnaje. */
+export type ScheduledMatch = {
+  id: string;
+  /** "Skupina A", "Finále" — překládá se přes stageLabel(). */
+  stage: string;
+  /** Výkop (ISO). */
+  kickoff: string;
+  /** Název týmu; "—", když tým není veřejně vidět (neschválená přihláška). */
+  home: string;
+  away: string;
+  /** Null = zápas ještě nemá zapsaný výsledek. */
+  homeGoals: number | null;
+  awayGoals: number | null;
+};
+
 /** Nadcházející turnaj pro upoutávku „Další na řadě“. */
 export type UpcomingTournament = {
   name: string;
-  dateLabel: string;
+  dateIso: string;
   format: string;
   summary: string;
   registrationOpen: boolean;
+  /** Rozpis zápasů podle výkopu. Prázdný, dokud ho organizátor nezadá. */
+  schedule: ScheduledMatch[];
 };
 
 /* -------------------------------------------------------------------------- */
@@ -193,7 +210,6 @@ async function loadCompleted(slug?: string): Promise<Tournament[]> {
       name: t.name,
       edition: t.edition,
       dateIso: t.starts_on,
-      dateLabel: formatDate(t.starts_on),
       venue: t.venue,
       format: t.format,
       matchLength: t.match_length,
@@ -267,19 +283,44 @@ export async function getUpcomingTournament(): Promise<UpcomingTournament | null
   if (!isSupabaseConfigured()) return null;
   const { data, error } = await createPublicClient()
     .from("tournaments")
-    .select("name, starts_on, format, summary, registration_open")
+    .select("id, name, starts_on, format, summary, registration_open")
     .eq("status", "upcoming")
     .order("starts_on")
     .limit(1)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  const supabase = createPublicClient();
+  const { data: matches, error: matchError } = await supabase
+    .from("matches")
+    .select("id, stage, kickoff, home_team_id, away_team_id, home_goals, away_goals")
+    .eq("tournament_id", data.id)
+    .order("kickoff");
+  if (matchError) throw matchError;
+
+  // Veřejně jsou vidět jen týmy se schválenou přihláškou (RLS).
+  const teamIds = [...new Set(matches.flatMap((m) => [m.home_team_id, m.away_team_id]))];
+  const { data: teams, error: teamsError } = teamIds.length
+    ? await supabase.from("teams").select("id, name").in("id", teamIds)
+    : { data: [], error: null };
+  if (teamsError) throw teamsError;
+  const teamName = new Map(teams.map((t) => [t.id, t.name]));
+
   return {
     name: data.name,
-    dateLabel: formatDate(data.starts_on),
+    dateIso: data.starts_on,
     format: data.format,
     summary: data.summary,
     registrationOpen: data.registration_open,
+    schedule: matches.map((m) => ({
+      id: m.id,
+      stage: m.stage,
+      kickoff: m.kickoff,
+      home: teamName.get(m.home_team_id) ?? "—",
+      away: teamName.get(m.away_team_id) ?? "—",
+      homeGoals: m.home_goals,
+      awayGoals: m.away_goals,
+    })),
   };
 }
 
@@ -287,7 +328,8 @@ export function findTeam(tournament: Tournament, teamId: string): TournamentTeam
   return (
     tournament.teams.find((t) => t.id === teamId) ?? {
       id: teamId,
-      name: "Neznámý tým",
+      // Neznámý tým (smazaný, neschválený) — neutrální znak ve všech jazycích.
+      name: "—",
       city: "",
     }
   );
@@ -459,6 +501,7 @@ export function tournamentSummaryStats(tournament: Tournament) {
     goals,
     yellowCards: events.filter((e) => e.kind === "yellow_card").length,
     redCards: events.filter((e) => e.kind === "red_card").length,
-    goalsPerMatch: played.length ? (goals / played.length).toFixed(1).replace(".", ",") : "0",
+    /** Formátuje se podle jazyka (formatDecimal). */
+    goalsPerMatch: played.length ? goals / played.length : 0,
   };
 }

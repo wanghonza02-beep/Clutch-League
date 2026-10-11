@@ -1,44 +1,56 @@
 import { cache } from "react";
+import { pragueDayStart, pragueIsoDay } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { getUpcomingTournament } from "@/lib/tournaments";
+import { getUpcomingTournament, type ScheduledMatch } from "@/lib/tournaments";
 
-/** Karta „Další na řadě“ na úvodní stránce (Historie i Fotky). */
+/** Nadcházející turnaj pro úvodní stránku (kampaň nahoře a dlaždice ve Fotkách). */
 export type UpcomingCard = {
   name: string;
-  dateLabel: string;
-  summary: string;
-  registrationOpen: boolean;
+  /** Datum "RRRR-MM-DD" — formátuje se podle jazyka stránky. */
+  dateIso: string;
+  /** Výkop prvního zápasu v den turnaje (ISO), nebo null, dokud ten den žádný zápas není. */
+  firstKickoff: string | null;
+  /** Kam běží odpočet: první výkop v den turnaje, jinak začátek dne turnaje (Praha). */
+  startsAt: string;
+  /** Konec dne turnaje (Praha) — do té doby web píše „Hrajeme dnes!“. */
+  endsAt: string;
+  /** Rozpis zápasů podle výkopu. Prázdný, dokud ho organizátor nezadá. */
+  schedule: ScheduledMatch[];
 };
+
+/** Následující den ("2027-01-10" → "2027-01-11"). */
+function nextDay(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
+
+// Datum turnaje je to, co organizátor zadal u turnaje. Čas výkopu se bere jen ze
+// zápasů v ten den — zápas zapsaný omylem s jiným datem tak nepřepíše odpočet.
+// Zápas s výkopem před dnem turnaje je chyba v datech: web ho neukáže, administrace
+// u něj píše upozornění (a nový takový uložit nejde).
+function card(name: string, dateIso: string, allMatches: ScheduledMatch[]): UpcomingCard {
+  const schedule = allMatches.filter((m) => pragueIsoDay(m.kickoff) >= dateIso);
+  const firstKickoff = schedule.find((m) => pragueIsoDay(m.kickoff) === dateIso)?.kickoff ?? null;
+  return {
+    name,
+    dateIso,
+    firstKickoff,
+    startsAt: firstKickoff ?? pragueDayStart(dateIso),
+    endsAt: pragueDayStart(nextDay(dateIso)),
+    schedule,
+  };
+}
 
 // Záloha, když databáze není připojená nebo neodpoví — úvodní stránka tak
-// nikdy nezůstane bez karty dalšího turnaje.
-const FALLBACK_UPCOMING: UpcomingCard = {
-  name: "Winter Clutch",
-  dateLabel: "10. 1. 2027",
-  summary:
-    "Zimní turnaj 3 na 3 na menším hřišti, mimo ligovou tabulku. Stejná parta, jiné hřiště.",
-  registrationOpen: true,
-};
+// nikdy nezůstane bez dalšího turnaje.
+const FALLBACK_UPCOMING = card("Winter Clutch", "2027-01-10", []);
 
-const NO_UPCOMING: UpcomingCard = {
-  name: "Další turnaj",
-  dateLabel: "Termín oznámíme",
-  summary: "Další turnaj právě chystáme. Sleduj nás na Instagramu, ať ti neuteče.",
-  registrationOpen: false,
-};
-
-/** cache(): sekce Historie i Fotky si turnaj načtou jen jednou na vykreslení. */
-export const loadUpcoming = cache(async (): Promise<UpcomingCard> => {
+/** Nadcházející turnaj, nebo null, když žádný naplánovaný není. */
+export const loadUpcoming = cache(async (): Promise<UpcomingCard | null> => {
   if (!isSupabaseConfigured()) return FALLBACK_UPCOMING;
   try {
     const t = await getUpcomingTournament();
-    if (!t) return NO_UPCOMING;
-    return {
-      name: t.name,
-      dateLabel: t.dateLabel,
-      summary: t.summary || FALLBACK_UPCOMING.summary,
-      registrationOpen: t.registrationOpen,
-    };
+    return t ? card(t.name, t.dateIso, t.schedule) : null;
   } catch (error) {
     console.error("[úvod] nadcházející turnaj se nenačetl", error);
     return FALLBACK_UPCOMING;

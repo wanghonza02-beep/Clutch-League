@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PAGE_REVEALED_EVENT, PAGE_TRANSITION_ATTR } from "@/components/PageTransition";
+import { useHomePath } from "@/i18n/client";
 import { clearRememberedSection, peekRememberedSection, scrollToSection } from "@/lib/sectionScroll";
 
 /**
@@ -12,11 +13,13 @@ import { clearRememberedSection, peekRememberedSection, scrollToSection } from "
  *    až zmizí přechodová animace,
  *  - z adresy s kotvou (/#pravidla, sdílený odkaz) → skočí rovnou.
  *
- * Next sám na kotvu skočí hned po načtení, ale animace „Jak to funguje“ si
- * pak připne obrazovku a vloží pod sebe místo na scroll — obsah pod ní se
- * posune níž. Proto se posun dělá až po přepočtu ScrollTriggeru.
+ * Next sám na kotvu skočí hned po načtení. Tady se posun pro jistotu zopakuje
+ * po přepočtu ScrollTriggeru (animace nadpisů SplitText), kdyby se rozvržení
+ * po načtení písem ještě dorovnalo.
  */
 export default function HashScroll() {
+  const home = useHomePath();
+
   useEffect(() => {
     // Cíl se smaže až po posunu: React efekt ve vývoji spustí dvakrát a
     // první (hned zrušený) běh nesmí cíl spotřebovat.
@@ -29,7 +32,7 @@ export default function HashScroll() {
       if (done) return;
       done = true;
       if (remembered) clearRememberedSection();
-      scrollToSection(id, Boolean(remembered));
+      scrollToSection(id, home, Boolean(remembered));
     };
     const timers: number[] = [];
     const later = () => timers.push(window.setTimeout(() => requestAnimationFrame(go), 60));
@@ -56,7 +59,7 @@ export default function HashScroll() {
       ScrollTrigger.removeEventListener("refresh", onRefresh);
       timers.forEach(window.clearTimeout);
     };
-  }, []);
+  }, [home]);
 
   return null;
 }

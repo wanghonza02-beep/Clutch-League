@@ -3,7 +3,7 @@
 Tenhle soubor je kontrolní seznam. Až se rozhodneš web pustit na internet, projdeme
 ho spolu odshora dolů. Odškrtávej `[x]`, co je hotové.
 
-_Naposledy aktualizováno: 9. 10. 2026 (odkazy v e-mailech na vercel.app, pryč vymyšlená data, fotky podle pravidla)_
+_Naposledy aktualizováno: 10. 10. 2026 (web ve 4 jazycích, Winter Clutch 5+1 se soupiskou 6–10, e-mail a TikTok v kontaktech)_
 
 ---
 
@@ -83,9 +83,11 @@ a jen pár zpráv za hodinu.
 - [ ] Supabase → Authentication → Emails → **SMTP Settings** → Enable custom SMTP:
   host `smtp.resend.com`, port `465`, username `resend`, heslo = API key,
   odesílatel `noreply@tvoje-domena.cz`, jméno `Clutch League`.
-- [ ] Vložit **české e-mailové šablony** (Supabase je do té doby zamčené):
-  - Confirm sign up: předmět `Potvrď svůj účet – Clutch League`, obsah ze `supabase/templates/potvrzeni-uctu.html`
-  - Reset password: předmět `Nové heslo – Clutch League`, obsah ze `supabase/templates/nove-heslo.html`
+- [ ] Vložit **e-mailové šablony** (Supabase je do té doby zamčené). Jsou čtyřjazyčné: e-mail přijde
+  v jazyce, ve kterém se kapitán na webu registroval (čeština, angličtina, ukrajinština, slovenština).
+  - Confirm sign up: předmět `Clutch League – potvrzení účtu / Confirm your account`, obsah ze `supabase/templates/potvrzeni-uctu.html`
+  - Reset password: předmět `Clutch League – nové heslo / New password`, obsah ze `supabase/templates/nove-heslo.html`
+  - Hned potom poslat zkušební e-mail (registrace v angličtině na webu) a ověřit, že přišel anglicky.
 - [ ] Authentication → **Rate Limits**: zvýšit limit e-mailů za hodinu (např. na 100).
 
 ### Krok 6. Zapnout potvrzování e-mailu
@@ -96,7 +98,8 @@ a jen pár zpráv za hodinu.
 ### Krok 7. Databáze a data
 - [ ] Všechny soubory spuštěné v pořadí: `20261005120000_init.sql`, `20261008120000_admin.sql`,
   `20261009120000_odhlaseni_tymu.sql`, `20261010120000_vysledky_bez_rozhodciho.sql`,
-  `20261011120000_role_jen_v_supabase.sql`, `20261012120000_mesto_tymu_nepovinne.sql`, `seed.sql`
+  `20261011120000_role_jen_v_supabase.sql`, `20261012120000_mesto_tymu_nepovinne.sql`,
+  `20261013120000_winter_5plus1_soupiska.sql`, `seed.sql`
   (ověř: v Table Editoru existuje tabulka `match_events`).
 - [x] **Ukázková data smazána** (9. 10. 2026, `supabase/smazat-ukazkova-data.sql`). Zůstal turnaj Winter Clutch 2027
   a 2 schválené týmy s kapitánem (ověřit, jestli nejsou zkušební).
@@ -148,8 +151,10 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
   „Rozpis zápasů a soupisky týmů zveřejníme po uzávěrce přihlášek“. Skutečný rozpis a soupisky
   doplním do `src/content/winter-clutch-preview.ts`, až mi je pošleš. Odkaz „Rozpis zápasů a týmy“
   se pak v Pravidlech a v archivu objeví sám. Jména hráčů = osobní údaje: jen se souhlasem hráčů.
-- [ ] **Minimální soupiska** u Winter Clutch je nastavená na 3 hráče (3 na 3). Ověřit podle pravidel
-  (Portál → Turnaje → Winter Clutch → „Nejmenší soupiska“).
+- [ ] **Winter Clutch je 5+1** (5 hráčů v poli + brankář), soupiska **aspoň 6, nejvýš 10 hráčů**. Web je
+  hotový (10. 10. 2026); v databázi to nastaví migrace `20261013120000_winter_5plus1_soupiska.sql`
+  (Supabase → SQL Editor → vlož → Run). Poslední řádek výsledku ukáže formát 5+1 a soupisku 6–10.
+  Bez ní administrace turnaj neuloží a přihláška počítá se starou nejmenší soupiskou 3.
 - [ ] **Recenze hráčů:** vymyšlené recenze jsou pryč a sekce „Proč zrovna Clutch League“ i odkaz
   „Proč my“ v navigaci jsou schované. Až budou skutečné, schválené citace, doplním je do
   `src/content/reviews.ts` a sekce se ukáže sama.
@@ -158,7 +163,13 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
 - [ ] **Ochrana proti falešným registracím:** Supabase → Authentication → Attack Protection → zapnout CAPTCHA.
 - [ ] **Bezplatný Supabase se po týdnu bez návštěv pozastaví** a nemá zálohy. Před ostrým provozem
   zvážit placený tarif, nebo si aspoň pravidelně stáhnout export dat.
-- [ ] Kontakt a Instagram v patičce a na stránce Kontakt zkontrolovat, jestli jsou správné.
+- [ ] Kontakty v patičce a na stránce Kontakt zkontrolovat: Instagram @clutchleague_football,
+  e-mail clutch.league@seznam.cz, TikTok @clutchleague_football.
+- [ ] **Jazyky:** web je česky, anglicky, ukrajinsky a slovensky (přepínač v liště). Překlady prošel
+  jen Claude — ideálně je nechat přečíst rodilým mluvčím (hlavně ukrajinštinu).
+- [ ] **Co zůstává jen česky:** PDF s pravidly (v ostatních jazycích to u PDF stojí) a popis turnaje,
+  který píšeš v administraci (v ostatních jazycích se nezobrazí). Fáze zápasů piš česky
+  (Skupina A, Semifinále, Finále) — web je sám přeloží.
 
 ---
 
@@ -169,7 +180,6 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
 - [ ] Novinky / články.
 - [ ] QR akreditace hráčů a export soupisky do PDF.
 - [ ] Fanouškovská zóna, hodnocení rozhodčích, rozhodnutí ligy.
-- [ ] Více jazyků (EN, UA).
 - [ ] Obnova: úprava e-mailu účtu (dnes jen přes organizátora).
 
 ---
@@ -187,6 +197,9 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
 - Úprava účtu (jméno, telefon), změna hesla
 - Termín nadcházejícího turnaje na úvodní stránce se bere z databáze
 - Produkční build ověřený (9. 10. 2026), web je připravený k nahrání na Vercel
+- Web ve 4 jazycích (10. 10. 2026): čeština (výchozí, adresy bez předpony), angličtina `/en`,
+  ukrajinština `/uk`, slovenština `/sk`. Přepínač v liště si volbu pamatuje.
+- Kontakty: Instagram, e-mail clutch.league@seznam.cz a TikTok na stránce Kontakt i v patičce
 
 ## Kde co najdeš
 - Návod na nastavení Supabase: `supabase/README.md`

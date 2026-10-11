@@ -11,6 +11,7 @@ import {
 } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
+import { useT } from "@/i18n/client";
 
 type Phase = "idle" | "snap" | "enter" | "cover" | "leave";
 
@@ -39,6 +40,7 @@ export const useTransitionNavigate = () => useContext(TransitionContext);
 export default function PageTransition({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useT();
   const [phase, setPhase] = useState<Phase>("idle");
 
   const phaseRef = useRef<Phase>("idle");
@@ -146,7 +148,7 @@ export default function PageTransition({ children }: { children: ReactNode }) {
         </div>
         {active && (
           <span className="sr-only" role="status">
-            Načítám stránku
+            {t.common.loadingPage}
           </span>
         )}
       </div>

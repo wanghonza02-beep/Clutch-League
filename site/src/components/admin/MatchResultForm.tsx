@@ -4,7 +4,10 @@ import { useActionState, useState } from "react";
 import { Plus, Save, Trash2, X } from "lucide-react";
 import Field, { SelectField } from "@/components/ui/Field";
 import Notice from "@/components/ui/Notice";
-import { EVENT_KINDS, EVENT_LABEL, matchPoints, type EventInput } from "@/lib/admin/result";
+import { useT } from "@/i18n/client";
+import { fmt } from "@/i18n/format";
+import LocaleField from "@/i18n/LocaleField";
+import { EVENT_KINDS, matchPoints, type EventInput } from "@/lib/admin/result";
 import { saveMatchResultAction } from "@/lib/admin/resultActions";
 import type { MatchEventKind } from "@/lib/supabase/database.types";
 import { IDLE, type FormState } from "@/lib/portal/validation";
@@ -50,6 +53,7 @@ export default function MatchResultForm({
   /** Nejvyšší povolená minuta. */
   limit: number;
 }) {
+  const { matchForm: t, labels, common } = useT();
   const [homeGoals, setHomeGoals] = useState(initialHome?.toString() ?? "");
   const [awayGoals, setAwayGoals] = useState(initialAway?.toString() ?? "");
   const [rows, setRows] = useState<Row[]>(() =>
@@ -109,6 +113,7 @@ export default function MatchResultForm({
   return (
     <div className="flex flex-col gap-[var(--sp-8)]">
       <form action={action} noValidate className="flex flex-col gap-[var(--sp-8)]">
+        <LocaleField />
         <input type="hidden" name="matchId" value={matchId} />
         <input
           type="hidden"
@@ -119,7 +124,7 @@ export default function MatchResultForm({
         {/* ---- skóre a body ---- */}
         <section className="flex flex-col gap-[var(--sp-4)]" aria-labelledby="res-score">
           <h2 id="res-score" className="adm-sub">
-            Konečné skóre
+            {t.score}
           </h2>
           <div className="res-score">
             <Field id="res-home" label={home.name} error={errors.homeGoals}>
@@ -153,26 +158,26 @@ export default function MatchResultForm({
 
           <dl className="hist-timeline__stats">
             <div className="cl-stat">
-              <dt className="cl-stat__label">Body {home.name}</dt>
+              <dt className="cl-stat__label">{fmt(t.points, { team: home.name })}</dt>
               <dd className="cl-stat__val order-first">{points ? points[0] : "–"}</dd>
             </div>
             <div className="cl-stat">
-              <dt className="cl-stat__label">Body {away.name}</dt>
+              <dt className="cl-stat__label">{fmt(t.points, { team: away.name })}</dt>
               <dd className="cl-stat__val order-first">{points ? points[1] : "–"}</dd>
             </div>
             <div className={`cl-stat${goalsMismatch ? " cl-stat--accent" : ""}`}>
-              <dt className="cl-stat__label">Rozepsané góly</dt>
+              <dt className="cl-stat__label">{t.goalsListed}</dt>
               <dd className="cl-stat__val order-first">
                 {goalRows.length ? `${goalsHome}:${goalsAway}` : "–"}
               </dd>
             </div>
           </dl>
           <p className="cl-field__hint" style={{ margin: 0 }}>
-            Body se počítají samy: výhra 3, remíza 1, prohra 0.
+            {t.pointsNote}
           </p>
           {goalsMismatch && (
             <Notice tone="accent">
-              Rozepsané góly dávají {goalsHome}:{goalsAway}, skóre je {h}:{a}. Před uložením je srovnej.
+              {fmt(t.mismatch, { goals: `${goalsHome}:${goalsAway}`, score: `${h}:${a}` })}
             </Notice>
           )}
         </section>
@@ -180,11 +185,10 @@ export default function MatchResultForm({
         {/* ---- góly a karty ---- */}
         <section className="flex flex-col gap-[var(--sp-4)]" aria-labelledby="res-events">
           <h2 id="res-events" className="adm-sub">
-            Góly a karty
+            {t.events}
           </h2>
           <p className="cl-field__hint" style={{ margin: 0 }}>
-            Gól zapiš týmu, kterému se počítá (i vlastní gól). Když góly rozepíšeš, musí sedět se
-            skóre. Když střelce neznáš, nech jen skóre. Minuta 1 až {limit}.
+            {fmt(t.eventsHint, { limit })}
           </p>
 
           <RosterSuggestions id="roster-home-first" roster={home.roster} part={0} />
@@ -193,9 +197,9 @@ export default function MatchResultForm({
           <RosterSuggestions id="roster-away-last" roster={away.roster} part={1} />
 
           {rows.length === 0 ? (
-            <Notice tone="info">Zatím žádný gól ani karta.</Notice>
+            <Notice tone="info">{t.noEvents}</Notice>
           ) : (
-            <ol className="flex flex-col gap-[var(--sp-3)]" aria-label="Góly a karty">
+            <ol className="flex flex-col gap-[var(--sp-3)]" aria-label={t.events}>
               {rows.map((row, i) => {
                 const err = (f: string) => errors[`event.${i}.${f}`];
                 const id = (f: string) => `ev-${row.key}-${f}`;
@@ -203,20 +207,20 @@ export default function MatchResultForm({
                   <li key={row.key} className={`res-event res-event--${row.kind}`}>
                     <SelectField
                       id={id("kind")}
-                      label="Typ"
+                      label={t.kind}
                       value={row.kind}
                       onChange={(e) => update(row.key, { kind: e.target.value })}
                       error={err("kind")}
                     >
                       {EVENT_KINDS.map((k) => (
                         <option key={k} value={k}>
-                          {EVENT_LABEL[k]}
+                          {labels.events[k]}
                         </option>
                       ))}
                     </SelectField>
                     <SelectField
                       id={id("side")}
-                      label="Tým"
+                      label={t.team}
                       value={row.side}
                       onChange={(e) => update(row.key, { side: e.target.value })}
                       error={err("side")}
@@ -224,7 +228,7 @@ export default function MatchResultForm({
                       <option value="home">{home.name}</option>
                       <option value="away">{away.name}</option>
                     </SelectField>
-                    <Field id={id("first")} label="Jméno" error={err("firstName")}>
+                    <Field id={id("first")} label={t.firstName} error={err("firstName")}>
                       <input
                         id={id("first")}
                         value={row.firstName}
@@ -236,7 +240,7 @@ export default function MatchResultForm({
                         className="cl-field__input"
                       />
                     </Field>
-                    <Field id={id("last")} label="Příjmení" error={err("lastName")}>
+                    <Field id={id("last")} label={t.lastName} error={err("lastName")}>
                       <input
                         id={id("last")}
                         value={row.lastName}
@@ -248,7 +252,7 @@ export default function MatchResultForm({
                         className="cl-field__input"
                       />
                     </Field>
-                    <Field id={id("min")} label="Minuta" error={err("minute")}>
+                    <Field id={id("min")} label={t.minute} error={err("minute")}>
                       <input
                         id={id("min")}
                         inputMode="numeric"
@@ -263,7 +267,7 @@ export default function MatchResultForm({
                       type="button"
                       className="cl-iconbtn cl-iconbtn--bare res-event__remove"
                       onClick={() => setRows((rs) => rs.filter((r) => r.key !== row.key))}
-                      aria-label={`Odebrat řádek ${i + 1}`}
+                      aria-label={fmt(t.removeRow, { n: i + 1 })}
                     >
                       <X size={18} strokeWidth={2} />
                     </button>
@@ -276,15 +280,15 @@ export default function MatchResultForm({
           <div className="adm-actions">
             <button type="button" className="cl-btn cl-btn--secondary cl-btn--sm" onClick={() => addRow("goal")}>
               <Plus size={14} strokeWidth={2} aria-hidden />
-              <span>Gól</span>
+              <span>{labels.events.goal}</span>
             </button>
             <button type="button" className="cl-btn cl-btn--ghost cl-btn--sm" onClick={() => addRow("yellow_card")}>
               <Plus size={14} strokeWidth={2} aria-hidden />
-              <span>Žlutá karta</span>
+              <span>{labels.events.yellow_card}</span>
             </button>
             <button type="button" className="cl-btn cl-btn--ghost cl-btn--sm" onClick={() => addRow("red_card")}>
               <Plus size={14} strokeWidth={2} aria-hidden />
-              <span>Červená karta</span>
+              <span>{labels.events.red_card}</span>
             </button>
           </div>
         </section>
@@ -303,25 +307,25 @@ export default function MatchResultForm({
             aria-busy={pending || undefined}
           >
             <Save size={18} strokeWidth={2} aria-hidden />
-            <span className="cl-btn-label">Uložit výsledek</span>
+            <span className="cl-btn-label">{t.save}</span>
           </button>
 
           {/* Smazání výsledku — dvoukrokové, ať se nesmaže omylem. */}
           {initialHome !== null &&
             (confirmClear ? (
-              <span className="res-clear" role="group" aria-label="Potvrzení smazání">
-                <span className="roster-row__meta">Smazat skóre i všechny góly a karty?</span>
+              <span className="res-clear" role="group" aria-label={t.clearGroup}>
+                <span className="roster-row__meta">{t.clearQuestion}</span>
                 <button type="submit" name="intent" value="clear" className="cl-btn cl-btn--secondary cl-btn--sm">
-                  <span>Ano, smazat</span>
+                  <span>{t.clearConfirm}</span>
                 </button>
                 <button type="button" className="cl-btn cl-btn--ghost cl-btn--sm" onClick={() => setConfirmClear(false)}>
-                  <span>Zrušit</span>
+                  <span>{common.cancel}</span>
                 </button>
               </span>
             ) : (
               <button type="button" className="cl-btn cl-btn--ghost cl-btn--sm" onClick={() => setConfirmClear(true)}>
                 <Trash2 size={14} strokeWidth={2} aria-hidden />
-                <span>Smazat výsledek</span>
+                <span>{t.clear}</span>
               </button>
             ))}
         </div>

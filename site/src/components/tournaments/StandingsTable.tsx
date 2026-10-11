@@ -1,18 +1,15 @@
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt } from "@/i18n/format";
+import { getDictionary } from "@/i18n/server";
 import type { MatchOutcome, TableGroup } from "@/lib/tournaments";
 
-const OUTCOME_LABEL: Record<MatchOutcome, string> = {
-  W: "výhra",
-  D: "remíza",
-  L: "prohra",
-};
-
-function Form({ form }: { form: MatchOutcome[] }) {
+function Form({ form, outcome }: { form: MatchOutcome[]; outcome: Dictionary["tournament"]["outcome"] }) {
   if (form.length === 0) return <span className="cl-table__num">—</span>;
   return (
-    <span className="cl-form" role="img" aria-label={form.map((f) => OUTCOME_LABEL[f]).join(", ")}>
-      {form.map((outcome, i) => (
-        <span key={i} className={`cl-form__dot cl-form__dot--${outcome}`} aria-hidden>
-          {outcome}
+    <span className="cl-form" role="img" aria-label={form.map((f) => outcome[f]).join(", ")}>
+      {form.map((result, i) => (
+        <span key={i} className={`cl-form__dot cl-form__dot--${result}`} aria-hidden>
+          {result}
         </span>
       ))}
     </span>
@@ -24,39 +21,40 @@ function Form({ form }: { form: MatchOutcome[] }) {
  * takže se nemůžou rozejít se zápasy níže na stránce. Postup ze skupiny
  * označuje organizátor u týmu („Postoupil ze skupiny“) — zvýrazní se pruhem.
  */
-export default function StandingsTable({ tables }: { tables: TableGroup[] }) {
-  const anyAdvanced = tables.some((t) => t.rows.some((r) => r.team.advanced));
+export default async function StandingsTable({ tables }: { tables: TableGroup[] }) {
+  const t = (await getDictionary()).tournament;
+  const anyAdvanced = tables.some((table) => table.rows.some((r) => r.team.advanced));
   return (
     <div className="flex flex-col gap-[var(--sp-8)]">
       {tables.map(({ group, rows }) => (
         <div key={group || "single"} className="cl-tablewrap">
           <table className="cl-table">
-            <caption>{group ? `Skupina ${group}` : "Základní část"}</caption>
+            <caption>{group ? fmt(t.groupCaption, { group }) : t.singleTable}</caption>
             <thead>
               <tr>
                 <th scope="col">#</th>
-                <th scope="col">Tým</th>
-                <th scope="col">Forma</th>
+                <th scope="col">{t.team}</th>
+                <th scope="col">{t.formCol}</th>
                 <th scope="col" className="cl-table__num">
-                  <abbr title="Zápasy">Z</abbr>
+                  <abbr title={t.played}>{t.playedAbbr}</abbr>
                 </th>
                 <th scope="col" className="cl-table__num">
-                  <abbr title="Výhry">V</abbr>
+                  <abbr title={t.wins}>{t.winsAbbr}</abbr>
                 </th>
                 <th scope="col" className="cl-table__num">
-                  <abbr title="Remízy">R</abbr>
+                  <abbr title={t.draws}>{t.drawsAbbr}</abbr>
                 </th>
                 <th scope="col" className="cl-table__num">
-                  <abbr title="Prohry">P</abbr>
+                  <abbr title={t.losses}>{t.lossesAbbr}</abbr>
                 </th>
                 <th scope="col" className="cl-table__num">
-                  <abbr title="Skóre">Skóre</abbr>
+                  <abbr title={t.scoreCol}>{t.scoreCol}</abbr>
                 </th>
                 <th scope="col" className="cl-table__num">
-                  <abbr title="Rozdíl gólů">RG</abbr>
+                  <abbr title={t.goalDiff}>{t.goalDiffAbbr}</abbr>
                 </th>
                 <th scope="col" className="cl-table__num">
-                  Body
+                  {t.pointsCol}
                 </th>
               </tr>
             </thead>
@@ -69,10 +67,10 @@ export default function StandingsTable({ tables }: { tables: TableGroup[] }) {
                   <td className="cl-table__rank">{row.rank}</td>
                   <th scope="row" className="cl-table__team">
                     {row.team.name}
-                    {row.team.advanced && <span className="sr-only"> (postoupil)</span>}
+                    {row.team.advanced && <span className="sr-only"> {t.advanced}</span>}
                   </th>
                   <td>
-                    <Form form={row.form} />
+                    <Form form={row.form} outcome={t.outcome} />
                   </td>
                   <td className="cl-table__num">{row.played}</td>
                   <td className="cl-table__num">{row.wins}</td>
@@ -93,8 +91,8 @@ export default function StandingsTable({ tables }: { tables: TableGroup[] }) {
       ))}
 
       <p className="cl-footer-meta">
-        {anyAdvanced && "Zlatý pruh označuje týmy, které postoupily ze skupiny. "}
-        Pořadí se řadí podle bodů, pak rozdílu skóre a vstřelených gólů.
+        {anyAdvanced && t.advancedNote}
+        {t.sortNote}
       </p>
     </div>
   );

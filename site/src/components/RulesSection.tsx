@@ -1,32 +1,23 @@
-import Link from "next/link";
 import { CalendarDays, Download, FileText } from "lucide-react";
 import SplitText from "@/components/ui/SplitText";
 import Notice from "@/components/ui/Notice";
 import { CAMPAIGN, type Campaign } from "@/content/campaign";
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt } from "@/i18n/format";
+import Link from "@/i18n/Link";
+import { getDictionary } from "@/i18n/server";
 
-// Pravidla mají dvě části:
+// Pravidla na úvodní stránce — pravý sloupec sekce „Jak to funguje“
+// (HowItWorksSection), od lg přilepený pod lištou. Mají dvě části:
 //   1. Obecná pravidla — platí pořád, bez ohledu na kampaň (PDF níže).
 //   2. Pravidla kampaně — vždy jako PDF; cesta a popisek jsou v
 //      src/content/campaign.ts. Při nové kampani se sahá jen tam.
+// PDF jsou česky; v ostatních jazycích to říká popisek pod názvem.
 
 const GENERAL_PDF = {
   href: "/docs/pravidla-clutch-league-cup-2026.pdf",
   fileName: "Pravidla_Clutch_League_Cup_2026.pdf",
-  title: "Pravidla Clutch League Cup 2026",
-  meta: "PDF, 8 stran, 219 kB",
 };
-
-const partTitle = {
-  fontFamily: "var(--font-display)",
-  fontWeight: "var(--fw-display)",
-  fontStyle: "italic",
-  fontSize: "var(--fs-h3)",
-  lineHeight: "var(--lh-heading)",
-  letterSpacing: "var(--ls-display)",
-  textTransform: "uppercase",
-  color: "var(--text-heading)",
-  margin: 0,
-} as const;
 
 const fileTitle = {
   fontFamily: "var(--font-display)",
@@ -42,24 +33,28 @@ function PdfCard({
   meta,
   href,
   fileName,
+  download,
 }: {
   title: string;
   meta: string;
   href: string;
   fileName: string;
+  download: string;
 }) {
   return (
     <div className="cl-card w-full">
       <div className="cl-card__in">
-        <div className="cl-card__body flex flex-col items-center gap-[var(--sp-6)] text-center sm:flex-row sm:text-left">
-          <FileText size={40} strokeWidth={2} color="var(--gold)" aria-hidden className="flex-none" />
-          <div className="flex flex-1 flex-col items-center gap-[var(--sp-1)] sm:items-start">
-            <span style={fileTitle}>{title}</span>
-            <span className="cl-footer-meta">{meta}</span>
+        <div className="cl-card__body hiw-rules__card">
+          <div className="flex items-center gap-[var(--sp-4)]">
+            <FileText size={36} strokeWidth={2} color="var(--gold)" aria-hidden className="flex-none" />
+            <div className="flex flex-col gap-[var(--sp-1)]">
+              <span style={fileTitle}>{title}</span>
+              <span className="cl-footer-meta">{meta}</span>
+            </div>
           </div>
-          <a href={href} download={fileName} className="cl-btn cl-btn--primary w-full flex-none sm:w-auto">
+          <a href={href} download={fileName} className="cl-btn cl-btn--primary w-full sm:w-auto sm:self-start">
             <Download size={16} aria-hidden />
-            <span>Stáhnout pravidla</span>
+            <span>{download}</span>
           </a>
         </div>
       </div>
@@ -67,40 +62,36 @@ function PdfCard({
   );
 }
 
-function CampaignRules({ campaign }: { campaign: Campaign }) {
+function CampaignRules({ campaign, t }: { campaign: Campaign; t: Dictionary["rules"] }) {
   const { pdf } = campaign;
+  const title = fmt(t.campaignTitle, { name: campaign.name });
   return (
-    <div className="flex flex-col gap-[var(--sp-6)]">
+    <div className="hiw-rules__part">
       <div className="cl-sectionhead">
-        <span className="cl-sectionhead__over">{campaign.label}</span>
-        <h3 style={partTitle}>Pravidla {campaign.name}</h3>
-        <p className="cl-sectionhead__sub">
-          Platí jen pro tuhle kampaň, navíc k obecným pravidlům.
-        </p>
+        <span className="cl-sectionhead__over">{t.campaignOver}</span>
+        <h3 className="hiw-rules__part-title">{title}</h3>
+        <p className="cl-sectionhead__sub">{t.campaignSub}</p>
       </div>
 
       {pdf ? (
-        <PdfCard
-          title={`Pravidla ${campaign.name}`}
-          href={pdf.href}
-          fileName={pdf.fileName}
-          meta={pdf.meta}
-        />
+        <PdfCard title={title} href={pdf.href} fileName={pdf.fileName} meta={pdf.meta} download={t.download} />
       ) : (
-        <Notice tone="info">Pravidla {campaign.name} zveřejníme před turnajem.</Notice>
+        <Notice tone="info">{fmt(t.campaignSoon, { name: campaign.name })}</Notice>
       )}
 
-      {campaign.preview && (
+      {campaign.previewHref && (
         <div className="cl-card cl-card--flat w-full">
           <div className="cl-card__in">
-            <div className="cl-card__body flex flex-col items-center gap-[var(--sp-6)] text-center sm:flex-row sm:text-left">
-              <CalendarDays size={40} strokeWidth={2} color="var(--gold)" aria-hidden className="flex-none" />
-              <div className="flex flex-1 flex-col items-center gap-[var(--sp-1)] sm:items-start">
-                <span style={fileTitle}>{campaign.preview.label}</span>
-                <span className="cl-footer-meta">Kdo s kým hraje, kdy, skupiny a soupisky týmů.</span>
+            <div className="cl-card__body hiw-rules__card">
+              <div className="flex items-center gap-[var(--sp-4)]">
+                <CalendarDays size={36} strokeWidth={2} color="var(--gold)" aria-hidden className="flex-none" />
+                <div className="flex flex-col gap-[var(--sp-1)]">
+                  <span style={fileTitle}>{t.previewLabel}</span>
+                  <span className="cl-footer-meta">{t.previewMeta}</span>
+                </div>
               </div>
-              <Link href={campaign.preview.href} className="cl-btn cl-btn--secondary w-full flex-none sm:w-auto">
-                <span>Zobrazit rozpis</span>
+              <Link href={campaign.previewHref} className="cl-btn cl-btn--secondary w-full sm:w-auto sm:self-start">
+                <span>{t.previewButton}</span>
               </Link>
             </div>
           </div>
@@ -110,43 +101,34 @@ function CampaignRules({ campaign }: { campaign: Campaign }) {
   );
 }
 
-export default function RulesSection() {
+/** Obsah pravidel bez vlastní sekce — obaluje ho HowItWorksSection. */
+export default async function RulesSection() {
+  const t = (await getDictionary()).rules;
+
   return (
-    <section
-      id="pravidla"
-      aria-labelledby="pravidla-title"
-      className="cl-section relative overflow-hidden bg-[var(--black)]"
-    >
-      <div className="cl-container-narrow flex w-full flex-col gap-[var(--sp-16)]">
-        <SplitText
-          tag="h2"
-          id="pravidla-title"
-          className="cl-display"
-          style={{
-            fontSize: "var(--fs-display-2)",
-            fontStyle: "italic",
-            lineHeight: "var(--lh-heading)",
-          }}
-          text="Přečti si naše pravidla!"
-          splitType="words"
-          delay={90}
-        />
+    <div className="hiw-rules">
+      <SplitText
+        tag="h2"
+        id="pravidla-title"
+        className="cl-display hiw-rules__title"
+        text={t.title}
+        textAlign="left"
+        splitType="words"
+        delay={90}
+      />
 
-        {/* 1) Obecná pravidla — beze změny napříč kampaněmi. */}
-        <div className="flex flex-col gap-[var(--sp-6)]">
-          <div className="cl-sectionhead">
-            <span className="cl-sectionhead__over">Platí vždy</span>
-            <h3 style={partTitle}>Obecná pravidla</h3>
-            <p className="cl-sectionhead__sub">
-              Platí pro všechny turnaje Clutch League, ať je zrovna jakákoli kampaň.
-            </p>
-          </div>
-          <PdfCard {...GENERAL_PDF} />
+      {/* 1) Obecná pravidla — beze změny napříč kampaněmi. */}
+      <div className="hiw-rules__part">
+        <div className="cl-sectionhead">
+          <span className="cl-sectionhead__over">{t.alwaysOver}</span>
+          <h3 className="hiw-rules__part-title">{t.generalTitle}</h3>
+          <p className="cl-sectionhead__sub">{t.generalSub}</p>
         </div>
-
-        {/* 2) Pravidla aktuální kampaně — z src/content/campaign.ts. */}
-        <CampaignRules campaign={CAMPAIGN} />
+        <PdfCard {...GENERAL_PDF} title={t.generalPdfTitle} meta={t.generalPdfMeta} download={t.download} />
       </div>
-    </section>
+
+      {/* 2) Pravidla aktuální kampaně — z src/content/campaign.ts. */}
+      <CampaignRules campaign={CAMPAIGN} t={t} />
+    </div>
   );
 }

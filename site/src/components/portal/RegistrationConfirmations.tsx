@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { useHomePath, useT } from "@/i18n/client";
+import { rich } from "@/i18n/rich";
 
 function Confirmation({
   name,
@@ -42,29 +44,33 @@ export default function RegistrationConfirmations({
   errors?: Record<string, string>;
   values?: Record<string, string>;
 }) {
+  const t = useT().teamForms;
+  const home = useHomePath();
   const checked = (name: string) => values[name] === "on";
 
   return (
     <fieldset className="flex flex-col gap-[var(--sp-4)]">
       <legend className="cl-field__label" style={{ marginBottom: "var(--sp-3)" }}>
-        Potvrzení
+        {t.confirmations}
       </legend>
       <Confirmation name="confirmRules" checked={checked("confirmRules")} error={errors.confirmRules}>
-        Tým se seznámil s{" "}
-        <a href="/#pravidla" target="_blank" rel="noopener">
-          pravidly turnaje
-        </a>{" "}
-        a bude je dodržovat.
+        {rich(t.confirmRules, {
+          link: (
+            <a href={`${home}#pravidla`} target="_blank" rel="noopener">
+              {t.confirmRulesLink}
+            </a>
+          ),
+        })}
       </Confirmation>
       <Confirmation name="confirmHealth" checked={checked("confirmHealth")} error={errors.confirmHealth}>
-        Hráči startují na vlastní zodpovědnost a jsou zdravotně způsobilí ke hře.
+        {t.confirmHealth}
       </Confirmation>
       <Confirmation
         name="confirmAuthority"
         checked={checked("confirmAuthority")}
         error={errors.confirmAuthority}
       >
-        Jsem kapitán týmu a mám souhlas hráčů s přihláškou.
+        {t.confirmAuthority}
       </Confirmation>
     </fieldset>
   );

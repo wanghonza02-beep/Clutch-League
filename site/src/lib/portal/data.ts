@@ -1,9 +1,8 @@
 import type { PostgrestError } from "@supabase/supabase-js";
-import { formatDate } from "@/lib/format";
 import type { Database } from "@/lib/supabase/database.types";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
-import type { Entry, OpenTournament, Player, Team } from "./types";
+import { DEFAULT_MAX_ROSTER, type Entry, type OpenTournament, type Player, type Team } from "./types";
 
 // Přístup k datům portálu v Supabase. Dotazy jdou za přihlášeného uživatele,
 // takže co smí vidět a měnit, rozhoduje RLS v databázi — tady se nic
@@ -44,7 +43,8 @@ const NOTHING_CHANGED: PostgrestError = {
 export async function getOpenTournament(): Promise<OpenTournament | null> {
   const { data, error } = await createPublicClient()
     .from("tournaments")
-    .select("id, name, starts_on, format, min_roster")
+    // "*": web funguje i před migrací 20261013120000 (bez sloupce max_roster).
+    .select("*")
     .eq("registration_open", true)
     .maybeSingle();
   if (error) throw error;
@@ -53,9 +53,10 @@ export async function getOpenTournament(): Promise<OpenTournament | null> {
   return {
     id: data.id,
     name: data.name,
-    dateLabel: formatDate(data.starts_on),
+    startsOn: data.starts_on,
     format: data.format,
     minRoster: data.min_roster,
+    maxRoster: data.max_roster ?? DEFAULT_MAX_ROSTER,
   };
 }
 

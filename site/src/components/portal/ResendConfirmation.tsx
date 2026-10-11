@@ -3,15 +3,19 @@
 import { useActionState } from "react";
 import { RotateCw } from "lucide-react";
 import Notice from "@/components/ui/Notice";
+import { useT } from "@/i18n/client";
+import LocaleField from "@/i18n/LocaleField";
 import { resendConfirmationAction } from "@/lib/portal/actions";
 import { IDLE } from "@/lib/portal/validation";
 
 /** Znovu pošle potvrzovací e-mail. Samostatný formulář — nesmí být uvnitř jiného. */
 export default function ResendConfirmation({ email, next }: { email: string; next?: string }) {
+  const t = useT().authForms;
   const [state, action, pending] = useActionState(resendConfirmationAction, IDLE);
 
   return (
     <form action={action} noValidate className="flex flex-col gap-[var(--sp-3)]">
+      <LocaleField />
       <input type="hidden" name="email" value={email} />
       {next && <input type="hidden" name="next" value={next} />}
 
@@ -29,7 +33,7 @@ export default function ResendConfirmation({ email, next }: { email: string; nex
           aria-busy={pending || undefined}
         >
           <RotateCw size={14} strokeWidth={2} aria-hidden />
-          <span className="cl-btn-label">Poslat potvrzovací e-mail znovu</span>
+          <span className="cl-btn-label">{t.resend}</span>
         </button>
       </div>
     </form>

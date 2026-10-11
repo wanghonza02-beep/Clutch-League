@@ -1,5 +1,6 @@
 // Datový model portálu tak, jak s ním pracuje UI. Databáze (Supabase) má
-// vlastní tvar v snake_case — převod je v data.ts.
+// vlastní tvar v snake_case — převod je v data.ts. Popisky (role, pozice,
+// stav přihlášky) jsou ve slovnících jazyků: i18n/dictionaries, část labels.
 //
 // Pořadí je pevné: nejdřív účet kapitána, teprve potom tým. Tým bez kapitána
 // z webu nevznikne — organizátor tak vždycky ví, kdo za tým odpovídá a jak
@@ -10,21 +11,15 @@ import type { EntryStatus, PlayerPosition, UserRole } from "@/lib/supabase/datab
 
 export type Role = UserRole;
 
-export const ROLE_LABEL: Record<Role, string> = {
-  captain: "Kapitán týmu",
-  admin: "Organizátor",
-};
-
 export type Position = PlayerPosition;
 
 export const POSITIONS: Position[] = ["goalkeeper", "defender", "midfielder", "forward"];
 
-export const POSITION_LABEL: Record<Position, string> = {
-  goalkeeper: "Brankář",
-  defender: "Obránce",
-  midfielder: "Záložník",
-  forward: "Útočník",
-};
+/**
+ * Největší soupiska, když zrovna žádný turnaj nepřijímá přihlášky. Stejné
+ * číslo hlídá databáze (trigger players_roster_limit).
+ */
+export const DEFAULT_MAX_ROSTER = 10;
 
 export type Player = {
   id: string;
@@ -39,11 +34,6 @@ export type Player = {
 };
 
 export type { EntryStatus };
-
-export const ENTRY_STATUS_LABEL: Record<EntryStatus, string> = {
-  pending: "Čeká na schválení",
-  approved: "Schváleno",
-};
 
 export type Team = {
   id: string;
@@ -61,9 +51,11 @@ export type Team = {
 export type OpenTournament = {
   id: string;
   name: string;
-  dateLabel: string;
+  /** Datum turnaje "RRRR-MM-DD" — formátuje se podle jazyka stránky. */
+  startsOn: string;
   format: string;
   minRoster: number;
+  maxRoster: number;
 };
 
 /** Přihláška týmu na konkrétní turnaj. */

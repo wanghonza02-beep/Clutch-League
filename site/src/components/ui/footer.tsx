@@ -1,11 +1,18 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
+import Link from "@/i18n/Link";
 
 interface FooterProps {
   logo: ReactNode;
   brandName: string;
+  /** Popisek navigace v patičce (pro čtečky obrazovky). */
+  navLabel: string;
   socialLinks: Array<{
     icon: ReactNode;
+    href: string;
+    label: string;
+  }>;
+  /** Kontakty vypsané textem pod ikonami (e-mail, profil). */
+  contactLinks?: Array<{
     href: string;
     label: string;
   }>;
@@ -23,10 +30,16 @@ interface FooterProps {
   };
 }
 
+/** Odkaz ven (profil na sociální síti) se otevře v nové záložce, mailto ne. */
+const external = (href: string) =>
+  href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {};
+
 export function Footer({
   logo,
   brandName,
+  navLabel,
   socialLinks,
+  contactLinks = [],
   mainLinks,
   legalLinks = [],
   copyright,
@@ -38,25 +51,32 @@ export function Footer({
           <Link href="/" className="cl-logo" aria-label={brandName}>
             {logo}
           </Link>
-          <ul className="flex list-none gap-3">
-            {socialLinks.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={link.label}
-                  className="cl-iconbtn"
-                >
-                  {link.icon}
-                </a>
-              </li>
-            ))}
-          </ul>
+          <div className="flex flex-col gap-3 md:items-end">
+            <ul className="flex list-none gap-3">
+              {socialLinks.map((link) => (
+                <li key={link.href}>
+                  <a href={link.href} {...external(link.href)} aria-label={link.label} className="cl-iconbtn">
+                    {link.icon}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            {contactLinks.length > 0 && (
+              <ul className="flex list-none flex-wrap gap-x-4 gap-y-1 md:justify-end">
+                {contactLinks.map((link) => (
+                  <li key={link.href}>
+                    <a href={link.href} {...external(link.href)} className="cl-footer-meta">
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <div className="mt-6 border-t border-[var(--border-subtle)] pt-6 md:mt-4 md:pt-8 lg:grid lg:grid-cols-10 lg:gap-x-6">
-          <nav aria-label="Patička" className="lg:col-[4/11]">
+          <nav aria-label={navLabel} className="lg:col-[4/11]">
             <ul className="flex list-none flex-wrap gap-x-6 gap-y-1 lg:justify-end">
               {mainLinks.map((link) => (
                 <li key={link.href} className="shrink-0">

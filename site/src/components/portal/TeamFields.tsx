@@ -1,4 +1,5 @@
 import Field from "@/components/ui/Field";
+import { useT } from "@/i18n/client";
 import { NOTE_MAX } from "@/lib/portal/validation";
 import type { Team } from "@/lib/portal/types";
 
@@ -15,20 +16,22 @@ export default function TeamFields({
   errors?: Record<string, string>;
   values?: Record<string, string>;
 }) {
+  const t = useT().teamForms;
   const value = (field: string, fallback: string) => values[field] ?? fallback;
 
   return (
     <>
       <div
-        className="grid gap-[var(--sp-5)]"
+        className="cl-fields grid gap-[var(--sp-5)]"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
       >
-        <Field id="name" label="Název týmu" error={errors.name}>
+        <Field id="name" label={t.teamName} error={errors.name}>
           <input
             id="name"
             name="name"
             type="text"
             required
+            maxLength={60}
             autoComplete="off"
             defaultValue={value("name", team?.name ?? "")}
             aria-invalid={errors.name ? true : undefined}
@@ -37,12 +40,26 @@ export default function TeamFields({
           />
         </Field>
 
-        <Field id="city" label="Město" error={errors.city}>
+        <Field id="colors" label={t.colors} hint={t.colorsHint} error={errors.colors}>
+          <input
+            id="colors"
+            name="colors"
+            type="text"
+            required
+            maxLength={60}
+            defaultValue={value("colors", team?.colors ?? "")}
+            aria-invalid={errors.colors ? true : undefined}
+            aria-describedby="colors-msg"
+            className="cl-field__input"
+          />
+        </Field>
+
+        <Field id="city" label={t.city} error={errors.city}>
           <input
             id="city"
             name="city"
             type="text"
-            required
+            maxLength={60}
             autoComplete="address-level2"
             defaultValue={value("city", team?.city ?? "")}
             aria-invalid={errors.city ? true : undefined}
@@ -53,8 +70,8 @@ export default function TeamFields({
 
         <Field
           id="foundedYear"
-          label="Rok založení (nepovinné)"
-          hint="Např. 2024"
+          label={t.foundedYear}
+          hint={t.foundedYearHint}
           error={errors.foundedYear}
         >
           <input
@@ -68,25 +85,9 @@ export default function TeamFields({
             className="cl-field__input"
           />
         </Field>
-
-        <Field
-          id="colors"
-          label="Barvy týmu (nepovinné)"
-          hint="Např. černá / žlutá"
-          error={errors.colors}
-        >
-          <input
-            id="colors"
-            name="colors"
-            type="text"
-            defaultValue={value("colors", team?.colors ?? "")}
-            aria-describedby="colors-msg"
-            className="cl-field__input"
-          />
-        </Field>
       </div>
 
-      <Field id="note" label="Poznámka pro organizátora (nepovinné)" error={errors.note}>
+      <Field id="note" label={t.note} error={errors.note}>
         <textarea
           id="note"
           name="note"

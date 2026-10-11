@@ -1,17 +1,22 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 import { MailCheck, UserPlus } from "lucide-react";
 import Field from "@/components/ui/Field";
 import Notice from "@/components/ui/Notice";
 import ResendConfirmation from "./ResendConfirmation";
+import { useT } from "@/i18n/client";
+import { fmt } from "@/i18n/format";
+import Link from "@/i18n/Link";
+import LocaleField from "@/i18n/LocaleField";
+import { rich } from "@/i18n/rich";
 import { signupAction } from "@/lib/portal/actions";
 import { PATHS, withNext } from "@/lib/portal/paths";
 import { IDLE, PASSWORD_MIN } from "@/lib/portal/validation";
 
 /** Vytvoření účtu — první krok před přihláškou týmu. */
 export default function SignupForm({ next }: { next?: string }) {
+  const t = useT().authForms;
   const [state, action, pending] = useActionState(signupAction, IDLE);
   const values = state.values ?? {};
   const errors = state.errors ?? {};
@@ -27,11 +32,10 @@ export default function SignupForm({ next }: { next?: string }) {
           className="cl-display"
           style={{ fontSize: "var(--fs-h3)", fontStyle: "italic", lineHeight: "var(--lh-heading)" }}
         >
-          Zkontroluj e-mail
+          {t.checkEmailTitle}
         </h2>
         <p style={{ margin: 0, color: "var(--text-body)" }}>
-          Poslali jsme ti e-mail na <strong>{values.email}</strong>. Klikni na odkaz v něm — tím
-          se účet potvrdí a pustíme tě rovnou k přihlášce týmu. Nic nepřišlo? Mrkni do spamu.
+          {rich(t.checkEmailText, { email: <strong>{values.email}</strong> })}
         </p>
         <ResendConfirmation email={values.email} next={values.next} />
       </div>
@@ -48,6 +52,7 @@ export default function SignupForm({ next }: { next?: string }) {
 
   return (
     <form action={action} noValidate className="flex flex-col gap-[var(--sp-6)]">
+      <LocaleField />
       {next && <input type="hidden" name="next" value={next} />}
 
       {state.status === "error" && state.message && (
@@ -57,10 +62,10 @@ export default function SignupForm({ next }: { next?: string }) {
       )}
 
       <div
-        className="grid gap-[var(--sp-5)]"
+        className="cl-fields grid gap-[var(--sp-5)]"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
       >
-        <Field id="name" label="Jméno a příjmení" error={errors.name}>
+        <Field id="name" label={t.name} error={errors.name}>
           <input
             {...input("name")}
             type="text"
@@ -72,8 +77,8 @@ export default function SignupForm({ next }: { next?: string }) {
 
         <Field
           id="phone"
-          label="Telefon"
-          hint="Např. +420 777 123 456"
+          label={t.phone}
+          hint={t.phoneHint}
           error={errors.phone}
         >
           <input
@@ -89,8 +94,8 @@ export default function SignupForm({ next }: { next?: string }) {
 
       <Field
         id="email"
-        label="E-mail"
-        hint="Tímhle e-mailem se budeš přihlašovat."
+        label={t.email}
+        hint={t.emailHint}
         error={errors.email}
       >
         <input
@@ -103,13 +108,13 @@ export default function SignupForm({ next }: { next?: string }) {
       </Field>
 
       <div
-        className="grid gap-[var(--sp-5)]"
+        className="cl-fields grid gap-[var(--sp-5)]"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}
       >
         <Field
           id="password"
-          label="Heslo"
-          hint={`Aspoň ${PASSWORD_MIN} znaků.`}
+          label={t.password}
+          hint={fmt(t.passwordHint, { n: PASSWORD_MIN })}
           error={errors.password}
         >
           <input
@@ -121,7 +126,7 @@ export default function SignupForm({ next }: { next?: string }) {
           />
         </Field>
 
-        <Field id="passwordConfirm" label="Heslo znovu" error={errors.passwordConfirm}>
+        <Field id="passwordConfirm" label={t.passwordConfirm} error={errors.passwordConfirm}>
           <input
             {...input("passwordConfirm")}
             type="password"
@@ -141,10 +146,7 @@ export default function SignupForm({ next }: { next?: string }) {
             aria-invalid={errors.consent ? true : undefined}
             aria-describedby={errors.consent ? "consent-msg" : undefined}
           />
-          <span>
-            Souhlasím se zpracováním svých osobních údajů (jméno, e-mail, telefon) pro účely
-            organizace turnajů Clutch League.
-          </span>
+          <span>{t.consent}</span>
         </label>
         {errors.consent && (
           <span id="consent-msg" className="cl-field__hint cl-check__error">
@@ -160,15 +162,17 @@ export default function SignupForm({ next }: { next?: string }) {
         aria-busy={pending || undefined}
       >
         <UserPlus size={18} strokeWidth={2} aria-hidden />
-        <span className="cl-btn-label">Vytvořit účet</span>
+        <span className="cl-btn-label">{t.signupSubmit}</span>
       </button>
 
       <p className="cl-field__hint">
-        Už máš účet?{" "}
-        <Link href={withNext(PATHS.login, next)} style={{ color: "var(--text-link)" }}>
-          Přihlas se
-        </Link>
-        .
+        {rich(t.haveAccount, {
+          link: (
+            <Link href={withNext(PATHS.login, next)} style={{ color: "var(--text-link)" }}>
+              {t.haveAccountLink}
+            </Link>
+          ),
+        })}
       </p>
     </form>
   );

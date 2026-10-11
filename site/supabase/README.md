@@ -20,7 +20,7 @@ jsou v databázi Supabase. Tenhle návod projdeš jednou.
 Co kdo smí, hlídá databáze sama (Row Level Security). Kapitán vidí jen svůj tým,
 výsledky zapisuje jen organizátor (admin) a veřejnost vidí jen schválené týmy a výsledky.
 
-## 1. Databáze (čtyři migrace + výchozí data)
+## 1. Databáze (sedm migrací + výchozí data)
 
 SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen jednou, v tomto pořadí:**
 
@@ -31,8 +31,10 @@ SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen j
    karty, postup), zrušení role rozhodčí. Na konci vypíše, kdo byl z rozhodčího převeden na admina.
 5. `migrations/20261011120000_role_jen_v_supabase.sql` — role už nejde měnit z webu, jen v Supabase
 6. `migrations/20261012120000_mesto_tymu_nepovinne.sql` — město týmu nepovinné (archivní týmy bez kapitána)
-7. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
-8. `prvni-turnaj-2026.sql` — skutečný první turnaj (23. 8. 2026): týmy a umístění, bez zápasů
+7. `migrations/20261013120000_winter_5plus1_soupiska.sql` — Winter Clutch je 5+1, soupiska
+   6 až 10 hráčů; databáze nepustí na soupisku víc hráčů, než turnaj dovoluje
+8. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
+9. `prvni-turnaj-2026.sql` — skutečný první turnaj (23. 8. 2026): týmy a umístění, bez zápasů
 
 Pokud databáze ještě obsahuje ukázkový archiv ze starší verze `seed.sql` (vymyšlené
 týmy a výsledky), smaž ho: spusť `smazat-ukazkova-data.sql`. Skutečné týmy a turnaje nezasáhne.
@@ -92,7 +94,7 @@ Sign In / Providers → Email → **Confirm email** (účet se pak přihlásí h
 - **Přihlášky:** schválit, vrátit ke schválení nebo odmítnout; vidíš kontakt na kapitána.
   Schválený tým se objeví ve veřejných výsledcích turnaje.
 - **Turnaje:** založit, upravit termín a popis, otevřít/zavřít přihlášky (otevřené
-  smí být vždy jen na jednom turnaji), nastavit minimální soupisku, smazat.
+  smí být vždy jen na jednom turnaji), nastavit nejmenší a největší soupisku, smazat.
 - **U každého turnaje:** skupiny, konečné pořadí a postup týmů, rozpis zápasů (čas v pražském
   čase, Clutch Time), ruční seznam střelců, ocenění hráče turnaje a brankáře.
   Zápasy fáze „Skupina…“ se samy počítají do tabulky.

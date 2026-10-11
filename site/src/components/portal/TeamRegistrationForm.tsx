@@ -5,16 +5,20 @@ import { Send } from "lucide-react";
 import Notice from "@/components/ui/Notice";
 import RegistrationConfirmations from "./RegistrationConfirmations";
 import TeamFields from "./TeamFields";
+import { useT } from "@/i18n/client";
+import LocaleField from "@/i18n/LocaleField";
 import { registerTeamAction } from "@/lib/portal/actions";
 import { IDLE } from "@/lib/portal/validation";
 
 /** Přihláška nového týmu. Kapitán je známý z účtu, tady se ptáme jen na tým. */
 export default function TeamRegistrationForm() {
+  const t = useT().teamForms;
   const [state, action, pending] = useActionState(registerTeamAction, IDLE);
   const errors = state.errors ?? {};
 
   return (
     <form action={action} noValidate className="flex flex-col gap-[var(--sp-6)]">
+      <LocaleField />
       {state.status === "error" && state.message && (
         <Notice tone="error" live>
           {state.message}
@@ -32,7 +36,7 @@ export default function TeamRegistrationForm() {
           aria-busy={pending || undefined}
         >
           <Send size={18} strokeWidth={2} aria-hidden />
-          <span className="cl-btn-label">Odeslat přihlášku</span>
+          <span className="cl-btn-label">{t.sendRegistration}</span>
         </button>
       </div>
     </form>

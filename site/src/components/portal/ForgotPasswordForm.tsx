@@ -1,15 +1,19 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 import { MailCheck, Send } from "lucide-react";
 import Field from "@/components/ui/Field";
 import Notice from "@/components/ui/Notice";
+import { useT } from "@/i18n/client";
+import Link from "@/i18n/Link";
+import LocaleField from "@/i18n/LocaleField";
+import { rich } from "@/i18n/rich";
 import { forgotPasswordAction } from "@/lib/portal/actions";
 import { PATHS } from "@/lib/portal/paths";
 import { IDLE } from "@/lib/portal/validation";
 
 export default function ForgotPasswordForm() {
+  const t = useT().authForms;
   const [state, action, pending] = useActionState(forgotPasswordAction, IDLE);
   const errors = state.errors ?? {};
 
@@ -21,12 +25,11 @@ export default function ForgotPasswordForm() {
           <MailCheck size={32} strokeWidth={2} aria-hidden />
         </span>
         <p style={{ margin: 0, color: "var(--text-body)" }}>
-          Pokud u nás máš účet s e-mailem <strong>{state.message}</strong>, poslali jsme ti odkaz
-          na nastavení nového hesla. Odkaz platí hodinu. Nic nepřišlo? Mrkni do spamu.
+          {rich(t.forgotSent, { email: <strong>{state.message}</strong> })}
         </p>
         <div>
           <Link href={PATHS.login} className="cl-btn cl-btn--secondary">
-            <span>Zpět na přihlášení</span>
+            <span>{t.backToLogin}</span>
           </Link>
         </div>
       </div>
@@ -35,13 +38,14 @@ export default function ForgotPasswordForm() {
 
   return (
     <form action={action} noValidate className="flex flex-col gap-[var(--sp-6)]">
+      <LocaleField />
       {state.status === "error" && state.message && (
         <Notice tone="error" live>
           {state.message}
         </Notice>
       )}
 
-      <Field id="email" label="E-mail účtu" error={errors.email}>
+      <Field id="email" label={t.accountEmail} error={errors.email}>
         <input
           id="email"
           name="email"
@@ -62,15 +66,17 @@ export default function ForgotPasswordForm() {
         aria-busy={pending || undefined}
       >
         <Send size={18} strokeWidth={2} aria-hidden />
-        <span className="cl-btn-label">Poslat odkaz</span>
+        <span className="cl-btn-label">{t.sendLink}</span>
       </button>
 
       <p className="cl-field__hint">
-        Vzpomínáš si na heslo?{" "}
-        <Link href={PATHS.login} style={{ color: "var(--text-link)" }}>
-          Přihlas se
-        </Link>
-        .
+        {rich(t.rememberPassword, {
+          link: (
+            <Link href={PATHS.login} style={{ color: "var(--text-link)" }}>
+              {t.haveAccountLink}
+            </Link>
+          ),
+        })}
       </p>
     </form>
   );

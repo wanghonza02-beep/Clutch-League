@@ -1,4 +1,9 @@
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt } from "@/i18n/format";
 import { POSITIONS, type Position } from "./types";
+
+/** Hlášky kontrol ve zvoleném jazyce (slovník, část validation). */
+export type ValidationMessages = Dictionary["validation"];
 
 /** Stav formuláře vracený server akcemi do `useActionState`. */
 export type FormState = {
@@ -43,9 +48,9 @@ export function checkbox(formData: FormData, field: string): boolean {
 const PHONE_RE = /^\+?\d{9,15}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function validateEmail(value: string): string | undefined {
-  if (!value) return "Chybí e-mail.";
-  return EMAIL_RE.test(value) ? undefined : "Zkontroluj e-mail, třeba jmeno@email.cz.";
+export function validateEmail(value: string, v: ValidationMessages): string | undefined {
+  if (!value) return v.emailMissing;
+  return EMAIL_RE.test(value) ? undefined : v.emailInvalid;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -55,12 +60,16 @@ export function validateEmail(value: string): string | undefined {
 export const PASSWORD_MIN = 8;
 
 /** Nové heslo a jeho zopakování — při registraci i obnově hesla. */
-export function validatePassword(password: string, confirm: string): Record<string, string> {
-  if (!password) return { password: "Zvol si heslo." };
+export function validatePassword(
+  password: string,
+  confirm: string,
+  v: ValidationMessages
+): Record<string, string> {
+  if (!password) return { password: v.passwordMissing };
   if (password.length < PASSWORD_MIN) {
-    return { password: `Heslo musí mít aspoň ${PASSWORD_MIN} znaků.` };
+    return { password: fmt(v.passwordShort, { n: PASSWORD_MIN }) };
   }
-  if (password !== confirm) return { passwordConfirm: "Hesla se neshodují." };
+  if (password !== confirm) return { passwordConfirm: v.passwordMismatch };
   return {};
 }
 
@@ -84,38 +93,48 @@ export function readAccount(formData: FormData): AccountValues {
   };
 }
 
-export function validateAccount(values: AccountValues): Record<string, string> {
+function validateName(name: string, v: ValidationMessages): string | undefined {
+  if (!name) return v.nameMissing;
+  if (name.split(/\s+/).length < 2) return v.nameIncomplete;
+  if (name.length > 120) return v.max120;
+  return undefined;
+}
+
+function validatePhone(phone: string, v: ValidationMessages): string | undefined {
+  if (!phone) return v.phoneMissing;
+  if (!PHONE_RE.test(phone.replace(/[\s-]/g, ""))) return v.phoneInvalid;
+  return undefined;
+}
+
+export function validateAccount(values: AccountValues, v: ValidationMessages): Record<string, string> {
   const errors: Record<string, string> = {};
 
-  if (!values.name) errors.name = "Chybí jméno a příjmení.";
-  else if (values.name.split(/\s+/).length < 2) errors.name = "Napiš jméno i příjmení.";
+  const nameError = validateName(values.name, v);
+  if (nameError) errors.name = nameError;
 
-  const emailError = validateEmail(values.email);
+  const emailError = validateEmail(values.email, v);
   if (emailError) errors.email = emailError;
 
-  if (!values.phone) errors.phone = "Chybí telefon.";
-  else if (!PHONE_RE.test(values.phone.replace(/[\s-]/g, ""))) {
-    errors.phone = "Zkontroluj telefon, třeba +420 777 123 456.";
-  }
+  const phoneError = validatePhone(values.phone, v);
+  if (phoneError) errors.phone = phoneError;
 
-  Object.assign(errors, validatePassword(values.password, values.passwordConfirm));
+  Object.assign(errors, validatePassword(values.password, values.passwordConfirm, v));
 
-  if (!values.consent) errors.consent = "Bez souhlasu účet založit nejde.";
+  if (!values.consent) errors.consent = v.consentMissing;
 
   return errors;
 }
 
 /** Jméno a telefon — úprava účtu (bez hesla a souhlasu). */
-export function validateProfile(values: { name: string; phone: string }): Record<string, string> {
+export function validateProfile(
+  values: { name: string; phone: string },
+  v: ValidationMessages
+): Record<string, string> {
   const errors: Record<string, string> = {};
-  if (!values.name) errors.name = "Chybí jméno a příjmení.";
-  else if (values.name.split(/\s+/).length < 2) errors.name = "Napiš jméno i příjmení.";
-  else if (values.name.length > 120) errors.name = "Nejvýš 120 znaků.";
-
-  if (!values.phone) errors.phone = "Chybí telefon.";
-  else if (!PHONE_RE.test(values.phone.replace(/[\s-]/g, ""))) {
-    errors.phone = "Zkontroluj telefon, třeba +420 777 123 456.";
-  }
+  const nameError = validateName(values.name, v);
+  if (nameError) errors.name = nameError;
+  const phoneError = validatePhone(values.phone, v);
+  if (phoneError) errors.phone = phoneError;
   return errors;
 }
 
@@ -158,24 +177,28 @@ export function foundedYearValue(values: TeamValues): number | null {
   return values.foundedYear ? Number(values.foundedYear) : null;
 }
 
-export function validateTeam(values: TeamValues): Record<string, string> {
+export function validateTeam(values: TeamValues, v: ValidationMessages): Record<string, string> {
   const errors: Record<string, string> = {};
   const thisYear = new Date().getFullYear();
 
-  if (!values.name) errors.name = "Chybí název týmu.";
-  else if (values.name.length > 60) errors.name = "Název může mít nejvýš 60 znaků.";
+  if (!values.name) errors.name = v.teamNameMissing;
+  else if (values.name.length > 60) errors.name = v.teamNameLong;
 
-  if (!values.city) errors.city = "Chybí město.";
+  // Město je nepovinné, barvy týmu povinné.
+  if (values.city.length > 60) errors.city = v.max60;
+
+  if (!values.colors) errors.colors = v.colorsMissing;
+  else if (values.colors.length > 60) errors.colors = v.max60;
 
   if (values.foundedYear) {
     const year = Number(values.foundedYear);
     if (!Number.isInteger(year) || year < 1900 || year > thisYear) {
-      errors.foundedYear = `Zadej rok mezi 1900 a ${thisYear}.`;
+      errors.foundedYear = fmt(v.yearRange, { from: 1900, to: thisYear });
     }
   }
 
   if (values.note.length > NOTE_MAX) {
-    errors.note = `Poznámka může mít nejvýš ${NOTE_MAX} znaků.`;
+    errors.note = fmt(v.noteLong, { n: NOTE_MAX });
   }
 
   return errors;
@@ -184,10 +207,10 @@ export function validateTeam(values: TeamValues): Record<string, string> {
 /** Povinná potvrzení u přihlášky týmu. Klíč = name checkboxu. */
 export const REGISTRATION_CONFIRMATIONS = ["confirmRules", "confirmHealth", "confirmAuthority"] as const;
 
-export function validateConfirmations(formData: FormData): Record<string, string> {
+export function validateConfirmations(formData: FormData, v: ValidationMessages): Record<string, string> {
   const errors: Record<string, string> = {};
   for (const field of REGISTRATION_CONFIRMATIONS) {
-    if (!checkbox(formData, field)) errors[field] = "Bez tohohle potvrzení tým přihlásit nejde.";
+    if (!checkbox(formData, field)) errors[field] = v.confirmationMissing;
   }
   return errors;
 }
@@ -225,31 +248,35 @@ export function readPlayer(formData: FormData): PlayerValues {
 
 export function validatePlayer(
   values: PlayerValues,
-  takenNumbers: number[]
+  takenNumbers: number[],
+  v: ValidationMessages
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   const thisYear = new Date().getFullYear();
 
-  if (!values.firstName) errors.firstName = "Chybí jméno.";
-  if (!values.lastName) errors.lastName = "Chybí příjmení.";
+  if (!values.firstName) errors.firstName = v.firstNameMissing;
+  if (!values.lastName) errors.lastName = v.lastNameMissing;
 
   if (values.number) {
     const number = Number(values.number);
     if (!Number.isInteger(number) || number < 1 || number > 99) {
-      errors.number = "Číslo dresu musí být 1 až 99.";
+      errors.number = v.numberRange;
     } else if (takenNumbers.includes(number)) {
-      errors.number = `Číslo ${number} už má jiný hráč.`;
+      errors.number = fmt(v.numberTaken, { n: number });
     }
   }
 
   if (!POSITIONS.includes(values.position as Position)) {
-    errors.position = "Vyber pozici.";
+    errors.position = v.positionMissing;
   }
 
-  if (values.birthYear) {
+  // Rok narození je povinný, číslo dresu ne.
+  if (!values.birthYear) {
+    errors.birthYear = v.birthYearMissing;
+  } else {
     const year = Number(values.birthYear);
     if (!Number.isInteger(year) || year < 1940 || year > thisYear) {
-      errors.birthYear = `Zadej rok mezi 1940 a ${thisYear}.`;
+      errors.birthYear = fmt(v.yearRange, { from: 1940, to: thisYear });
     }
   }
 

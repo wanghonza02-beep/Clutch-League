@@ -3,16 +3,20 @@
 import { useActionState } from "react";
 import Notice from "@/components/ui/Notice";
 import TeamFields from "./TeamFields";
+import { useT } from "@/i18n/client";
+import LocaleField from "@/i18n/LocaleField";
 import { saveTeamAction } from "@/lib/portal/actions";
 import { IDLE } from "@/lib/portal/validation";
 import type { Team } from "@/lib/portal/types";
 
 /** Úprava údajů už přihlášeného týmu v portálu. */
 export default function TeamForm({ team }: { team: Team }) {
+  const t = useT();
   const [state, action, pending] = useActionState(saveTeamAction, IDLE);
 
   return (
     <form action={action} className="flex flex-col gap-[var(--sp-6)]">
+      <LocaleField />
       {state.status !== "idle" && state.message && (
         <Notice tone={state.status === "ok" ? "ok" : "error"} live>
           {state.message}
@@ -28,7 +32,7 @@ export default function TeamForm({ team }: { team: Team }) {
           aria-disabled={pending || undefined}
           aria-busy={pending || undefined}
         >
-          <span className="cl-btn-label">Uložit změny</span>
+          <span className="cl-btn-label">{t.common.saveChanges}</span>
         </button>
       </div>
     </form>

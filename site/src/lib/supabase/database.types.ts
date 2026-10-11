@@ -1,4 +1,4 @@
-// Typy databáze podle supabase/migrations (č. 1–4).
+// Typy databáze podle supabase/migrations (č. 1–7).
 // Při změně schématu je uprav ručně, nebo je přegeneruj:
 //   npx supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts
 
@@ -23,6 +23,7 @@ export type TournamentWrite = {
   status?: TournamentStatus;
   registration_open?: boolean;
   min_roster?: number;
+  max_roster?: number;
   mvp_player?: string | null;
   mvp_team_id?: string | null;
   best_keeper_player?: string | null;
@@ -64,6 +65,7 @@ export type Database = {
           status: TournamentStatus;
           registration_open: boolean;
           min_roster: number;
+          max_roster: number;
           mvp_player: string | null;
           mvp_team_id: string | null;
           best_keeper_player: string | null;

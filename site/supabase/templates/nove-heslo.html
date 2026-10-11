@@ -1,5 +1,10 @@
-<!doctype html>
-<html lang="cs">
+{{ $l := "cs" }}{{ with .Data.locale }}{{ if or (eq . "en") (eq . "uk") (eq . "sk") }}{{ $l = . }}{{ end }}{{ end }}<!doctype html>
+<html lang="{{ $l }}">
+  <!--
+    Nové heslo (Supabase → Authentication → Emails → Reset password).
+    Jazyk podle toho, ve kterém jazyce webu se uživatel registroval
+    (user_metadata.locale = cs / en / uk / sk). Bez jazyka česky.
+  -->
   <body style="margin:0;padding:0;background:#000000;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000;">
       <tr>
@@ -13,21 +18,21 @@
             </tr>
             <tr>
               <td style="padding:28px 32px 0 32px;">
-                <h1 style="margin:0;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-style:italic;font-size:28px;line-height:1.05;text-transform:uppercase;color:#f2f2f0;">Nové heslo</h1>
+                <h1 style="margin:0;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-style:italic;font-size:28px;line-height:1.05;text-transform:uppercase;color:#f2f2f0;">{{ if eq $l "en" }}New password{{ else if eq $l "uk" }}Новий пароль{{ else if eq $l "sk" }}Nové heslo{{ else }}Nové heslo{{ end }}</h1>
                 <p style="margin:16px 0 0 0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#dcdcda;">
-                  Přišla nám žádost o nové heslo k účtu {{ .Email }}. Klikni na tlačítko a nastav si nové. Odkaz platí hodinu a jde použít jen jednou.
+                  {{ if eq $l "en" }}We received a request for a new password for the account {{ .Email }}. Click the button and set a new one. The link is valid for one hour and can only be used once.{{ else if eq $l "uk" }}Ми отримали запит на новий пароль для акаунта {{ .Email }}. Натисни кнопку та встанови новий. Посилання дійсне одну годину і працює лише один раз.{{ else if eq $l "sk" }}Prišla nám žiadosť o nové heslo k účtu {{ .Email }}. Klikni na tlačidlo a nastav si nové. Odkaz platí hodinu a dá sa použiť len raz.{{ else }}Přišla nám žádost o nové heslo k účtu {{ .Email }}. Klikni na tlačítko a nastav si nové. Odkaz platí hodinu a jde použít jen jednou.{{ end }}
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding:28px 32px;">
-                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/nove-heslo" style="display:inline-block;padding:14px 28px;background:#f5b300;color:#0a0a0a;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:15px;letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;">Nastavit nové heslo</a>
+                <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ if eq $l "cs" }}/nove-heslo{{ else }}/{{ $l }}/nove-heslo{{ end }}" style="display:inline-block;padding:14px 28px;background:#f5b300;color:#0a0a0a;font-family:'Arial Narrow',Arial,sans-serif;font-weight:700;font-size:15px;letter-spacing:0.16em;text-transform:uppercase;text-decoration:none;">{{ if eq $l "en" }}Set new password{{ else if eq $l "uk" }}Встановити новий пароль{{ else if eq $l "sk" }}Nastaviť nové heslo{{ else }}Nastavit nové heslo{{ end }}</a>
               </td>
             </tr>
             <tr>
               <td style="padding:0 32px 32px 32px;">
                 <p style="margin:0;padding-top:20px;border-top:1px solid #2a2a2a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:#a6a6a6;">
-                  Pokud tenhle e-mail nečekáš, ignoruj ho — heslo zůstane stejné.
+                  {{ if eq $l "en" }}If you weren't expecting this email, ignore it — your password stays the same.{{ else if eq $l "uk" }}Якщо цей лист для тебе несподіваний, проігноруй його — пароль залишиться тим самим.{{ else if eq $l "sk" }}Ak tento e-mail nečakáš, ignoruj ho — heslo zostane rovnaké.{{ else }}Pokud tenhle e-mail nečekáš, ignoruj ho — heslo zůstane stejné.{{ end }}
                 </p>
               </td>
             </tr>

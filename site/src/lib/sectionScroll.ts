@@ -1,8 +1,8 @@
 // Plynulé posouvání na sekce úvodní stránky (jen v prohlížeči).
 //
 // Na úvodní stránce se sjede rovnou. Z podstránky se cíl uloží, přejde se na
-// úvodní stránku a sjede se až po načtení (HashScroll) — pod animací „Jak to
-// funguje“ se totiž obsah po načtení ještě posune.
+// úvodní stránku a sjede se až po načtení (HashScroll) — až zmizí přechodová
+// animace, ať návštěvník posun vidí.
 
 /** Výška lepící navigace (= .cl-nav, --nav-h v globals.css). */
 export const NAV_HEIGHT = 76;
@@ -13,19 +13,22 @@ function smoothAllowed(): boolean {
   return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** Sjede na sekci (odsazení pod lištou řeší scroll-padding v CSS) a zapíše kotvu do adresy. */
-export function scrollToSection(id: string, smooth = true): boolean {
+/**
+ * Sjede na sekci (odsazení pod lištou řeší scroll-padding v CSS) a zapíše
+ * kotvu do adresy. `home` je úvodní stránka v jazyce webu ("/" nebo "/en").
+ */
+export function scrollToSection(id: string, home: string, smooth = true): boolean {
   const el = document.getElementById(id);
   if (!el) return false;
   el.scrollIntoView({ behavior: smooth && smoothAllowed() ? "smooth" : "auto", block: "start" });
-  history.replaceState(null, "", `/#${id}`);
+  history.replaceState(null, "", `${home}#${id}`);
   return true;
 }
 
 /** Úplný začátek úvodní stránky — nad první sekci. */
-export function scrollToTop(): void {
+export function scrollToTop(home: string): void {
   window.scrollTo({ top: 0, behavior: smoothAllowed() ? "smooth" : "auto" });
-  history.replaceState(null, "", "/");
+  history.replaceState(null, "", home);
 }
 
 export function rememberSection(id: string): void {

@@ -1,16 +1,20 @@
 "use client";
 
 import { useActionState } from "react";
-import Link from "next/link";
 import { LogIn } from "lucide-react";
 import Field from "@/components/ui/Field";
 import Notice from "@/components/ui/Notice";
 import ResendConfirmation from "./ResendConfirmation";
+import { useT } from "@/i18n/client";
+import Link from "@/i18n/Link";
+import LocaleField from "@/i18n/LocaleField";
+import { rich } from "@/i18n/rich";
 import { loginAction } from "@/lib/portal/actions";
 import { PATHS, withNext } from "@/lib/portal/paths";
 import { IDLE } from "@/lib/portal/validation";
 
 export default function LoginForm({ next }: { next?: string }) {
+  const t = useT().authForms;
   const [state, action, pending] = useActionState(loginAction, IDLE);
   const values = state.values ?? {};
   const errors = state.errors ?? {};
@@ -19,6 +23,7 @@ export default function LoginForm({ next }: { next?: string }) {
   return (
     <div className="flex flex-col gap-[var(--sp-6)]">
       <form action={action} noValidate className="flex flex-col gap-[var(--sp-6)]">
+        <LocaleField />
         {next && <input type="hidden" name="next" value={next} />}
 
         {state.status === "error" && state.message && (
@@ -27,7 +32,7 @@ export default function LoginForm({ next }: { next?: string }) {
           </Notice>
         )}
 
-        <Field id="email" label="E-mail" error={errors.email}>
+        <Field id="email" label={t.email} error={errors.email}>
           <input
             id="email"
             name="email"
@@ -42,7 +47,7 @@ export default function LoginForm({ next }: { next?: string }) {
         </Field>
 
         <div className="flex flex-col gap-[var(--sp-2)]">
-          <Field id="password" label="Heslo" error={errors.password}>
+          <Field id="password" label={t.password} error={errors.password}>
             <input
               id="password"
               name="password"
@@ -59,7 +64,7 @@ export default function LoginForm({ next }: { next?: string }) {
             className="cl-field__hint self-end"
             style={{ color: "var(--text-link)" }}
           >
-            Zapomenuté heslo?
+            {t.forgotLink}
           </Link>
         </div>
 
@@ -70,15 +75,17 @@ export default function LoginForm({ next }: { next?: string }) {
           aria-busy={pending || undefined}
         >
           <LogIn size={18} strokeWidth={2} aria-hidden />
-          <span className="cl-btn-label">Přihlásit se</span>
+          <span className="cl-btn-label">{t.loginSubmit}</span>
         </button>
 
         <p className="cl-field__hint">
-          Ještě nemáš účet?{" "}
-          <Link href={withNext(PATHS.signup, next)} style={{ color: "var(--text-link)" }}>
-            Vytvoř si účet
-          </Link>
-          . Bez něj tým přihlásit nejde.
+          {rich(t.noAccount, {
+            link: (
+              <Link href={withNext(PATHS.signup, next)} style={{ color: "var(--text-link)" }}>
+                {t.noAccountLink}
+              </Link>
+            ),
+          })}
         </p>
       </form>
 

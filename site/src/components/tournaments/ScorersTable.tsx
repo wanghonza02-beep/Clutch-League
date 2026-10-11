@@ -1,20 +1,22 @@
+import { getDictionary } from "@/i18n/server";
 import { findTeam, type Tournament } from "@/lib/tournaments";
 
 /** Tabulka střelců turnaje. */
-export default function ScorersTable({ tournament }: { tournament: Tournament }) {
+export default async function ScorersTable({ tournament }: { tournament: Tournament }) {
+  const t = (await getDictionary()).tournament;
   const scorers = [...tournament.scorers].sort((a, b) => b.goals - a.goals);
 
   return (
     <div className="cl-tablewrap">
       <table className="cl-table" style={{ minWidth: "420px" }}>
-        <caption>Nejlepší střelci</caption>
+        <caption>{t.scorersCaption}</caption>
         <thead>
           <tr>
             <th scope="col">#</th>
-            <th scope="col">Hráč</th>
-            <th scope="col">Tým</th>
+            <th scope="col">{t.player}</th>
+            <th scope="col">{t.team}</th>
             <th scope="col" className="cl-table__num">
-              Góly
+              {t.goalsCol}
             </th>
           </tr>
         </thead>

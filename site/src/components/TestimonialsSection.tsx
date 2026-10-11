@@ -1,6 +1,7 @@
 import { Quote, Star } from "lucide-react";
 import SplitText from "@/components/ui/SplitText";
 import { REVIEWS } from "@/content/reviews";
+import { getDictionary } from "@/i18n/server";
 
 const initials = (name: string) =>
   name
@@ -9,9 +10,9 @@ const initials = (name: string) =>
     .join("")
     .toUpperCase();
 
-function Stars() {
+function Stars({ label }: { label: string }) {
   return (
-    <div className="testi-stars" role="img" aria-label="Hodnocení 5 z 5">
+    <div className="testi-stars" role="img" aria-label={label}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star key={i} size={16} strokeWidth={0} fill="currentColor" aria-hidden />
       ))}
@@ -19,9 +20,10 @@ function Stars() {
   );
 }
 
-export default function TestimonialsSection() {
+export default async function TestimonialsSection() {
   // Bez skutečných recenzí se sekce neukazuje (viz src/content/reviews.ts).
   if (REVIEWS.length === 0) return null;
+  const t = (await getDictionary()).testimonials;
 
   return (
     <section
@@ -34,19 +36,16 @@ export default function TestimonialsSection() {
           className="cl-sectionhead cl-sectionhead--center"
           style={{ marginBottom: "var(--sp-12)" }}
         >
-          <span className="cl-sectionhead__over">Co o nás říkají hráči</span>
+          <span className="cl-sectionhead__over">{t.over}</span>
           <SplitText
             tag="h2"
             id="proc-clutch-league-title"
             className="cl-sectionhead__title"
-            text="Proč zrovna Clutch League"
+            text={t.title}
             splitType="words"
             delay={90}
           />
-          <p className="cl-sectionhead__sub">
-            Organizace, souboje, fair play a parta kolem hřiště. Tohle si z Clutch League
-            odnesli hráči z prvního turnaje.
-          </p>
+          <p className="cl-sectionhead__sub">{t.sub}</p>
         </div>
 
         <ul className="testi-grid">
@@ -57,7 +56,7 @@ export default function TestimonialsSection() {
                   <span className="cl-card__raster" aria-hidden />
                   <div className="cl-card__body testi-card__body">
                     <div className="flex items-start justify-between gap-4">
-                      <Stars />
+                      <Stars label={t.stars} />
                       <Quote size={28} className="testi-card__mark" aria-hidden />
                     </div>
 

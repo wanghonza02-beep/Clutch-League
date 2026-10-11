@@ -1,9 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { formI18n } from "@/i18n/action";
+import type { Dictionary } from "@/i18n/dictionaries";
+import { fmt } from "@/i18n/format";
 import { PATHS } from "@/lib/portal/paths";
 import { requireRole } from "@/lib/portal/session";
 import { fail, ok, text, type FormState } from "@/lib/portal/validation";
+import { revalidateRoute } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { getMatchForResult } from "./data";
 import { maxMinute, validateResult, type EventInput } from "./result";
@@ -11,13 +14,13 @@ import { maxMinute, validateResult, type EventInput } from "./result";
 // Zápis výsledku zápasu. Smí jen admin: tady to ověří requireRole a znovu
 // databáze ve funkci admin_save_match_result (jinak vyhodí „permission denied“).
 
-function refreshResults(matchId: string) {
-  revalidatePath("/");
-  revalidatePath("/turnaje");
-  revalidatePath("/turnaje/[slug]", "page");
-  revalidatePath(`${PATHS.portal}/vysledky`);
-  revalidatePath(`${PATHS.portal}/vysledky/${matchId}`);
-  revalidatePath(PATHS.portal, "layout");
+function refreshResults() {
+  revalidateRoute("/");
+  revalidateRoute("/turnaje");
+  revalidateRoute("/turnaje/[slug]");
+  revalidateRoute(`${PATHS.portal}/vysledky`);
+  revalidateRoute(`${PATHS.portal}/vysledky/[id]`);
+  revalidateRoute(PATHS.portal, "layout");
 }
 
 function parseEvents(raw: string): EventInput[] | null {
@@ -40,13 +43,13 @@ function parseEvents(raw: string): EventInput[] | null {
   }
 }
 
-function rpcFailure(message: string): FormState {
-  if (message.includes("goals_do_not_match_score")) return fail("Góly nesedí se skóre.");
-  if (message.includes("event_team_not_in_match")) return fail("Událost patří týmu, který zápas nehraje.");
-  if (message.includes("permission denied")) return fail("Výsledky smí zapisovat jen admin.");
-  if (message.includes("match_not_found")) return fail("Zápas už neexistuje.");
+function rpcFailure(message: string, m: Dictionary["adminActions"]): FormState {
+  if (message.includes("goals_do_not_match_score")) return fail(m.resultGoalsMismatch);
+  if (message.includes("event_team_not_in_match")) return fail(m.resultWrongTeam);
+  if (message.includes("permission denied")) return fail(m.resultForbidden);
+  if (message.includes("match_not_found")) return fail(m.matchMissing);
   console.error("[výsledky]", message);
-  return fail("Výsledek se nepodařilo uložit. Zkus to prosím znovu.");
+  return fail(m.resultFailed);
 }
 
 /**
@@ -54,19 +57,22 @@ function rpcFailure(message: string): FormState {
  * Body se nikam neukládají — počítají se ze skóre.
  */
 export async function saveMatchResultAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  await requireRole("admin");
+  const { locale, t } = formI18n(formData);
+  const m = t.adminActions;
+  await requireRole("admin", locale);
 
   const match = await getMatchForResult(text(formData, "matchId"));
-  if (!match) return fail("Zápas už neexistuje.");
+  if (!match) return fail(m.matchMissing);
 
-  if (text(formData, "intent") === "clear") return clearResult(match.id);
+  if (text(formData, "intent") === "clear") return clearResult(match.id, m);
 
   const events = parseEvents(text(formData, "events"));
-  if (!events) return fail("Události zápasu se nepodařilo přečíst. Obnov stránku a zkus to znovu.");
+  if (!events) return fail(m.resultUnreadable);
 
   const result = validateResult(
     { homeGoals: text(formData, "homeGoals"), awayGoals: text(formData, "awayGoals"), events },
-    maxMinute(match.tournament.matchLength)
+    maxMinute(match.tournament.matchLength),
+    t
   );
   if (result.message) return fail(result.message, result.errors);
 
@@ -83,17 +89,17 @@ export async function saveMatchResultAction(_prev: FormState, formData: FormData
       minute: e.minute,
     })),
   });
-  if (error) return rpcFailure(error.message);
+  if (error) return rpcFailure(error.message, m);
 
-  refreshResults(match.id);
+  refreshResults();
   return ok(
     result.homeGoals === null
-      ? "Výsledek je smazaný."
-      : `Výsledek ${result.homeGoals}:${result.awayGoals} je uložený a je vidět v Odehraných zápasech.`
+      ? m.resultCleared
+      : fmt(m.resultSaved, { score: `${result.homeGoals}:${result.awayGoals}` })
   );
 }
 
-async function clearResult(matchId: string): Promise<FormState> {
+async function clearResult(matchId: string, m: Dictionary["adminActions"]): Promise<FormState> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("admin_save_match_result", {
     p_match: matchId,
@@ -101,8 +107,8 @@ async function clearResult(matchId: string): Promise<FormState> {
     p_away_goals: null,
     p_events: [],
   });
-  if (error) return rpcFailure(error.message);
+  if (error) return rpcFailure(error.message, m);
 
-  refreshResults(matchId);
-  return ok("Výsledek je smazaný. Zápas teď čeká na zápis.");
+  refreshResults();
+  return ok(m.resultClearedWaiting);
 }

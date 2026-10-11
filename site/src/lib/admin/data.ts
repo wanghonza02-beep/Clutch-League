@@ -310,8 +310,8 @@ export async function getResultsOverview(tournamentId: string): Promise<ResultsO
       const own = events.filter((e) => e.match_id === m.id);
       return {
         ...m,
-        homeTeam: teamName.get(m.homeTeamId) ?? "Neznámý tým",
-        awayTeam: teamName.get(m.awayTeamId) ?? "Neznámý tým",
+        homeTeam: teamName.get(m.homeTeamId) ?? "—",
+        awayTeam: teamName.get(m.awayTeamId) ?? "—",
         goals: own.filter((e) => e.kind === "goal").length,
         cards: own.filter((e) => e.kind !== "goal").length,
       };
@@ -371,7 +371,7 @@ export async function getMatchForResult(matchId: string): Promise<MatchForResult
 
   const side = (id: string) => ({
     id,
-    name: teams.data.find((t) => t.id === id)?.name ?? "Neznámý tým",
+    name: teams.data.find((t) => t.id === id)?.name ?? "—",
     roster: players.data
       .filter((p) => p.team_id === id)
       .map((p) => `${p.first_name} ${p.last_name}`)

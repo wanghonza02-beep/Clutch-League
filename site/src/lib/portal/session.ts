@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { localePath, type Locale } from "@/i18n/config";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { PATHS } from "./paths";
@@ -42,17 +43,17 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
 
 /**
  * Stráž pro chráněné stránky a server akce. Bez přihlášení přesměruje na
- * přihlášení. Volá se v každé chráněné části zvlášť — ne jen v layoutu.
- * Skutečnou ochranu dat drží RLS v databázi; tohle je hlavně UX.
+ * přihlášení (v jazyce stránky). Volá se v každé chráněné části zvlášť — ne
+ * jen v layoutu. Skutečnou ochranu dat drží RLS v databázi; tohle je hlavně UX.
  */
-export async function requireUser(): Promise<SessionUser> {
+export async function requireUser(locale: Locale): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) redirect(PATHS.login);
+  if (!user) redirect(localePath(locale, PATHS.login));
   return user;
 }
 
-export async function requireRole(role: Role): Promise<SessionUser> {
-  const user = await requireUser();
-  if (user.role !== role) redirect(PATHS.portal);
+export async function requireRole(role: Role, locale: Locale): Promise<SessionUser> {
+  const user = await requireUser(locale);
+  if (user.role !== role) redirect(localePath(locale, PATHS.portal));
   return user;
 }

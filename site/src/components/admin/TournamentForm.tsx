@@ -1,11 +1,15 @@
 import { saveTournamentAction } from "@/lib/admin/actions";
+import { DEFAULT_MAX_ROSTER } from "@/lib/portal/types";
 import type { Database } from "@/lib/supabase/database.types";
+import { getDictionary } from "@/i18n/server";
 import ActionForm, { CheckInput, SelectInput, SubmitButton, TextAreaInput, TextInput } from "@/components/ui/ActionForm";
 
 type Tournament = Database["public"]["Tables"]["tournaments"]["Row"];
 
 /** Založení nového turnaje (bez `tournament`) i úprava stávajícího. */
-export default function TournamentForm({ tournament }: { tournament?: Tournament }) {
+export default async function TournamentForm({ tournament }: { tournament?: Tournament }) {
+  const t = (await getDictionary()).admin;
+
   return (
     <ActionForm
       action={saveTournamentAction}
@@ -14,64 +18,57 @@ export default function TournamentForm({ tournament }: { tournament?: Tournament
       className="flex flex-col gap-[var(--sp-5)]"
     >
       <div className="adm-grid adm-grid--wide">
-        <TextInput name="name" label="Název turnaje" fallback={tournament?.name} />
-        <TextInput name="startsOn" label="Datum" type="date" fallback={tournament?.starts_on} />
-        <TextInput
-          name="edition"
-          label="Sezóna (nepovinné)"
-          hint="Např. Zima 2027"
-          fallback={tournament?.edition}
-        />
-        <TextInput name="venue" label="Místo (nepovinné)" hint="Např. Praha" fallback={tournament?.venue} />
-        <TextInput name="format" label="Formát (nepovinné)" hint="Např. 3 na 3" fallback={tournament?.format} />
+        <TextInput name="name" label={t.name} fallback={tournament?.name} />
+        <TextInput name="startsOn" label={t.date} type="date" fallback={tournament?.starts_on} />
+        <TextInput name="edition" label={t.edition} hint={t.editionHint} fallback={tournament?.edition} />
+        <TextInput name="venue" label={t.venue} hint={t.venueHint} fallback={tournament?.venue} />
+        <TextInput name="format" label={t.format} hint={t.formatHint} fallback={tournament?.format} />
         <TextInput
           name="matchLength"
-          label="Délka zápasu (nepovinné)"
-          hint="Např. 15 min"
+          label={t.matchLength}
+          hint={t.matchLengthHint}
           fallback={tournament?.match_length}
         />
       </div>
 
-      <TextAreaInput
-        name="summary"
-        label="Krátký popis (nepovinné)"
-        hint="Ukáže se v přehledu turnajů a na úvodní stránce."
-        fallback={tournament?.summary}
-      />
+      <TextAreaInput name="summary" label={t.summary} hint={t.summaryHint} fallback={tournament?.summary} />
 
       <div className="adm-grid">
         <TextInput
           name="minRoster"
-          label="Nejmenší soupiska"
+          label={t.minRoster}
           inputMode="numeric"
-          hint="Kolik hráčů musí tým mít."
-          fallback={tournament?.min_roster ?? 3}
+          hint={t.minRosterHint}
+          fallback={tournament?.min_roster ?? 6}
+        />
+        <TextInput
+          name="maxRoster"
+          label={t.maxRoster}
+          inputMode="numeric"
+          hint={t.maxRosterHint}
+          fallback={tournament?.max_roster ?? DEFAULT_MAX_ROSTER}
         />
         <SelectInput
           name="status"
-          label="Stav"
+          label={t.status}
           fallback={tournament?.status ?? "upcoming"}
           options={[
-            { value: "upcoming", label: "Nadcházející" },
-            { value: "completed", label: "Odehraný (jde do archivu)" },
+            { value: "upcoming", label: t.statusUpcoming },
+            { value: "completed", label: t.statusCompleted },
           ]}
         />
         <TextInput
           name="slug"
-          label="Adresa stránky (nepovinné)"
-          hint={tournament ? "Mění odkaz na výsledky." : "Prázdné = vytvoří se z názvu."}
+          label={t.slug}
+          hint={tournament ? t.slugHintEdit : t.slugHintNew}
           fallback={tournament?.slug}
         />
       </div>
 
-      <CheckInput
-        name="registrationOpen"
-        label="Přihlášky týmů jsou otevřené (jen u jednoho nadcházejícího turnaje, ostatní se zavřou)"
-        fallback={tournament?.registration_open}
-      />
+      <CheckInput name="registrationOpen" label={t.registrationOpenCheck} fallback={tournament?.registration_open} />
 
       <div>
-        <SubmitButton>{tournament ? "Uložit turnaj" : "Založit turnaj"}</SubmitButton>
+        <SubmitButton>{tournament ? t.saveTournament : t.createTournament}</SubmitButton>
       </div>
     </ActionForm>
   );
