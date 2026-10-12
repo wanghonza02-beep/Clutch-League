@@ -62,6 +62,30 @@ export type OpenTournament = {
 export type Entry = {
   tournamentId: string;
   status: EntryStatus;
+  /** Důvod zamítnutí od organizátora (migrace č. 8), jinak prázdné. */
+  statusNote: string;
+  /** Kdy organizátor naposledy rozhodl; null = ještě nerozhodl. */
+  statusChangedAt: string | null;
+  /** Kdy kapitán přihlášku poslal. */
+  createdAt: string;
+};
+
+/** Přihláška týmu i s turnajem — kapitán ji vidí v přehledu i po uzávěrce přihlášek. */
+export type CaptainEntry = Entry & {
+  tournament: OpenTournament & { registrationOpen: boolean };
+};
+
+/** Zápas týmu z rozpisu turnaje (veřejná data). */
+export type TeamMatch = {
+  id: string;
+  stage: string;
+  kickoff: string;
+  home: string;
+  away: string;
+  /** Hraje náš tým doma? */
+  isHome: boolean;
+  homeGoals: number | null;
+  awayGoals: number | null;
 };
 
 /** Přihlášený uživatel pro UI. */

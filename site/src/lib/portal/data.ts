@@ -2,7 +2,15 @@ import type { PostgrestError } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
-import { DEFAULT_MAX_ROSTER, type Entry, type OpenTournament, type Player, type Team } from "./types";
+import {
+  DEFAULT_MAX_ROSTER,
+  type CaptainEntry,
+  type Entry,
+  type OpenTournament,
+  type Player,
+  type Team,
+  type TeamMatch,
+} from "./types";
 
 // Přístup k datům portálu v Supabase. Dotazy jdou za přihlášeného uživatele,
 // takže co smí vidět a měnit, rozhoduje RLS v databázi — tady se nic
@@ -88,17 +96,101 @@ export async function getCaptainTeam(userId: string): Promise<Team | null> {
   };
 }
 
+type EntryRow = Database["public"]["Tables"]["tournament_entries"]["Row"];
+
+function toEntry(row: EntryRow): Entry {
+  return {
+    tournamentId: row.tournament_id,
+    status: row.status,
+    // Před migrací č. 8 sloupce chybí.
+    statusNote: row.status_note ?? "",
+    statusChangedAt: row.status_changed_at ?? null,
+    createdAt: row.created_at,
+  };
+}
+
 /** Přihláška týmu na daný turnaj, nebo null. */
 export async function getTeamEntry(teamId: string, tournamentId: string): Promise<Entry | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("tournament_entries")
-    .select("tournament_id, status")
+    // "*": funguje i před migrací č. 8 (bez důvodu a času rozhodnutí).
+    .select("*")
     .eq("team_id", teamId)
     .eq("tournament_id", tournamentId)
     .maybeSingle();
   if (error) throw error;
-  return data ? { tournamentId: data.tournament_id, status: data.status } : null;
+  return data ? toEntry(data) : null;
+}
+
+/**
+ * Přihlášky týmu na nadcházející turnaje — nejdřív turnaj s otevřenými
+ * přihláškami, pak podle data. Kapitán tak vidí stav přihlášky i po uzávěrce.
+ */
+export async function getCaptainEntries(teamId: string): Promise<CaptainEntry[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tournament_entries")
+    .select("*, tournament:tournaments!inner(*)")
+    .eq("team_id", teamId)
+    .eq("tournament.status", "upcoming");
+  if (error) throw error;
+
+  return data
+    .flatMap((row) => {
+      const t = row.tournament;
+      if (!t) return [];
+      return [
+        {
+          ...toEntry(row),
+          tournament: {
+            id: t.id,
+            name: t.name,
+            startsOn: t.starts_on,
+            format: t.format,
+            minRoster: t.min_roster,
+            maxRoster: t.max_roster ?? DEFAULT_MAX_ROSTER,
+            registrationOpen: t.registration_open,
+          },
+        } satisfies CaptainEntry,
+      ];
+    })
+    .sort(
+      (a, b) =>
+        Number(b.tournament.registrationOpen) - Number(a.tournament.registrationOpen) ||
+        a.tournament.startsOn.localeCompare(b.tournament.startsOn)
+    );
+}
+
+/**
+ * Zápasy týmu v rozpisu turnaje. Rozpis je veřejný, čte se veřejným klientem;
+ * soupeři bez schválené přihlášky jsou „—“ (stejně jako na webu).
+ */
+export async function getTeamSchedule(teamId: string, tournamentId: string): Promise<TeamMatch[]> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from("matches")
+    .select("id, stage, kickoff, home_team_id, away_team_id, home_goals, away_goals")
+    .eq("tournament_id", tournamentId)
+    .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`)
+    .order("kickoff");
+  if (error) throw error;
+  if (data.length === 0) return [];
+
+  const ids = [...new Set(data.flatMap((m) => [m.home_team_id, m.away_team_id]))];
+  const { data: teams } = await supabase.from("teams").select("id, name").in("id", ids);
+  const name = new Map((teams ?? []).map((t) => [t.id, t.name]));
+
+  return data.map((m) => ({
+    id: m.id,
+    stage: m.stage,
+    kickoff: m.kickoff,
+    home: name.get(m.home_team_id) ?? "—",
+    away: name.get(m.away_team_id) ?? "—",
+    isHome: m.home_team_id === teamId,
+    homeGoals: m.home_goals,
+    awayGoals: m.away_goals,
+  }));
 }
 
 export type TeamInput = {

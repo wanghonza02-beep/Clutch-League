@@ -3,7 +3,7 @@ import { getDictionary } from "@/i18n/server";
 import { saveEntryRankingAction } from "@/lib/admin/actions";
 import type { AdminEntryRow } from "@/lib/admin/data";
 
-/** Skupina, konečné pořadí a postup jednoho týmu na turnaji. */
+/** Skupina, konečné pořadí a postup jednoho (schváleného) týmu na turnaji. */
 export default async function EntryRankingForm({
   tournamentId,
   entry,
@@ -18,9 +18,6 @@ export default async function EntryRankingForm({
     <li className="adm-item" style={{ gap: "var(--sp-3)" }}>
       <div className="adm-item__head">
         <span className="adm-item__title">{entry.teamName}</span>
-        <span className={entry.status === "approved" ? "cl-badge" : "cl-badge cl-badge--neutral"}>
-          {dict.labels.entryStatus[entry.status]}
-        </span>
         {entry.city && <span className="adm-meta">{entry.city}</span>}
       </div>
       <ActionForm

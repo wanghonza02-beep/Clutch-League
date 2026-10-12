@@ -29,6 +29,8 @@ export const CLIENT_NAMESPACES = [
   "authForms",
   "teamForms",
   "matchForm",
+  "decision",
+  "usersBrowser",
 ] as const satisfies readonly (keyof Dictionary)[];
 
 export type ClientDictionary = Pick<Dictionary, (typeof CLIENT_NAMESPACES)[number]>;

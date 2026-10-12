@@ -1,12 +1,21 @@
-// Typy databáze podle supabase/migrations (č. 1–7).
+// Typy databáze podle supabase/migrations (č. 1–8).
 // Při změně schématu je uprav ručně, nebo je přegeneruj:
 //   npx supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts
 
 export type UserRole = "captain" | "admin";
-export type EntryStatus = "pending" | "approved";
+export type EntryStatus = "pending" | "approved" | "rejected";
 export type TournamentStatus = "upcoming" | "completed";
 export type PlayerPosition = "goalkeeper" | "defender" | "midfielder" | "forward";
 export type MatchEventKind = "goal" | "yellow_card" | "red_card";
+export type Locale = "cs" | "en" | "uk" | "sk";
+/** Druh oznámení (tabulka notifications, migrace č. 8). */
+export type NotificationKind =
+  | "entry_submitted"
+  | "entry_withdrawn"
+  | "entry_approved"
+  | "entry_rejected"
+  | "entry_returned"
+  | "entry_removed";
 
 /** Sloupce turnaje, které smí zapisovat administrátor. */
 export type TournamentWrite = {
@@ -40,6 +49,8 @@ export type Database = {
           phone: string;
           email: string;
           role: UserRole;
+          /** Jazyk účtu (migrace č. 8) — pro e-maily s oznámením. */
+          locale: Locale;
           created_at: string;
         };
         Insert: never;
@@ -121,6 +132,10 @@ export type Database = {
           group_label: string | null;
           final_rank: number | null;
           advanced: boolean;
+          /** Důvod zamítnutí — vidí kapitán a organizátor (migrace č. 8). */
+          status_note: string;
+          /** Kdy organizátor naposledy změnil stav (migrace č. 8). */
+          status_changed_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -128,6 +143,7 @@ export type Database = {
           team_id: string;
         };
         Update: {
+          /** Stav mění organizátor přes admin_set_entry_status (oznámení, pojistky). */
           status?: EntryStatus;
           group_label?: string | null;
           final_rank?: number | null;
@@ -253,6 +269,38 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: NotificationKind;
+          tournament_id: string | null;
+          team_id: string | null;
+          note: string;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: never;
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_tournament_id_fkey";
+            columns: ["tournament_id"];
+            isOneToOne: false;
+            referencedRelation: "tournaments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       scorers: {
         Row: {
           id: string;
@@ -276,6 +324,25 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      admin_set_entry_status: {
+        Args: {
+          p_tournament: string;
+          p_team: string;
+          p_status: EntryStatus;
+          p_note?: string;
+          p_delete_matches?: boolean;
+        };
+        /** Počet smazaných zápasů týmu. */
+        Returns: number;
+      };
+      admin_remove_entry: {
+        Args: {
+          p_tournament: string;
+          p_team: string;
+          p_delete_matches?: boolean;
+        };
+        Returns: number;
+      };
       admin_save_match_result: {
         Args: {
           p_match: string;

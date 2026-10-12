@@ -1,7 +1,9 @@
+import { pragueIsoDay } from "@/lib/format";
 import type {
   Database,
   EntryStatus,
   MatchEventKind,
+  PlayerPosition,
   TournamentStatus,
   UserRole,
 } from "@/lib/supabase/database.types";
@@ -14,107 +16,277 @@ import { createClient } from "@/lib/supabase/server";
 type TournamentRow = Database["public"]["Tables"]["tournaments"]["Row"];
 
 /* -------------------------------------------------------------------------- */
-/*  Přehled                                                                   */
+/*  Hlavní turnaj                                                             */
 /* -------------------------------------------------------------------------- */
 
-export type AdminOverview = {
-  pendingEntries: number;
-  users: number;
-  upcoming: { id: string; name: string; startsOn: string; registrationOpen: boolean }[];
+/** Nadcházející turnaj, jak ho potřebuje administrace. */
+export type AdminTournamentInfo = {
+  id: string;
+  name: string;
+  startsOn: string;
+  registrationOpen: boolean;
+  format: string;
+  minRoster: number;
+  maxRoster: number;
 };
 
-export async function getAdminOverview(): Promise<AdminOverview> {
-  const supabase = await createClient();
-  const [pending, users, upcoming] = await Promise.all([
-    supabase.from("tournament_entries").select("*", { count: "exact", head: true }).eq("status", "pending"),
-    supabase.from("profiles").select("*", { count: "exact", head: true }),
-    supabase
-      .from("tournaments")
-      .select("id, name, starts_on, registration_open")
-      .eq("status", "upcoming")
-      .order("starts_on"),
-  ]);
-  if (pending.error) throw pending.error;
-  if (upcoming.error) throw upcoming.error;
-
+function toTournamentInfo(t: TournamentRow): AdminTournamentInfo {
   return {
-    pendingEntries: pending.count ?? 0,
-    users: users.count ?? 0,
-    upcoming: upcoming.data.map((t) => ({
-      id: t.id,
-      name: t.name,
-      startsOn: t.starts_on,
-      registrationOpen: t.registration_open,
-    })),
+    id: t.id,
+    name: t.name,
+    startsOn: t.starts_on,
+    registrationOpen: t.registration_open,
+    format: t.format,
+    minRoster: t.min_roster,
+    // Před migrací č. 7 sloupec chybí — stejný výchozí limit jako v databázi.
+    maxRoster: t.max_roster ?? 10,
   };
+}
+
+/**
+ * Nadcházející turnaje: nejdřív ten s otevřenými přihláškami, pak podle data.
+ * První z nich je „hlavní turnaj“ — na něj se dívá přehled i seznam uživatelů.
+ */
+export async function listUpcomingTournaments(): Promise<AdminTournamentInfo[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("tournaments")
+    // "*": funguje i bez sloupců z novějších migrací.
+    .select("*")
+    .eq("status", "upcoming")
+    .order("starts_on");
+  if (error) throw error;
+  return data
+    .map(toTournamentInfo)
+    .sort((a, b) => Number(b.registrationOpen) - Number(a.registrationOpen) || a.startsOn.localeCompare(b.startsOn));
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Přihlášky týmů                                                            */
 /* -------------------------------------------------------------------------- */
 
+export type RosterPlayer = {
+  name: string;
+  number: number | null;
+  position: PlayerPosition;
+  birthYear: number | null;
+  captain: boolean;
+};
+
 export type AdminEntry = {
   tournamentId: string;
-  tournamentName: string;
-  tournamentStatus: TournamentStatus;
-  startsOn: string;
   teamId: string;
   teamName: string;
   city: string;
+  colors: string;
   code: string;
   note: string;
   status: EntryStatus;
-  playerCount: number;
+  /** Důvod zamítnutí (migrace č. 8). */
+  statusNote: string;
+  /** Kdy organizátor naposledy změnil stav (migrace č. 8). */
+  statusChangedAt: string | null;
   createdAt: string;
+  players: RosterPlayer[];
+  /** Zápasy týmu v rozpisu turnaje — při vyřazení týmu by se musely smazat. */
+  matches: number;
+  /** Z toho zápasy se zapsaným výsledkem — kvůli nim tým vyřadit nejde. */
+  playedMatches: number;
   captain: { name: string; email: string; phone: string } | null;
 };
 
-/** Všechny přihlášky na turnaje, které ještě nejsou odehrané; čekající nahoře. */
-export async function listPendingTournamentEntries(): Promise<AdminEntry[]> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("tournament_entries")
-    .select(
-      "tournament_id, team_id, status, created_at, tournament:tournaments!inner(name, status, starts_on), team:teams(name, city, code, note, owner_id, players(id))"
-    )
-    .eq("tournament.status", "upcoming")
-    .order("created_at", { ascending: false });
-  if (error) throw error;
+export type AdminEntryGroup = {
+  tournament: AdminTournamentInfo;
+  counts: Record<EntryStatus, number>;
+  entries: AdminEntry[];
+};
 
-  const ownerIds = [...new Set(data.flatMap((e) => (e.team?.owner_id ? [e.team.owner_id] : [])))];
+const STATUS_ORDER: Record<EntryStatus, number> = { pending: 0, approved: 1, rejected: 2 };
+
+/**
+ * Přihlášky na nadcházející turnaje, po turnajích. Turnaj s otevřenými
+ * přihláškami je vždy v seznamu, i když se na něj ještě nikdo nepřihlásil.
+ * V turnaji: čekající nahoře (nejstarší první — kdo dřív přišel), pak
+ * schválené podle názvu, zamítnuté nakonec.
+ */
+export async function listEntryGroups(): Promise<AdminEntryGroup[]> {
+  const tournaments = await listUpcomingTournaments();
+  if (tournaments.length === 0) return [];
+
+  const supabase = await createClient();
+  const ids = tournaments.map((t) => t.id);
+  const [entries, matches] = await Promise.all([
+    supabase
+      .from("tournament_entries")
+      .select(
+        "*, team:teams(name, city, colors, code, note, owner_id, players(first_name, last_name, shirt_number, position, birth_year, is_captain))"
+      )
+      .in("tournament_id", ids),
+    supabase.from("matches").select("tournament_id, home_team_id, away_team_id, home_goals").in("tournament_id", ids),
+  ]);
+  if (entries.error) throw entries.error;
+  if (matches.error) throw matches.error;
+
+  const ownerIds = [...new Set(entries.data.flatMap((e) => (e.team?.owner_id ? [e.team.owner_id] : [])))];
   const { data: owners, error: ownersError } = ownerIds.length
     ? await supabase.from("profiles").select("id, full_name, email, phone").in("id", ownerIds)
     : { data: [], error: null };
   if (ownersError) throw ownersError;
   const ownerById = new Map(owners.map((o) => [o.id, o]));
 
-  const entries = data.flatMap((e) => {
-    if (!e.team || !e.tournament) return [];
+  const rows: AdminEntry[] = entries.data.flatMap((e) => {
+    if (!e.team) return [];
     const owner = e.team.owner_id ? ownerById.get(e.team.owner_id) : undefined;
-    const entry: AdminEntry = {
-      tournamentId: e.tournament_id,
-      tournamentName: e.tournament.name,
-      tournamentStatus: e.tournament.status,
-      startsOn: e.tournament.starts_on,
-      teamId: e.team_id,
-      teamName: e.team.name,
-      city: e.team.city,
-      code: e.team.code,
-      note: e.team.note,
-      status: e.status,
-      playerCount: e.team.players.length,
-      createdAt: e.created_at,
-      captain: owner ? { name: owner.full_name, email: owner.email, phone: owner.phone } : null,
-    };
-    return [entry];
+    const own = matches.data.filter(
+      (m) => m.tournament_id === e.tournament_id && (m.home_team_id === e.team_id || m.away_team_id === e.team_id)
+    );
+    return [
+      {
+        tournamentId: e.tournament_id,
+        teamId: e.team_id,
+        teamName: e.team.name,
+        city: e.team.city,
+        colors: e.team.colors,
+        code: e.team.code,
+        note: e.team.note,
+        status: e.status,
+        statusNote: e.status_note ?? "",
+        statusChangedAt: e.status_changed_at ?? null,
+        createdAt: e.created_at,
+        players: e.team.players
+          .map((p) => ({
+            name: `${p.first_name} ${p.last_name}`,
+            number: p.shirt_number,
+            position: p.position,
+            birthYear: p.birth_year,
+            captain: p.is_captain,
+          }))
+          .sort((a, b) => (a.number ?? 999) - (b.number ?? 999) || a.name.localeCompare(b.name, "cs")),
+        matches: own.length,
+        playedMatches: own.filter((m) => m.home_goals !== null).length,
+        captain: owner ? { name: owner.full_name, email: owner.email, phone: owner.phone } : null,
+      },
+    ];
   });
 
-  // Čekající nahoře — právě ty organizátor potřebuje vyřídit.
-  return entries.sort(
-    (a, b) =>
-      Number(a.status === "approved") - Number(b.status === "approved") ||
-      b.createdAt.localeCompare(a.createdAt)
-  );
+  return tournaments.map((tournament) => {
+    const own = rows
+      .filter((r) => r.tournamentId === tournament.id)
+      .sort(
+        (a, b) =>
+          STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
+          (a.status === "pending"
+            ? a.createdAt.localeCompare(b.createdAt)
+            : a.status === "rejected"
+              ? (b.statusChangedAt ?? "").localeCompare(a.statusChangedAt ?? "")
+              : a.teamName.localeCompare(b.teamName, "cs"))
+      );
+    const counts: Record<EntryStatus, number> = { pending: 0, approved: 0, rejected: 0 };
+    for (const r of own) counts[r.status]++;
+    return { tournament, counts, entries: own };
+  });
+}
+
+/** Čekající přihlášky na nadcházející turnaje (odznak v liště). */
+export async function countPendingEntries(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("tournament_entries")
+    .select("team_id, tournament:tournaments!inner(status)", { count: "exact", head: true })
+    .eq("status", "pending")
+    .eq("tournament.status", "upcoming");
+  if (error) {
+    console.error("[admin] počet čekajících přihlášek", error.code, error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Přehled                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export type AdminOverview = {
+  /** Hlavní turnaj (otevřené přihlášky, jinak nejbližší) a jeho stav. */
+  focus: {
+    group: AdminEntryGroup;
+    /** Hráči ve schválených týmech. */
+    players: number;
+    /** Schválené a čekající týmy, jejichž soupiska nesplňuje limity turnaje. */
+    rosterIssues: { teamId: string; teamName: string; players: number }[];
+    matches: number;
+    played: number;
+    /** Zápasy, které k turnaji nesedí (jiný den, tým bez schválené přihlášky). */
+    matchIssues: number;
+    /** Zápasy po výkopu bez zapsaného výsledku. */
+    resultsMissing: number;
+  } | null;
+  /** Další nadcházející turnaje. */
+  others: AdminEntryGroup[];
+  /** Čekající přihlášky na všech nadcházejících turnajích. */
+  pendingTotal: number;
+  users: number;
+  /** Kapitáni s účtem, ale bez týmu — nedokončili přihlášku. */
+  captainsWithoutTeam: number;
+};
+
+export async function getAdminOverview(): Promise<AdminOverview> {
+  const supabase = await createClient();
+  const [groups, profiles, teams] = await Promise.all([
+    listEntryGroups(),
+    supabase.from("profiles").select("id, role"),
+    supabase.from("teams").select("owner_id"),
+  ]);
+  if (profiles.error) throw profiles.error;
+  if (teams.error) throw teams.error;
+
+  const owners = new Set(teams.data.flatMap((t) => (t.owner_id ? [t.owner_id] : [])));
+  const captainsWithoutTeam = profiles.data.filter((p) => p.role === "captain" && !owners.has(p.id)).length;
+  const pendingTotal = groups.reduce((sum, g) => sum + g.counts.pending, 0);
+
+  const [focusGroup, ...others] = groups;
+  if (!focusGroup) {
+    return { focus: null, others: [], pendingTotal, users: profiles.data.length, captainsWithoutTeam };
+  }
+
+  const { tournament } = focusGroup;
+  const { data: matches, error } = await supabase
+    .from("matches")
+    .select("kickoff, home_team_id, away_team_id, home_goals")
+    .eq("tournament_id", tournament.id);
+  if (error) throw error;
+
+  const approved = new Set(focusGroup.entries.filter((e) => e.status === "approved").map((e) => e.teamId));
+  const now = Date.now();
+
+  return {
+    focus: {
+      group: focusGroup,
+      players: focusGroup.entries
+        .filter((e) => e.status === "approved")
+        .reduce((sum, e) => sum + e.players.length, 0),
+      rosterIssues: focusGroup.entries
+        .filter(
+          (e) =>
+            e.status !== "rejected" &&
+            (e.players.length < tournament.minRoster || e.players.length > tournament.maxRoster)
+        )
+        .map((e) => ({ teamId: e.teamId, teamName: e.teamName, players: e.players.length })),
+      matches: matches.length,
+      played: matches.filter((m) => m.home_goals !== null).length,
+      matchIssues: matches.filter(
+        (m) =>
+          pragueIsoDay(m.kickoff) !== tournament.startsOn ||
+          !approved.has(m.home_team_id) ||
+          !approved.has(m.away_team_id)
+      ).length,
+      resultsMissing: matches.filter((m) => m.home_goals === null && Date.parse(m.kickoff) < now).length,
+    },
+    others,
+    pendingTotal,
+    users: profiles.data.length,
+    captainsWithoutTeam,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -414,29 +586,63 @@ export type AdminUser = {
   email: string;
   phone: string;
   role: UserRole;
-  teamName: string | null;
   createdAt: string;
+  team: {
+    name: string;
+    code: string;
+    players: number;
+    /** Stav přihlášky na hlavní turnaj; null = na něj přihlášený není. */
+    entryStatus: EntryStatus | null;
+  } | null;
 };
 
-export async function listUsers(): Promise<AdminUser[]> {
+export type AdminUsers = {
+  users: AdminUser[];
+  /** Hlavní turnaj, ke kterému se vztahuje stav přihlášky u týmů. */
+  tournament: AdminTournamentInfo | null;
+};
+
+export async function listUsers(): Promise<AdminUsers> {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, email, phone, role, created_at")
-    .order("created_at", { ascending: false });
+  const [profiles, teams, tournaments] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, email, phone, role, created_at")
+      .order("created_at", { ascending: false }),
+    supabase.from("teams").select("id, name, code, owner_id, players(id)"),
+    listUpcomingTournaments(),
+  ]);
+  if (profiles.error) throw profiles.error;
+  if (teams.error) throw teams.error;
+
+  const tournament = tournaments[0] ?? null;
+  const { data: entries, error } = tournament
+    ? await supabase.from("tournament_entries").select("team_id, status").eq("tournament_id", tournament.id)
+    : { data: [], error: null };
   if (error) throw error;
+  const statusByTeam = new Map(entries.map((e) => [e.team_id, e.status]));
+  const teamByOwner = new Map(teams.data.flatMap((t) => (t.owner_id ? [[t.owner_id, t] as const] : [])));
 
-  const { data: teams, error: teamsError } = await supabase.from("teams").select("name, owner_id");
-  if (teamsError) throw teamsError;
-  const teamByOwner = new Map(teams.flatMap((t) => (t.owner_id ? [[t.owner_id, t.name] as const] : [])));
-
-  return data.map((u) => ({
-    id: u.id,
-    name: u.full_name,
-    email: u.email,
-    phone: u.phone,
-    role: u.role,
-    teamName: teamByOwner.get(u.id) ?? null,
-    createdAt: u.created_at,
-  }));
+  return {
+    tournament,
+    users: profiles.data.map((u) => {
+      const team = teamByOwner.get(u.id);
+      return {
+        id: u.id,
+        name: u.full_name,
+        email: u.email,
+        phone: u.phone,
+        role: u.role,
+        createdAt: u.created_at,
+        team: team
+          ? {
+              name: team.name,
+              code: team.code,
+              players: team.players.length,
+              entryStatus: statusByTeam.get(team.id) ?? null,
+            }
+          : null,
+      };
+    }),
+  };
 }

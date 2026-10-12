@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { LogIn, LogOut, ShieldCheck, UserPlus, UserRound, Users } from "lucide-react";
+import { Ban, LogIn, LogOut, ShieldCheck, UserPlus, UserRound, Users } from "lucide-react";
+import { CONTACT } from "@/content/contact";
 import BackButton from "@/components/BackButton";
 import SplitText from "@/components/ui/SplitText";
 import Notice from "@/components/ui/Notice";
@@ -154,8 +155,12 @@ export default async function PrihlasitTym() {
     );
   }
 
-  /* ---- organizátor: tým nepřihlašuje ---- */
-  if (user.role !== "captain") {
+  const team = await getCaptainTeam(user.id);
+  const entry = team ? await getTeamEntry(team.id, tournament.id) : null;
+
+  /* ---- organizátor: tým nepřihlašuje. Výjimka: organizátor s vlastním
+     týmem, který už přihlášený je — ten vidí stav jako kapitán. ---- */
+  if (user.role !== "captain" && !(team && entry)) {
     return (
       <Page tournament={tournament} sub={t.adminSub}>
         <Notice tone="error">
@@ -172,8 +177,39 @@ export default async function PrihlasitTym() {
     );
   }
 
-  const team = await getCaptainTeam(user.id);
-  const entry = team ? await getTeamEntry(team.id, tournament.id) : null;
+  /* ---- přihláška zamítnutá: důvod a na koho se obrátit ---- */
+  if (team && entry?.status === "rejected") {
+    return (
+      <Page tournament={tournament} sub={t.rejectedSub}>
+        <div className="cl-card" role="status">
+          <div className="cl-card__in">
+            <div className="cl-card__body flex flex-col gap-[var(--sp-5)]">
+              <span style={{ color: "var(--danger)" }}>
+                <Ban size={32} strokeWidth={2} aria-hidden />
+              </span>
+              <h2 style={cardTitle}>{fmt(t.rejectedTitle, { team: team.name })}</h2>
+              <p style={{ margin: 0, color: "var(--text-body)" }}>
+                {entry.statusChangedAt
+                  ? fmt(t.rejectedOn, {
+                      tournament: tournament.name,
+                      date: formatDate(entry.statusChangedAt.slice(0, 10), locale),
+                    })
+                  : fmt(t.rejectedText, { tournament: tournament.name })}
+              </p>
+              {entry.statusNote && (
+                <p className="status-step__reason" style={{ margin: 0 }}>
+                  {fmt(dict.entryStatus.reason, { reason: entry.statusNote })}
+                </p>
+              )}
+              <p style={{ margin: 0, color: "var(--text-muted)" }}>
+                {fmt(dict.entryStatus.rejectedHelp, { email: CONTACT.email })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </Page>
+    );
+  }
 
   /* ---- tým je přihlášený: stav přihlášky ---- */
   if (team && entry) {

@@ -123,7 +123,7 @@ function MatchRow({
             variant="ghost"
             size="sm"
             flush
-            confirm={t.deleteMatchConfirm}
+            confirm={played ? t.deleteMatchPlayedConfirm : t.deleteMatchConfirm}
             icon={<Trash2 size={14} strokeWidth={2} aria-hidden />}
           >
             {t.deleteMatch}
@@ -227,13 +227,23 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
         <p className="cl-sectionhead__sub" style={{ margin: 0 }}>
           {t.teamsSub}
         </p>
-        {entries.length === 0 ? (
-          <Notice tone="info">{t.noTeams}</Notice>
+        {/* Skupinu a pořadí mají jen schválené týmy; o ostatních se rozhoduje v Přihláškách. */}
+        {entries.length > approved.length && (
+          <p className="adm-meta" style={{ margin: 0 }}>
+            {fmt(t.notApprovedSummary, {
+              pending: entries.filter((e) => e.status === "pending").length,
+              rejected: entries.filter((e) => e.status === "rejected").length,
+            })}{" "}
+            <Link href="/portal/prihlasky">{t.notApprovedLink}</Link>
+          </p>
+        )}
+        {approved.length === 0 ? (
+          <Notice tone="info">{entries.length === 0 ? t.noTeams : t.noApprovedTeams}</Notice>
         ) : (
           <div className="cl-card">
             <div className="cl-card__in">
               <ul className="cl-card__body" aria-label={t.teamsLabel}>
-                {entries.map((e) => (
+                {approved.map((e) => (
                   <EntryRankingForm key={e.teamId} tournamentId={tournament.id} entry={e} />
                 ))}
               </ul>

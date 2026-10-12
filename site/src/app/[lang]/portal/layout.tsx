@@ -1,5 +1,9 @@
 import { LogOut } from "lucide-react";
-import PortalNav from "@/components/portal/PortalNav";
+import PortalNav, { type PortalBadges } from "@/components/portal/PortalNav";
+import ActionToast from "@/components/ui/ActionToast";
+import { countPendingEntries } from "@/lib/admin/data";
+import { getCaptainTeam } from "@/lib/portal/data";
+import { countUnreadNotifications } from "@/lib/portal/notifications";
 import LocaleField from "@/i18n/LocaleField";
 import { getI18n } from "@/i18n/server";
 import { logoutAction } from "@/lib/portal/actions";
@@ -15,6 +19,14 @@ export default async function PortalLayout({ children }: LayoutProps<"/[lang]/po
   const { locale, t } = await getI18n();
   const user = await requireUser(locale);
 
+  // Odznaky v liště: co na uživatele čeká (oznámení, přihlášky ke schválení).
+  const [unread, pending, ownTeam] = await Promise.all([
+    countUnreadNotifications(user.id),
+    user.role === "admin" ? countPendingEntries() : Promise.resolve(0),
+    user.role === "admin" ? getCaptainTeam(user.id) : Promise.resolve(null),
+  ]);
+  const badges: PortalBadges = { overview: unread, entries: pending };
+
   return (
     <main className="pt-[var(--sp-8)] pb-[var(--section-y)]">
       <div className="cl-container">
@@ -26,7 +38,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/[lang]/po
               <span className="roster-row__meta">{t.labels.roles[user.role]}</span>
             </div>
 
-            <PortalNav role={user.role} />
+            <PortalNav role={user.role} badges={badges} ownsTeam={Boolean(ownTeam)} />
 
             <form action={logoutAction} className="portal-logout">
               <LocaleField />
@@ -39,6 +51,7 @@ export default async function PortalLayout({ children }: LayoutProps<"/[lang]/po
 
           <div className="portal-main">{children}</div>
         </div>
+        <ActionToast />
       </div>
     </main>
   );

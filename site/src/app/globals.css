@@ -3024,6 +3024,715 @@ a.adm-item__title:hover {
   color: var(--text-accent);
 }
 
+/* ==========================================================================
+   Přihlášky, oznámení, přehled a uživatelé (migrace č. 8).
+   ========================================================================== */
+
+/* Štítek „Zamítnuto“. */
+.cl-badge--danger {
+  background: var(--danger);
+  color: var(--text-on-accent);
+}
+
+/* Počet nových oznámení u tlačítka účtu v hlavní navigaci. */
+.cl-nav__dot {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  font-family: var(--font-numeric);
+  font-size: 11px;
+  font-weight: var(--fw-display);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--text-on-accent);
+  background: var(--gold);
+}
+
+/* Odznak u položky postranní lišty (čekající přihlášky, nová oznámení). */
+.portal-nav__badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: auto;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-family: var(--font-numeric);
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--text-on-accent);
+  background: var(--gold);
+}
+.portal-nav__link.is-active .portal-nav__badge {
+  color: var(--gold);
+  background: var(--black);
+}
+
+/* Potvrzení akce dole na obrazovce (ActionToast). */
+.toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sp-6);
+  z-index: 60;
+  width: min(calc(100% - 2 * var(--gutter)), 560px);
+  translate: -50% 0;
+  pointer-events: none;
+}
+.toast {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-elevated-2);
+  box-shadow: inset 0 0 0 1px var(--win), 0 12px 32px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  animation: toast-in var(--dur-base) var(--ease-out);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+}
+.toast__icon {
+  margin-top: 2px;
+  color: var(--win);
+}
+.toast__text {
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-heading);
+}
+.toast__close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.toast__close:hover {
+  color: var(--text-heading);
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
+/* ---- Oznámení ---- */
+.notif {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.notif__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.notif__item {
+  --ch: var(--chamfer-sm);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-4);
+  background: var(--bg-elevated-2);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  clip-path: polygon(
+    var(--ch) 0,
+    100% 0,
+    100% calc(100% - var(--ch)),
+    calc(100% - var(--ch)) 100%,
+    0 100%,
+    0 var(--ch)
+  );
+}
+.notif__item--ok {
+  box-shadow: inset 0 0 0 1px var(--win);
+}
+.notif__item--error {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+.notif__item--accent {
+  box-shadow: inset 0 0 0 1px var(--border-accent);
+}
+.notif__icon {
+  color: var(--text-muted);
+  padding-top: 2px;
+}
+.notif__item--ok .notif__icon {
+  color: var(--win);
+}
+.notif__item--error .notif__icon {
+  color: var(--danger);
+}
+.notif__item--accent .notif__icon {
+  color: var(--gold);
+}
+.notif__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.notif__text,
+.notif__reason,
+.notif__help {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+}
+.notif__text {
+  color: var(--text-heading);
+}
+.notif__reason {
+  font-weight: var(--fw-semibold);
+}
+.notif__help {
+  color: var(--text-muted);
+}
+.notif__time {
+  font-size: var(--fs-caption);
+  color: var(--text-faint);
+}
+.notif__ack {
+  grid-column: 2;
+}
+.notif__all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-4);
+}
+.notif__all .adm-meta {
+  margin-right: var(--sp-4);
+}
+/* Poslední dění organizátora: přečtené ztlumené, nové plné. */
+.notif--feed .notif__item {
+  background: transparent;
+}
+.notif--feed .notif__item:not(.is-unread) {
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.notif--feed .notif__item:not(.is-unread) .notif__text {
+  color: var(--text-body);
+}
+.notif--feed .notif__item.is-unread {
+  background: var(--bg-elevated-2);
+}
+@media (min-width: 640px) {
+  .notif--banners .notif__item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .notif__ack {
+    grid-column: 3;
+    align-self: center;
+  }
+}
+
+/* ---- Filtry (stav přihlášky, role uživatele) ---- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 34px;
+  padding: 0 var(--sp-3);
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+  cursor: pointer;
+  transition: var(--t-control);
+}
+.chip:hover {
+  color: var(--text-heading);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.chip.is-active {
+  color: var(--text-on-accent);
+  background: var(--gold);
+  box-shadow: none;
+}
+.chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.chip__count {
+  font-family: var(--font-numeric);
+  letter-spacing: 0;
+  opacity: 0.8;
+}
+
+/* ---- Přihlášky: oddíl turnaje a karta týmu ---- */
+.entry-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.entry-group__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.entry-group__head .adm-meta {
+  margin: 0;
+  align-items: center;
+}
+.entry-group__counts {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+.entry-list {
+  margin: 0;
+  list-style: none;
+}
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-6) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  scroll-margin-top: calc(var(--nav-h) + var(--sp-6));
+}
+.entry:first-child {
+  padding-top: 0;
+}
+.entry:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+.entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+}
+.entry__head .adm-item__title {
+  margin: 0;
+}
+.entry__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--sp-4) var(--sp-6);
+  margin: 0;
+}
+.entry__facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.entry__facts dd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+  overflow-wrap: anywhere;
+}
+.entry__strong {
+  font-weight: var(--fw-semibold);
+  color: var(--text-heading);
+}
+.entry__contacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sp-3);
+  font-size: var(--fs-caption);
+}
+.entry__contacts a {
+  color: var(--text-muted);
+}
+.entry__contacts a:hover {
+  color: var(--text-heading);
+}
+.entry__sub {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+.entry__warn .entry__strong {
+  color: var(--gold);
+}
+.entry__note {
+  margin: 0;
+  padding-left: var(--sp-3);
+  border-left: 2px solid var(--border-strong);
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+}
+.entry .adm-meta {
+  align-items: center;
+  margin: 0;
+}
+.entry__roster summary {
+  cursor: pointer;
+  width: fit-content;
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.entry__roster summary:hover {
+  color: var(--text-heading);
+}
+.entry__roster ol {
+  display: flex;
+  flex-direction: column;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.entry__roster li {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 0 var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--fs-body-sm);
+  color: var(--text-heading);
+}
+.entry__roster li .entry__sub {
+  grid-column: 2;
+}
+.entry__num {
+  color: var(--text-muted);
+}
+.entry__cap {
+  height: 18px;
+  margin-left: var(--sp-2);
+  padding: 0 6px;
+  vertical-align: 2px;
+}
+
+/* Rozhodnutí o přihlášce: tlačítka, nebo panel s otázkou a dopadem. */
+.decide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.decide__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.decide__question {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.decide__effect {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+}
+.decide__confirm {
+  align-items: flex-start;
+}
+.decide__confirm input {
+  margin-top: 2px;
+}
+
+/* ---- Přehled organizátora ---- */
+.ov-focus__link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 6px;
+}
+.ov-focus__link:hover {
+  color: var(--gold);
+  text-decoration-color: var(--gold);
+}
+.ov-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-5) var(--sp-6);
+  margin: 0;
+}
+.ov-stats .cl-stat__label {
+  line-height: 1.35;
+}
+.tasks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tasks__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-elevated-2);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+.tasks__item--action {
+  box-shadow: inset 3px 0 0 var(--gold), inset 0 0 0 1px var(--border-subtle);
+}
+.tasks__icon {
+  padding-top: 2px;
+  color: var(--text-muted);
+}
+.tasks__item--action .tasks__icon {
+  color: var(--gold);
+}
+.tasks__text {
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-heading);
+}
+.tasks__link {
+  grid-column: 2;
+  width: fit-content;
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-link);
+}
+.tasks__link::after {
+  content: " →";
+}
+.tasks__link:hover {
+  color: var(--text-link-hover);
+}
+@media (min-width: 640px) {
+  .tasks__item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .tasks__link {
+    grid-column: 3;
+    white-space: nowrap;
+  }
+}
+
+/* ---- Kapitán: stav přihlášky krok za krokem ---- */
+.status-steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.status-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-5);
+}
+.status-step:last-child {
+  padding-bottom: 0;
+}
+/* Svislá čára mezi kroky. */
+.status-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 30px;
+  bottom: 2px;
+  left: 13px;
+  width: 2px;
+  background: var(--border-subtle);
+}
+.status-step__mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  box-shadow: inset 0 0 0 2px var(--border-strong);
+}
+.status-step--done .status-step__mark {
+  color: var(--text-on-accent);
+  background: var(--win);
+  box-shadow: none;
+}
+.status-step--current .status-step__mark {
+  color: var(--gold);
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+.status-step--failed .status-step__mark {
+  color: var(--text-on-accent);
+  background: var(--danger);
+  box-shadow: none;
+}
+.status-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+  padding-top: 3px;
+}
+.status-step__title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h6);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.status-step__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+}
+.status-step__text p {
+  margin: 0;
+}
+.status-step__reason {
+  font-weight: var(--fw-semibold);
+  color: var(--text-heading);
+}
+.status-matches {
+  display: flex;
+  flex-direction: column;
+  margin: var(--sp-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.status-matches li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0 var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.status-matches__time {
+  color: var(--text-heading);
+}
+.status-matches__stage {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+.status-matches li > span:last-child {
+  grid-column: 2;
+  color: var(--text-heading);
+}
+.status-matches__score {
+  color: var(--gold);
+}
+
+/* ---- Uživatelé: hledání a filtr ---- */
+.users {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+.users__bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.users__search {
+  position: relative;
+  max-width: 560px;
+}
+.users__search-icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: var(--sp-4);
+  translate: 0 -50%;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.users__input {
+  width: 100%;
+  padding-left: calc(var(--sp-4) + 26px);
+  padding-right: 44px;
+}
+.users__input::-webkit-search-cancel-button {
+  display: none;
+}
+.users__clear {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  translate: 0 -50%;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.users__clear:hover {
+  color: var(--text-heading);
+}
+.users__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.users__empty p {
+  margin: 0;
+  color: var(--text-body);
+}
+.users__team {
+  align-items: center;
+}
+.users__team-name {
+  font-weight: var(--fw-semibold);
+  color: var(--text-heading);
+}
+.users__noteam {
+  color: var(--gold);
+}
+
 /* Zápis výsledku — skóre vedle sebe, řádky gólů a karet. */
 .res-picker {
   display: flex;

@@ -20,7 +20,7 @@ jsou v databázi Supabase. Tenhle návod projdeš jednou.
 Co kdo smí, hlídá databáze sama (Row Level Security). Kapitán vidí jen svůj tým,
 výsledky zapisuje jen organizátor (admin) a veřejnost vidí jen schválené týmy a výsledky.
 
-## 1. Databáze (sedm migrací + výchozí data)
+## 1. Databáze (osm migrací + výchozí data)
 
 SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen jednou, v tomto pořadí:**
 
@@ -33,8 +33,12 @@ SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen j
 6. `migrations/20261012120000_mesto_tymu_nepovinne.sql` — město týmu nepovinné (archivní týmy bez kapitána)
 7. `migrations/20261013120000_winter_5plus1_soupiska.sql` — Winter Clutch je 5+1, soupiska
    6 až 10 hráčů; databáze nepustí na soupisku víc hráčů, než turnaj dovoluje
-8. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
-9. `prvni-turnaj-2026.sql` — skutečný první turnaj (23. 8. 2026): týmy a umístění, bez zápasů
+8. `migrations/20261014120000_prihlasky_oznameni.sql` — přihláška může být zamítnutá (s důvodem),
+   oznámení pro kapitány i organizátora (tabulka `notifications`), pojistky rozpisu: tým se zápasy
+   nejde z turnaje vyřadit, zápas jen se schválenými týmy a nejdřív v den turnaje. Na konci vypíše,
+   kolik zápasů má tým bez schválené přihlášky.
+9. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
+10. `prvni-turnaj-2026.sql` — skutečný první turnaj (23. 8. 2026): týmy a umístění, bez zápasů
 
 Pokud databáze ještě obsahuje ukázkový archiv ze starší verze `seed.sql` (vymyšlené
 týmy a výsledky), smaž ho: spusť `smazat-ukazkova-data.sql`. Skutečné týmy a turnaje nezasáhne.

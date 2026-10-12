@@ -23,7 +23,8 @@ export default function TeamRegisterButton({ className }: { className: string })
     fetch("/api/session?entry=1", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { entry?: string | null } | null) => {
-        if (alive) setEntered(Boolean(data?.entry));
+        // Zamítnutou přihlášku kapitán odhlásit nemůže — tlačítko pak vede na její stav.
+        if (alive) setEntered(data?.entry === "pending" || data?.entry === "approved");
       })
       .catch(() => {
         // Bez spojení zůstane výchozí „Přihlásit tým“ — stránka přihlášky si stav ověří sama.

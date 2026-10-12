@@ -89,6 +89,10 @@ a jen pár zpráv za hodinu.
   - Reset password: předmět `Clutch League – nové heslo / New password`, obsah ze `supabase/templates/nove-heslo.html`
   - Hned potom poslat zkušební e-mail (registrace v angličtině na webu) a ověřit, že přišel anglicky.
 - [ ] Authentication → **Rate Limits**: zvýšit limit e-mailů za hodinu (např. na 100).
+- [ ] **E-maily kapitánům o přihlášce** (schváleno / zamítnuto / vráceno / smazáno). Ve Vercelu
+  → Settings → Environment Variables (jen **Production**) přidat `RESEND_API_KEY` (stejný druh klíče
+  z Resendu, klidně druhý) a `MAIL_FROM` = `Clutch League <noreply@tvoje-domena.cz>`, pak Redeploy.
+  Bez nich web funguje dál, kapitán se o rozhodnutí dozví jen v portálu.
 
 ### Krok 6. Zapnout potvrzování e-mailu
 - [ ] Supabase → Authentication → Sign In / Providers → Email → **Confirm email** zapnout.
@@ -99,8 +103,10 @@ a jen pár zpráv za hodinu.
 - [ ] Všechny soubory spuštěné v pořadí: `20261005120000_init.sql`, `20261008120000_admin.sql`,
   `20261009120000_odhlaseni_tymu.sql`, `20261010120000_vysledky_bez_rozhodciho.sql`,
   `20261011120000_role_jen_v_supabase.sql`, `20261012120000_mesto_tymu_nepovinne.sql`,
-  `20261013120000_winter_5plus1_soupiska.sql`, `seed.sql`
+  `20261013120000_winter_5plus1_soupiska.sql`, `20261014120000_prihlasky_oznameni.sql`, `seed.sql`
   (ověř: v Table Editoru existuje tabulka `match_events`).
+  Pozor (11. 10. 2026): v ostré databázi chyběla migrace č. 3 (odhlášení týmu) — kapitáni se nemohli
+  sami odhlásit. Migrace č. 8 ji obsahuje celou, takže stačí spustit č. 8 (č. 3 zvlášť není potřeba).
 - [x] **Ukázková data smazána** (9. 10. 2026, `supabase/smazat-ukazkova-data.sql`). Zůstal turnaj Winter Clutch 2027
   a 2 schválené týmy s kapitánem (ověřit, jestli nejsou zkušební).
   Archiv turnajů obsahuje vymyšlené týmy, výsledky a střelce. `seed.sql` už je bez nich (9. 10. 2026),

@@ -47,20 +47,21 @@ const ACCOUNT: Record<"guest" | Role, Account> = {
 };
 
 /**
- * Role přihlášeného uživatele, nebo null. Navigace je v kořenovém layoutu,
- * takže stav přihlášení čte z prohlížeče (/api/session) — kdyby četla cookie
- * na serveru, žádná stránka webu by nešla vyrenderovat staticky. Přenačítá se
- * při změně stránky, protože přihlášení i odhlášení končí přesměrováním.
+ * Role přihlášeného uživatele (nebo null) a počet nepřečtených oznámení.
+ * Navigace je v kořenovém layoutu, takže stav přihlášení čte z prohlížeče
+ * (/api/session) — kdyby četla cookie na serveru, žádná stránka webu by nešla
+ * vyrenderovat staticky. Přenačítá se při změně stránky, protože přihlášení
+ * i odhlášení končí přesměrováním.
  */
-function useSessionRole(pathname: string): Role | null {
-  const [role, setRole] = useState<Role | null>(null);
+function useSession(pathname: string): { role: Role | null; alerts: number } {
+  const [session, setSession] = useState<{ role: Role | null; alerts: number }>({ role: null, alerts: 0 });
 
   useEffect(() => {
     let alive = true;
     fetch("/api/session", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : { role: null }))
-      .then((data: { role: Role | null }) => {
-        if (alive) setRole(data.role);
+      .then((data: { role: Role | null; alerts?: number }) => {
+        if (alive) setSession({ role: data.role, alerts: data.alerts ?? 0 });
       })
       .catch(() => {
         // Bez spojení zůstane navigace v režimu nepřihlášeného — nic se nerozbije.
@@ -70,7 +71,7 @@ function useSessionRole(pathname: string): Role | null {
     };
   }, [pathname]);
 
-  return role;
+  return session;
 }
 
 export default function Nav() {
@@ -80,8 +81,14 @@ export default function Nav() {
   const pathname = usePathname();
   // Cesta bez jazykové předpony — zvýraznění odkazů je stejné ve všech jazycích.
   const { path } = splitLocale(pathname);
-  const role = useSessionRole(pathname);
+  const { role, alerts } = useSession(pathname);
   const account = ACCOUNT[role ?? "guest"];
+  // Tečka u tlačítka účtu: v portálu čeká nové oznámení (schválená přihláška…).
+  const alertDot = alerts > 0 && (
+    <span className="cl-nav__dot" role="status" aria-label={t.nav.alerts}>
+      <span aria-hidden>{alerts > 9 ? "9+" : alerts}</span>
+    </span>
+  );
   const AccountIcon = account.icon;
 
   useEffect(() => recordPath(pathname), [pathname]);
@@ -143,6 +150,7 @@ export default function Nav() {
           <Link href={account.href} className="cl-btn cl-btn--secondary cl-btn--sm cl-nav__cta">
             <AccountIcon size={16} strokeWidth={2} aria-hidden />
             <span>{t.nav[account.label]}</span>
+            {alertDot}
           </Link>
         </div>
 
@@ -170,6 +178,7 @@ export default function Nav() {
           >
             <AccountIcon size={18} strokeWidth={2} aria-hidden />
             <span>{t.nav[account.label]}</span>
+            {alertDot}
           </Link>
         </div>
       )}

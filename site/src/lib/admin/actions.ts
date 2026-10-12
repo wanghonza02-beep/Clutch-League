@@ -3,16 +3,17 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { formI18n } from "@/i18n/action";
-import type { Locale } from "@/i18n/config";
+import { toLocale, type Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries";
-import { fmt } from "@/i18n/format";
+import { fmt, plural } from "@/i18n/format";
 import { formatDate, pragueIsoDay } from "@/lib/format";
+import { mailEnabled, sendEntryDecisionMail, type EntryMailKind } from "@/lib/mail";
 import { PATHS } from "@/lib/portal/paths";
 import { requireRole } from "@/lib/portal/session";
 import { DEFAULT_MAX_ROSTER } from "@/lib/portal/types";
 import { fail, ok, checkbox, text, type FormState } from "@/lib/portal/validation";
 import { revalidateRoute } from "@/lib/revalidate";
-import type { TournamentStatus, TournamentWrite } from "@/lib/supabase/database.types";
+import type { EntryStatus, TournamentStatus, TournamentWrite } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { intOrNull, pragueLocalToIso, slugify, textOrNull } from "./helpers";
 
@@ -61,6 +62,10 @@ function dbFailure(
   if (error.code === "23503") {
     return fail(m.hasDependents, errors, values);
   }
+  if (error.message.includes("match_team_not_approved")) return fail(m.teamNotApproved, errors, values);
+  if (error.message.includes("kickoff_before_tournament")) return fail(m.kickoffBeforeDay, errors, values);
+  if (error.message.includes("match_has_events")) return fail(m.matchHasEvents, errors, values);
+  if (error.message.includes("entry_has_matches")) return fail(m.entryHasMatches, errors, values);
   if (error.code === "42501") return fail(t.actions.forbidden, errors, values);
   // Web je novější než databáze: chybí migrace 20261013120000 (sloupec max_roster).
   if (error.message.includes("max_roster")) return fail(m.migrationMissing, errors, values);
@@ -73,57 +78,134 @@ function dbFailure(
 /*  Přihlášky týmů                                                            */
 /* -------------------------------------------------------------------------- */
 
-/** Má tým na turnaji zápas v rozpisu? Pak jeho přihlášku nejde vrátit ani odebrat. */
-async function teamHasMatches(
+const ENTRY_STATUSES: EntryStatus[] = ["pending", "approved", "rejected"];
+
+/** Web je novější než databáze: chybí migrace č. 8 (funkce pro stav přihlášky). */
+function missingFunction(error: PostgrestError): boolean {
+  return error.code === "PGRST202" || error.code === "42883";
+}
+
+/** Chyby funkcí admin_set_entry_status / admin_remove_entry → hláška pro organizátora. */
+function entryFailure(error: PostgrestError, t: Dictionary, locale: Locale, values?: Record<string, string>) {
+  const m = t.adminActions;
+  const matches = error.message.match(/entry_has_matches:(\d+)/);
+  if (matches) return fail(plural(locale, Number(matches[1]), m.entryHasMatchesN), {}, values);
+  if (error.message.includes("entry_has_results")) return fail(m.entryHasResults, {}, values);
+  if (error.message.includes("entry_not_found")) return fail(m.entryMissing, {}, values);
+  if (error.message.includes("invalid_status")) return fail(m.invalidEntryStatus, {}, values);
+  if (missingFunction(error)) return fail(m.migration8Missing, {}, values);
+  return dbFailure(error, t, {}, values);
+}
+
+/**
+ * E-mail kapitánovi o rozhodnutí (jen když je nastavený Resend). V portálu se
+ * kapitán dozví vždycky — oznámení zakládá databáze sama.
+ */
+async function mailCaptain(
   supabase: Awaited<ReturnType<typeof createClient>>,
   tournamentId: string,
-  teamId: string
+  teamId: string,
+  kind: EntryMailKind,
+  reason?: string
 ): Promise<boolean> {
-  const { count } = await supabase
-    .from("matches")
-    .select("id", { count: "exact", head: true })
-    .eq("tournament_id", tournamentId)
-    .or(`home_team_id.eq.${teamId},away_team_id.eq.${teamId}`);
-  return (count ?? 0) > 0;
+  if (!mailEnabled()) return false;
+  const [team, tournament] = await Promise.all([
+    supabase.from("teams").select("name, owner_id").eq("id", teamId).maybeSingle(),
+    supabase.from("tournaments").select("name, starts_on").eq("id", tournamentId).maybeSingle(),
+  ]);
+  if (!team.data?.owner_id || !tournament.data) return false;
+  const { data: owner } = await supabase.from("profiles").select("*").eq("id", team.data.owner_id).maybeSingle();
+  if (!owner?.email) return false;
+  return sendEntryDecisionMail({
+    kind,
+    to: owner.email,
+    locale: toLocale(owner.locale),
+    name: owner.full_name,
+    team: team.data.name,
+    tournament: tournament.data.name,
+    startsOn: tournament.data.starts_on,
+    reason,
+  });
 }
 
+/** „Kapitán to uvidí v portálu (a dostal e-mail).“ + kolik zápasů týmu zmizelo. */
+function decisionMessage(base: string, deleted: number, mailed: boolean, t: Dictionary, locale: Locale): string {
+  const m = t.adminActions;
+  return [base, deleted > 0 ? plural(locale, deleted, m.matchesDeleted) : "", mailed ? m.captainMailed : m.captainNotified]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/**
+ * Schválit / zamítnout / vrátit ke schválení. Zamítnutí nese důvod pro
+ * kapitána. Když má tým v rozpisu zápasy, formulář musí výslovně potvrdit
+ * jejich smazání (deleteMatches) — jinak databáze změnu nepustí.
+ */
 export async function setEntryStatusAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t } = formI18n(formData);
+  const m = t.adminActions;
   const supabase = await adminClient(locale);
-  const status = text(formData, "status");
-  if (status !== "approved" && status !== "pending") return fail(t.adminActions.invalidEntryStatus);
-  if (status === "pending" && (await teamHasMatches(supabase, text(formData, "tournamentId"), text(formData, "teamId")))) {
-    return fail(t.adminActions.entryHasMatches);
-  }
+  const tournamentId = text(formData, "tournamentId");
+  const teamId = text(formData, "teamId");
+  const status = text(formData, "status") as EntryStatus;
+  if (!ENTRY_STATUSES.includes(status)) return fail(m.invalidEntryStatus);
 
-  const { data, error } = await supabase
-    .from("tournament_entries")
-    .update({ status })
-    .eq("tournament_id", text(formData, "tournamentId"))
-    .eq("team_id", text(formData, "teamId"))
-    .select("team_id");
-  if (error) return dbFailure(error, t);
-  if (data.length === 0) return fail(t.adminActions.entryMissing);
+  const note = status === "rejected" ? text(formData, "note") : "";
+  const values = { note };
+  if (note.length > 500) return fail(t.actions.checkFields, { note: m.noteLong }, values);
+
+  const { data: deleted, error } = await supabase.rpc("admin_set_entry_status", {
+    p_tournament: tournamentId,
+    p_team: teamId,
+    p_status: status,
+    p_note: note,
+    p_delete_matches: checkbox(formData, "deleteMatches"),
+  });
+
+  if (error && missingFunction(error) && status !== "rejected") {
+    // Databáze bez migrace č. 8: schválit a vrátit jde i postaru (bez oznámení).
+    const { data, error: updateError } = await supabase
+      .from("tournament_entries")
+      .update({ status })
+      .eq("tournament_id", tournamentId)
+      .eq("team_id", teamId)
+      .select("team_id");
+    if (updateError) return entryFailure(updateError, t, locale, values);
+    if (data.length === 0) return fail(m.entryMissing);
+    refreshEverything();
+    return ok(status === "approved" ? m.entryApproved : m.entryPending);
+  }
+  if (error) return entryFailure(error, t, locale, values);
+
+  const kind: EntryMailKind = status === "approved" ? "approved" : status === "rejected" ? "rejected" : "returned";
+  const mailed = await mailCaptain(supabase, tournamentId, teamId, kind, note);
 
   refreshEverything();
-  return ok(status === "approved" ? t.adminActions.entryApproved : t.adminActions.entryPending);
+  const base = status === "approved" ? m.entryApproved : status === "rejected" ? m.entryRejected : m.entryPending;
+  return ok(decisionMessage(base, deleted ?? 0, mailed, t, locale));
 }
 
+/**
+ * Smazání přihlášky (jen u zamítnuté — tým se pak může přihlásit znovu).
+ * Zápasy týmu stejně jako u změny stavu: jen s výslovným potvrzením.
+ */
 export async function removeEntryAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t } = formI18n(formData);
+  const m = t.adminActions;
   const supabase = await adminClient(locale);
-  if (await teamHasMatches(supabase, text(formData, "tournamentId"), text(formData, "teamId"))) {
-    return fail(t.adminActions.entryHasMatches);
-  }
-  const { error } = await supabase
-    .from("tournament_entries")
-    .delete()
-    .eq("tournament_id", text(formData, "tournamentId"))
-    .eq("team_id", text(formData, "teamId"));
-  if (error) return dbFailure(error, t);
+  const tournamentId = text(formData, "tournamentId");
+  const teamId = text(formData, "teamId");
 
+  const { data: deleted, error } = await supabase.rpc("admin_remove_entry", {
+    p_tournament: tournamentId,
+    p_team: teamId,
+    p_delete_matches: checkbox(formData, "deleteMatches"),
+  });
+  if (error) return entryFailure(error, t, locale);
+
+  const mailed = await mailCaptain(supabase, tournamentId, teamId, "removed");
   refreshEverything();
-  return ok(t.adminActions.entryRejected);
+  return ok(decisionMessage(m.entryRemoved, deleted ?? 0, mailed, t, locale));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -182,12 +264,18 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
   // Odehraný turnaj nemůže přijímat přihlášky.
   const registrationOpen = values.registrationOpen === "on" && status === "upcoming";
 
-  // Přihlášky smí být otevřené jen na jeden turnaj — ostatní nejdřív zavřeme.
+  // Přihlášky smí být otevřené jen na jeden turnaj — ostatní nejdřív zavřeme
+  // a organizátorovi to řekneme (jinak by se o tom nedozvěděl).
+  const notes: string[] = [];
   if (registrationOpen) {
+    let open = supabase.from("tournaments").select("name").eq("registration_open", true);
+    if (id) open = open.neq("id", id);
+    const { data: others } = await open;
     let close = supabase.from("tournaments").update({ registration_open: false }).eq("registration_open", true);
     if (id) close = close.neq("id", id);
     const { error } = await close;
     if (error) return dbFailure(error, t, {}, values);
+    for (const other of others ?? []) notes.push(fmt(m.closedOther, { name: other.name }));
   }
 
   const row: TournamentWrite = {
@@ -216,9 +304,15 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
   if (error) return dbFailure(error, t, {}, values);
   if (data.length === 0) return fail(m.tournamentMissing);
 
+  if (values.registrationOpen === "on" && !registrationOpen) notes.push(m.keptClosed.trim());
+
+  // Zápasy, které po změně data turnaje leží v jiný den (svítí v rozpisu).
+  const { data: matches } = await supabase.from("matches").select("kickoff").eq("tournament_id", id);
+  const offDay = (matches ?? []).filter((match) => pragueIsoDay(match.kickoff) !== values.startsOn).length;
+  if (offDay > 0) notes.push(plural(locale, offDay, m.matchesOffDay));
+
   refreshEverything();
-  const note = values.registrationOpen === "on" && !registrationOpen ? m.keptClosed : "";
-  return ok(`${m.tournamentSaved}${note}`);
+  return ok([m.tournamentSaved, ...notes].join(" "));
 }
 
 export async function deleteTournamentAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -325,10 +419,14 @@ export async function updateMatchAction(_prev: FormState, formData: FormData): P
   if (Object.keys(errors).length > 0 || !kickoff) return fail(t.actions.checkFields, errors, values);
   const { data: current } = await supabase
     .from("matches")
-    .select("tournament_id")
+    .select("tournament_id, home_team_id, away_team_id, events:match_events(id)")
     .eq("id", text(formData, "id"))
     .maybeSingle();
   if (!current) return fail(t.adminActions.matchMissing);
+  const teamsChanged = current.home_team_id !== values.homeTeamId || current.away_team_id !== values.awayTeamId;
+  if (teamsChanged && current.events.length > 0) {
+    return fail(t.adminActions.matchHasEvents, {}, values);
+  }
   const fitErrors = await checkMatchFitsTournament(supabase, current.tournament_id, values, kickoff, locale, t.adminActions);
   if (Object.keys(fitErrors).length > 0) return fail(t.actions.checkFields, fitErrors, values);
 

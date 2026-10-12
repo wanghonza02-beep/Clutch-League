@@ -22,6 +22,7 @@ import {
   withdrawEntry,
   type PlayerInput,
 } from "./data";
+import { markNotificationsRead } from "./notifications";
 import { PATHS, safeNext } from "./paths";
 import { requireRole, requireUser } from "./session";
 import { DEFAULT_MAX_ROSTER, type Position } from "./types";
@@ -313,6 +314,18 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
   return ok(t.actions.profileSaved);
 }
 
+/**
+ * Označí oznámení jako přečtená — jedno konkrétní (pole id), nebo všechna.
+ * Odznaky v navigaci se tím vynulují.
+ */
+export async function markNotificationsReadAction(formData: FormData): Promise<void> {
+  const { locale } = formI18n(formData);
+  const user = await requireUser(locale);
+  const ids = formData.getAll("id").filter((v): v is string => typeof v === "string" && v.length > 0);
+  await markNotificationsRead(user.id, ids.length ? ids : undefined);
+  revalidateRoute(PATHS.portal, "layout");
+}
+
 export async function logoutAction(formData: FormData): Promise<void> {
   const { href } = formI18n(formData);
   if (isSupabaseConfigured()) {
@@ -373,10 +386,13 @@ export async function enterTournamentAction(
   redirect(href(PATHS.teamRegistration));
 }
 
+// Tým spravuje jeho vlastník (teams.owner_id) — kapitán, ale i organizátor, který
+// má vlastní tým. Nový tým a přihláška na turnaj zůstávají jen kapitánům.
+
 /** Odhlášení týmu z turnaje, na který se právě přihlašuje. */
 export async function withdrawTeamAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t, href } = formI18n(formData);
-  const user = await requireRole("captain", locale);
+  const user = await requireUser(locale);
 
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
   if (!team) redirect(href(PATHS.teamRegistration));
@@ -397,7 +413,7 @@ export async function withdrawTeamAction(_prev: FormState, formData: FormData): 
 /** Úprava údajů týmu. */
 export async function saveTeamAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t, href } = formI18n(formData);
-  const user = await requireRole("captain", locale);
+  const user = await requireUser(locale);
   const team = await getCaptainTeam(user.id);
   if (!team) redirect(href(PATHS.teamRegistration));
 
@@ -433,7 +449,7 @@ function takenNumbers(players: { id: string; number: number | null }[], exceptId
 
 export async function addPlayerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t } = formI18n(formData);
-  const user = await requireRole("captain", locale);
+  const user = await requireUser(locale);
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
   if (!team) return fail(t.actions.registerTeamFirst);
 
@@ -467,7 +483,7 @@ export async function updatePlayerAction(
   formData: FormData
 ): Promise<FormState> {
   const { locale, t } = formI18n(formData);
-  const user = await requireRole("captain", locale);
+  const user = await requireUser(locale);
   const team = await getCaptainTeam(user.id);
   if (!team) return fail(t.actions.registerTeamFirst);
 
@@ -489,7 +505,7 @@ export async function updatePlayerAction(
 
 export async function removePlayerAction(formData: FormData): Promise<void> {
   const { locale } = formI18n(formData);
-  const user = await requireRole("captain", locale);
+  const user = await requireUser(locale);
   const team = await getCaptainTeam(user.id);
   if (!team) return;
 

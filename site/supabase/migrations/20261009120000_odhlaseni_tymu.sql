@@ -28,10 +28,15 @@ $$;
 
 grant execute on function private.team_has_matches(uuid, uuid) to authenticated;
 
+-- Druhé spuštění (nebo spuštění po migraci č. 8, která politiku zakládá taky) nic
+-- nepokazí — politika je v obou stejná. Zamítnutou přihlášku (stav „rejected“
+-- z migrace č. 8) kapitán smazat nesmí; před č. 8 podmínka nic nezmění.
+drop policy if exists "Kapitán odhlašuje svůj tým z otevřeného turnaje" on public.tournament_entries;
 create policy "Kapitán odhlašuje svůj tým z otevřeného turnaje" on public.tournament_entries
   for delete to authenticated
   using (
-    exists (
+    status::text <> 'rejected'
+    and exists (
       select 1 from public.teams t
       where t.id = tournament_entries.team_id and t.owner_id = (select auth.uid())
     )
