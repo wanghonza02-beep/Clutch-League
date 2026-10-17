@@ -433,9 +433,6 @@ const en: Dictionary = {
   played: {
     over: "Results",
     title: "Results",
-    tournaments: "Tournaments played",
-    matches: "Matches",
-    goals: "Goals",
     listLabel: "Latest tournaments played",
     all: "All tournaments played",
     empty: "Results of past tournaments are coming soon.",

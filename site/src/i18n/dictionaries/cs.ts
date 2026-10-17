@@ -458,9 +458,6 @@ const cs = {
   played: {
     over: "Výsledky",
     title: "Odehrané zápasy",
-    tournaments: "Odehraných turnajů",
-    matches: "Zápasů",
-    goals: "Gólů",
     listLabel: "Poslední odehrané turnaje",
     all: "Všechny odehrané turnaje",
     empty: "Výsledky odehraných turnajů sem brzy doplníme.",

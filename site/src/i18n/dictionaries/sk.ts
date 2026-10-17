@@ -439,9 +439,6 @@ const sk: Dictionary = {
   played: {
     over: "Výsledky",
     title: "Odohrané zápasy",
-    tournaments: "Odohraných turnajov",
-    matches: "Zápasov",
-    goals: "Gólov",
     listLabel: "Posledné odohrané turnaje",
     all: "Všetky odohrané turnaje",
     empty: "Výsledky odohraných turnajov sem čoskoro doplníme.",
