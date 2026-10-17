@@ -54,7 +54,6 @@ export default async function PlayedTournamentsSection() {
             text={t.title}
             textAlign="left"
           />
-          <p className="cl-sectionhead__sub">{t.sub}</p>
         </div>
 
         {played && played.latest.length > 0 ? (

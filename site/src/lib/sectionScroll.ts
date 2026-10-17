@@ -4,9 +4,6 @@
 // úvodní stránku a sjede se až po načtení (HashScroll) — až zmizí přechodová
 // animace, ať návštěvník posun vidí.
 
-/** Výška lepící navigace (= .cl-nav, --nav-h v globals.css). */
-export const NAV_HEIGHT = 76;
-
 const PENDING_KEY = "cl:scroll-to";
 
 function smoothAllowed(): boolean {

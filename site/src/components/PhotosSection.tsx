@@ -1,38 +1,41 @@
-import ParallaxGallery, { type ParallaxPhoto } from "@/components/ui/3d-parallax-unfurling-gallery";
-import SplitText from "@/components/ui/SplitText";
+import ZoomGallery from "@/components/ui/ZoomGallery";
 import { GALLERY } from "@/content/gallery";
+import { fmt } from "@/i18n/format";
 import { getDictionary } from "@/i18n/server";
 
-// Fotky z turnajů jako 3D galerie (ParallaxGallery). Seznam fotek je v
+// Fotky z turnajů jako prostá mřížka, bez animací. Seznam fotek je v
 // src/content/gallery.ts, popisky (alt) ve slovnících jazyků, část photos.alts.
+// Náhled má pevný poměr stran (CSS) a načítá se líně; klik ukáže fotku
+// zvětšenou v prohlížeči se šipkami (ZoomGallery).
 export default async function PhotosSection() {
   const t = (await getDictionary()).photos;
-  const photos: ParallaxPhoto[] = GALLERY.map(({ id, alt, width, height }) => ({
+  const photos = GALLERY.map(({ id, alt, width, height }) => ({
     src: `/galerie/${id}.webp`,
     thumb: `/galerie/${id}-nahled.webp`,
-    alt: t.alts[alt],
     width,
     height,
+    alt: t.alts[alt],
+    label: fmt(t.enlarge, { caption: t.alts[alt] }),
   }));
 
   return (
-    <section id="fotky" aria-labelledby="fotky-title" className="photos border-t border-[var(--border-subtle)]">
-      <div className="cl-container photos__head">
+    <section id="fotky" aria-labelledby="fotky-title" className="cl-section border-t border-[var(--border-subtle)]">
+      <div className="cl-container flex flex-col gap-[var(--sp-10)]">
         <div className="cl-sectionhead">
           <span className="cl-sectionhead__over">{t.over}</span>
-          <SplitText
-            tag="h2"
-            id="fotky-title"
-            className="cl-sectionhead__title"
-            text={t.title}
-            textAlign="left"
-            splitType="words"
-          />
+          <h2 id="fotky-title" className="cl-sectionhead__title">
+            {t.title}
+          </h2>
         </div>
-        <span className="cl-footer-meta">{t.hint}</span>
-      </div>
 
-      <ParallaxGallery photos={photos} label={t.galleryLabel} />
+        <ZoomGallery
+          images={photos}
+          label={t.galleryLabel}
+          className="photos__grid"
+          itemClassName="photos__item"
+          unoptimized
+        />
+      </div>
     </section>
   );
 }

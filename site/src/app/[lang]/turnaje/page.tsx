@@ -38,7 +38,7 @@ export default async function Turnaje() {
     <main className="pt-[var(--sp-8)] pb-[var(--section-y)]">
       <div className="cl-container flex flex-col gap-[var(--sp-10)]">
         <div>
-          <BackButton />
+          <BackButton fallback="/#odehrane-zapasy" />
         </div>
 
         <div className="cl-sectionhead">

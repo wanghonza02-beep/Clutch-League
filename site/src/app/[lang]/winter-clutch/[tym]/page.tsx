@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Crown, Hand } from "lucide-react";
+import { Crown, Hand } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import SplitText from "@/components/ui/SplitText";
 import PlaceholderNotice from "@/components/winter/PlaceholderNotice";
 import { WINTER_PREVIEW, previewTeam } from "@/content/winter-clutch-preview";
@@ -56,10 +57,8 @@ export default async function WinterTeamPage({ params }: PageProps<"/[lang]/wint
     <main className="pt-[var(--sp-8)] pb-[var(--section-y)]">
       <div className="cl-container-narrow flex w-full flex-col gap-[var(--sp-12)]">
         <div>
-          <Link href="/winter-clutch#tymy" className="cl-btn cl-btn--ghost cl-btn--sm cl-back">
-            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-            <span>{t.allTeams}</span>
-          </Link>
+          {/* Zpět tam, odkud návštěvník přišel (rozpis nebo jiný tým). */}
+          <BackButton fallback="/winter-clutch#tymy" />
         </div>
 
         <header className="flex flex-col gap-[var(--sp-6)]">

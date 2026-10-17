@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { useHomePath, useT } from "@/i18n/client";
+import { useT } from "@/i18n/client";
+import Link from "@/i18n/Link";
 import { rich } from "@/i18n/rich";
 
 function Confirmation({
@@ -45,7 +46,6 @@ export default function RegistrationConfirmations({
   values?: Record<string, string>;
 }) {
   const t = useT().teamForms;
-  const home = useHomePath();
   const checked = (name: string) => values[name] === "on";
 
   return (
@@ -56,9 +56,9 @@ export default function RegistrationConfirmations({
       <Confirmation name="confirmRules" checked={checked("confirmRules")} error={errors.confirmRules}>
         {rich(t.confirmRules, {
           link: (
-            <a href={`${home}#pravidla`} target="_blank" rel="noopener">
+            <Link href="/pravidla" target="_blank" rel="noopener">
               {t.confirmRulesLink}
-            </a>
+            </Link>
           ),
         })}
       </Confirmation>

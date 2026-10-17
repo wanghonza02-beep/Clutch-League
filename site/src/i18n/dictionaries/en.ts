@@ -76,18 +76,17 @@ const en: Dictionary = {
     withdraw: "Withdraw team from tournament",
   },
 
-  scrolly: {
-    run: ["How does", "Clutch", "League", "work?"],
-    ask: ["Bored of", "basic", "football?"],
-    answer: ["You're", "in the", "right place!"],
+  howItWorks: {
+    run: "How does Clutch League work?",
+    ask: "Bored of basic football?",
+    answer: "You're in the right place!",
   },
 
-  gallery: {
-    enlarge: "Enlarge photo: {caption}",
+  lightbox: {
+    close: "Close",
+    prev: "Previous image",
+    next: "Next image",
     of: "of",
-    close: "Close gallery",
-    prev: "Previous photo",
-    next: "Next photo",
   },
 
   archiveError: {
@@ -407,20 +406,21 @@ const en: Dictionary = {
   },
 
   rules: {
-    title: "Read our rules!",
-    alwaysOver: "Always apply",
+    title: "Rules",
+    metaDescription: "General, special, active and inactive Clutch League rules in one place.",
     generalTitle: "General rules",
-    generalSub: "They apply to every Clutch League tournament, whatever the current campaign.",
+    specialTitle: "Special rules",
+    activeTitle: "Active rules",
+    inactiveTitle: "Inactive rules",
     generalPdfTitle: "Clutch League Cup 2026 rules",
     generalPdfMeta: "PDF in Czech, 8 pages, 219 kB",
-    download: "Download rules",
+    hint: "Cards are in Czech, click one to enlarge it",
+    cardAlt: "Card {number} {name}, {minutes} min",
+    enlarge: "Enlarge card: {caption}",
+    open: "Open",
+    empty: "Nothing here yet.",
     campaignOver: "Current campaign",
-    campaignTitle: "{name} rules",
-    campaignSub: "Apply only to this campaign, on top of the general rules.",
-    campaignSoon: "We'll publish the {name} rules before the tournament.",
     previewLabel: "Schedule and teams",
-    previewMeta: "Who plays whom and when, groups and team rosters.",
-    previewButton: "View schedule",
   },
 
   testimonials: {
@@ -433,7 +433,6 @@ const en: Dictionary = {
   played: {
     over: "Results",
     title: "Results",
-    sub: "The latest Clutch League tournaments. Click a tournament to see the final standings, tables, scorers and every result.",
     tournaments: "Tournaments played",
     matches: "Matches",
     goals: "Goals",
@@ -444,13 +443,12 @@ const en: Dictionary = {
 
   photos: {
     over: "Photos",
-    title: "Cup 2026 in photos",
-    hint: "Click a photo to enlarge it",
+    title: "Clutch League in photos",
     galleryLabel: "Photos from Clutch League Cup 2026",
+    enlarge: "Enlarge photo: {caption}",
     alts: {
       team: "Team Žlutý balet with medals and a trophy in front of the goal",
       keeper: "Žlutý balet goalkeeper in an orange kit on the pitch",
-      banner: "Clutch League banner with the Clutch dice on the pitch fence",
       match: "A match at a Clutch League tournament",
       award: "Žlutý balet player holding the player of the tournament award",
       player: "Žlutý balet player on the pitch",
@@ -487,7 +485,6 @@ const en: Dictionary = {
 
   tournament: {
     notFound: "Tournament not found",
-    allTournaments: "All tournaments",
     completed: "Played",
     date: "Date",
     venue: "Venue",
@@ -604,7 +601,6 @@ const en: Dictionary = {
     teamNotFound: "Team not found",
     teamMetaTitle: "{team} — roster | {name}",
     teamMetaDescription: "Roster and matches of {team} in group {group}.",
-    allTeams: "All teams",
     teamOver: "{name} · Group {group}",
     teamPlaceholderWhat: "The team name and player names",
     playersOf: "{team} players",
@@ -890,7 +886,7 @@ const en: Dictionary = {
     matchLength: "Match length (optional)",
     matchLengthHint: "E.g. 15 min",
     summary: "Short description (optional)",
-    summaryHint: "Write it in Czech. Shown in the tournament overview and on the tournament page — only in the Czech version of the website.",
+    summaryHint: "Write it in Czech. It isn't shown on the website, only used as the tournament page description for search engines and link previews (Czech version).",
     minRoster: "Minimum roster",
     minRosterHint: "How many players a team must have.",
     maxRoster: "Maximum roster",

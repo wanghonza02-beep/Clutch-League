@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import SplitText from "@/components/ui/SplitText";
 import Awards from "@/components/tournaments/Awards";
 import CardsTable from "@/components/tournaments/CardsTable";
@@ -12,7 +12,6 @@ import ScorersTable from "@/components/tournaments/ScorersTable";
 import StandingsTable from "@/components/tournaments/StandingsTable";
 import { czechOnly, editionLabel, formatLabel } from "@/i18n/data";
 import { fmt, formatDecimal, plural } from "@/i18n/format";
-import Link from "@/i18n/Link";
 import { getI18n, pageTitle } from "@/i18n/server";
 import { formatDate } from "@/lib/format";
 import { buildTables, getTournament, tournamentSummaryStats, winner } from "@/lib/tournaments";
@@ -68,10 +67,8 @@ export default async function TurnajDetail({ params }: PageProps<"/[lang]/turnaj
     <main className="pt-[var(--sp-8)] pb-[var(--section-y)]">
       <div className="cl-container flex flex-col gap-[var(--sp-12)]">
         <div>
-          <Link href="/turnaje" className="cl-btn cl-btn--ghost cl-btn--sm cl-back">
-            <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-            <span>{t.allTournaments}</span>
-          </Link>
+          {/* Zpět tam, odkud návštěvník přišel (úvodní stránka nebo archiv). */}
+          <BackButton fallback="/#odehrane-zapasy" />
         </div>
 
         {/* ---- hlavička ---- */}
@@ -93,9 +90,6 @@ export default async function TurnajDetail({ params }: PageProps<"/[lang]/turnaj
               text={tournament.name}
               textAlign="left"
             />
-            {czechOnly(tournament.summary, locale) && (
-              <p className="cl-sectionhead__sub">{tournament.summary}</p>
-            )}
           </div>
 
           <dl className="hist-timeline__stats">

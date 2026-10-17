@@ -76,18 +76,17 @@ const sk: Dictionary = {
     withdraw: "Odhlásiť tím z turnaja",
   },
 
-  scrolly: {
-    run: ["Ako funguje", "Clutch", "League?"],
-    ask: ["Už ťa nebaví", "basic", "futbal?"],
-    answer: ["Si", "tu", "správne!"],
+  howItWorks: {
+    run: "Ako funguje Clutch League?",
+    ask: "Už ťa nebaví basic futbal?",
+    answer: "Si tu správne!",
   },
 
-  gallery: {
-    enlarge: "Zväčšiť fotku: {caption}",
+  lightbox: {
+    close: "Zavrieť",
+    prev: "Predchádzajúci obrázok",
+    next: "Ďalší obrázok",
     of: "z",
-    close: "Zavrieť galériu",
-    prev: "Predchádzajúca fotka",
-    next: "Ďalšia fotka",
   },
 
   archiveError: {
@@ -413,20 +412,21 @@ const sk: Dictionary = {
   },
 
   rules: {
-    title: "Prečítaj si naše pravidlá!",
-    alwaysOver: "Platia vždy",
+    title: "Pravidlá",
+    metaDescription: "Všeobecné, špeciálne, aktívne aj neaktívne pravidlá Clutch League na jednom mieste.",
     generalTitle: "Všeobecné pravidlá",
-    generalSub: "Platia pre všetky turnaje Clutch League, nech je práve akákoľvek kampaň.",
+    specialTitle: "Špeciálne pravidlá",
+    activeTitle: "Aktívne pravidlá",
+    inactiveTitle: "Neaktívne pravidlá",
     generalPdfTitle: "Pravidlá Clutch League Cup 2026",
     generalPdfMeta: "PDF v češtine, 8 strán, 219 kB",
-    download: "Stiahnuť pravidlá",
+    hint: "Karty sú v češtine, klikni na kartu pre zväčšenie",
+    cardAlt: "Karta {number} {name}, {minutes} min",
+    enlarge: "Zväčšiť kartu: {caption}",
+    open: "Otvoriť",
+    empty: "Zatiaľ tu nič nie je.",
     campaignOver: "Aktuálna kampaň",
-    campaignTitle: "Pravidlá {name}",
-    campaignSub: "Platia len pre túto kampaň, navyše k všeobecným pravidlám.",
-    campaignSoon: "Pravidlá {name} zverejníme pred turnajom.",
     previewLabel: "Rozpis zápasov a tímy",
-    previewMeta: "Kto s kým hrá, kedy, skupiny a súpisky tímov.",
-    previewButton: "Zobraziť rozpis",
   },
 
   testimonials: {
@@ -439,7 +439,6 @@ const sk: Dictionary = {
   played: {
     over: "Výsledky",
     title: "Odohrané zápasy",
-    sub: "Posledné turnaje Clutch League. Klikni na turnaj a uvidíš konečné poradie, tabuľky, strelcov aj všetky výsledky.",
     tournaments: "Odohraných turnajov",
     matches: "Zápasov",
     goals: "Gólov",
@@ -450,13 +449,12 @@ const sk: Dictionary = {
 
   photos: {
     over: "Fotky",
-    title: "Cup 2026 vo fotkách",
-    hint: "Klikni na fotku pre zväčšenie",
+    title: "Clutch League vo fotkách",
     galleryLabel: "Fotky z Clutch League Cupu 2026",
+    enlarge: "Zväčšiť fotku: {caption}",
     alts: {
       team: "Tím Žlutý balet s medailami a trofejou pred bránkou",
       keeper: "Brankár Žlutého baletu v oranžovom drese na ihrisku",
-      banner: "Banner Clutch League s Clutch kockou na plote ihriska",
       match: "Zápas na turnaji Clutch League",
       award: "Hráč Žlutého baletu s ocenením pre najlepšieho hráča turnaja",
       player: "Hráč Žlutého baletu na ihrisku",
@@ -492,7 +490,6 @@ const sk: Dictionary = {
 
   tournament: {
     notFound: "Turnaj sa nenašiel",
-    allTournaments: "Všetky turnaje",
     completed: "Odohrané",
     date: "Dátum",
     venue: "Miesto",
@@ -610,7 +607,6 @@ const sk: Dictionary = {
     teamNotFound: "Tím sa nenašiel",
     teamMetaTitle: "{team} — súpiska | {name}",
     teamMetaDescription: "Súpiska a zápasy tímu {team} v skupine {group}.",
-    allTeams: "Všetky tímy",
     teamOver: "{name} · Skupina {group}",
     teamPlaceholderWhat: "Názov tímu aj mená hráčov",
     playersOf: "Hráči tímu {team}",
@@ -896,7 +892,7 @@ const sk: Dictionary = {
     matchLength: "Dĺžka zápasu (nepovinné)",
     matchLengthHint: "Napr. 15 min",
     summary: "Krátky popis (nepovinné)",
-    summaryHint: "Píš po česky. Zobrazí sa v prehľade turnajov a na stránke turnaja — len v českej verzii webu.",
+    summaryHint: "Píš po česky. Na webe sa nezobrazuje, použije sa len ako popis stránky turnaja pre vyhľadávače a zdieľanie odkazu (česká verzia).",
     minRoster: "Najmenšia súpiska",
     minRosterHint: "Koľko hráčov musí tím mať.",
     maxRoster: "Najväčšia súpiska",

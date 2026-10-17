@@ -77,18 +77,17 @@ const uk: Dictionary = {
     withdraw: "Зняти команду з турніру",
   },
 
-  scrolly: {
-    run: ["Як працює", "Clutch", "League?"],
-    ask: ["Набрид", "звичайний", "футбол?"],
-    answer: ["Ти там,", "де", "треба!"],
+  howItWorks: {
+    run: "Як працює Clutch League?",
+    ask: "Набрид звичайний футбол?",
+    answer: "Ти там, де треба!",
   },
 
-  gallery: {
-    enlarge: "Збільшити фото: {caption}",
+  lightbox: {
+    close: "Закрити",
+    prev: "Попереднє зображення",
+    next: "Наступне зображення",
     of: "з",
-    close: "Закрити галерею",
-    prev: "Попереднє фото",
-    next: "Наступне фото",
   },
 
   archiveError: {
@@ -422,20 +421,21 @@ const uk: Dictionary = {
   },
 
   rules: {
-    title: "Прочитай наші правила!",
-    alwaysOver: "Діють завжди",
+    title: "Правила",
+    metaDescription: "Загальні, спеціальні, активні й неактивні правила Clutch League в одному місці.",
     generalTitle: "Загальні правила",
-    generalSub: "Діють на всіх турнірах Clutch League, незалежно від поточної кампанії.",
+    specialTitle: "Спеціальні правила",
+    activeTitle: "Активні правила",
+    inactiveTitle: "Неактивні правила",
     generalPdfTitle: "Правила Clutch League Cup 2026",
     generalPdfMeta: "PDF чеською мовою, 8 сторінок, 219 кБ",
-    download: "Завантажити правила",
+    hint: "Картки чеською мовою, натисни на картку, щоб збільшити",
+    cardAlt: "Картка {number} {name}, {minutes} хв",
+    enlarge: "Збільшити картку: {caption}",
+    open: "Відкрити",
+    empty: "Поки що тут нічого немає.",
     campaignOver: "Поточна кампанія",
-    campaignTitle: "Правила {name}",
-    campaignSub: "Діють лише для цієї кампанії, на додачу до загальних правил.",
-    campaignSoon: "Правила {name} опублікуємо перед турніром.",
     previewLabel: "Розклад матчів і команди",
-    previewMeta: "Хто з ким грає, коли, групи та склади команд.",
-    previewButton: "Переглянути розклад",
   },
 
   testimonials: {
@@ -448,7 +448,6 @@ const uk: Dictionary = {
   played: {
     over: "Результати",
     title: "Зіграні матчі",
-    sub: "Останні турніри Clutch League. Натисни на турнір, щоб побачити підсумкові місця, таблиці, бомбардирів і всі результати.",
     tournaments: "Зіграних турнірів",
     matches: "Матчів",
     goals: "Голів",
@@ -459,13 +458,12 @@ const uk: Dictionary = {
 
   photos: {
     over: "Фото",
-    title: "Cup 2026 у фотографіях",
-    hint: "Натисни на фото, щоб збільшити",
+    title: "Clutch League у фотографіях",
     galleryLabel: "Фото з Clutch League Cup 2026",
+    enlarge: "Збільшити фото: {caption}",
     alts: {
       team: "Команда Žlutý balet з медалями й трофеєм перед воротами",
       keeper: "Воротар Žlutý balet у помаранчевій формі на полі",
-      banner: "Банер Clutch League з кубиком Clutch на огорожі поля",
       match: "Матч на турнірі Clutch League",
       award: "Гравець Žlutý balet з нагородою найкращому гравцю турніру",
       player: "Гравець Žlutý balet на полі",
@@ -501,7 +499,6 @@ const uk: Dictionary = {
 
   tournament: {
     notFound: "Турнір не знайдено",
-    allTournaments: "Усі турніри",
     completed: "Зіграно",
     date: "Дата",
     venue: "Місце",
@@ -620,7 +617,6 @@ const uk: Dictionary = {
     teamNotFound: "Команду не знайдено",
     teamMetaTitle: "{team} — склад | {name}",
     teamMetaDescription: "Склад і матчі команди {team} у групі {group}.",
-    allTeams: "Усі команди",
     teamOver: "{name} · Група {group}",
     teamPlaceholderWhat: "Назва команди та імена гравців",
     playersOf: "Гравці команди {team}",
@@ -909,7 +905,7 @@ const uk: Dictionary = {
     matchLength: "Тривалість матчу (необов'язково)",
     matchLengthHint: "Напр. 15 min",
     summary: "Короткий опис (необов'язково)",
-    summaryHint: "Пиши чеською. Показується в огляді турнірів і на сторінці турніру — лише в чеській версії сайту.",
+    summaryHint: "Пиши чеською. На сайті не показується, лише як опис сторінки турніру для пошукових систем і поширення посилання (чеська версія).",
     minRoster: "Мінімальний склад",
     minRosterHint: "Скільки гравців має бути в команді.",
     maxRoster: "Максимальний склад",

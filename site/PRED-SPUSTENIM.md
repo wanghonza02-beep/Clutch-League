@@ -148,15 +148,16 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
 - [ ] **Texty k osobním údajům (GDPR).** Web sbírá jméno, e-mail a telefon. Registrace má souhlas se
   zpracováním, ale chybí stránka **Zásady ochrany osobních údajů** a odkaz na ni. Konkrétní znění
   je na tobě (nebo právníkovi), já jen připravím místo a odkaz.
-- [ ] **PDF s pravidly kampaně Winter Clutch League.** Zástupný soubor je smazaný, web píše
-  „Pravidla Winter Clutch League zveřejníme před turnajem“. Až bude skutečné PDF, pošli mi ho
-  (nahraju do `public/docs/` a doplním v `src/content/campaign.ts`).
+- [ ] **Pravidla** jsou na samostatné stránce `/pravidla` (odkaz v navigaci a tlačítko na úvodní
+  stránce): obecná pravidla (PDF) a karty módů z Disku ve třech sekcích (speciální, aktivní,
+  neaktivní). Když se módy změní nebo přibude PDF (třeba pravidla Winter Clutch League), pošli mi
+  soubory. Nahraju je do `public/docs/` a doplním v `src/content/rules.ts`.
 - [ ] **Obecná pravidla** jsou PDF pojmenované „Pravidla Clutch League Cup 2026“. Pokud má být obecné
-  bez vazby na Cup, přejmenovat / vyměnit soubor (`src/components/RulesSection.tsx`).
+  bez vazby na Cup, přejmenovat / vyměnit soubor (`src/content/rules.ts`, název ve slovnících jazyků).
 - [ ] **Rozpis Winter Clutch League** (`/winter-clutch`): ukázkové týmy a časy jsou pryč, stránka píše
   „Rozpis zápasů a soupisky týmů zveřejníme po uzávěrce přihlášek“. Skutečný rozpis a soupisky
   doplním do `src/content/winter-clutch-preview.ts`, až mi je pošleš. Odkaz „Rozpis zápasů a týmy“
-  se pak v Pravidlech a v archivu objeví sám. Jména hráčů = osobní údaje: jen se souhlasem hráčů.
+  se pak v archivu odehraných turnajů objeví sám. Jména hráčů = osobní údaje: jen se souhlasem hráčů.
 - [ ] **Winter Clutch je 5+1** (5 hráčů v poli + brankář), soupiska **aspoň 6, nejvýš 10 hráčů**. Web je
   hotový (10. 10. 2026); v databázi to nastaví migrace `20261013120000_winter_5plus1_soupiska.sql`
   (Supabase → SQL Editor → vlož → Run). Poslední řádek výsledku ukáže formát 5+1 a soupisku 6–10.
@@ -173,7 +174,7 @@ se tím nemění. Ta se zadávají v Portálu a jsou vidět hned.
   e-mail clutch.league@seznam.cz, TikTok @clutchleague_football.
 - [ ] **Jazyky:** web je česky, anglicky, ukrajinsky a slovensky (přepínač v liště). Překlady prošel
   jen Claude — ideálně je nechat přečíst rodilým mluvčím (hlavně ukrajinštinu).
-- [ ] **Co zůstává jen česky:** PDF s pravidly (v ostatních jazycích to u PDF stojí) a popis turnaje,
+- [ ] **Co zůstává jen česky:** PDF s pravidly a karty módů (v ostatních jazycích to u nich stojí) a popis turnaje,
   který píšeš v administraci (v ostatních jazycích se nezobrazí). Fáze zápasů piš česky
   (Skupina A, Semifinále, Finále) — web je sám přeloží.
 

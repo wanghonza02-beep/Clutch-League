@@ -85,19 +85,20 @@ const cs = {
     withdraw: "Odhlásit tým z turnaje",
   },
 
-  /** Úvodní stránka, sekce „Jak to funguje“: každá položka je jeden řádek. */
-  scrolly: {
-    run: ["Jak funguje", "Clutch", "League?"],
-    ask: ["Už tě nebaví", "basic", "fotbal?"],
-    answer: ["Jsi", "tu", "správně!"],
+  /** Úvodní stránka, sekce „Jak to funguje“: tři věty, každá na vlastním řádku. */
+  howItWorks: {
+    run: "Jak funguje Clutch League?",
+    ask: "Už tě nebaví basic fotbal?",
+    answer: "Jsi tu správně!",
   },
 
-  gallery: {
-    enlarge: "Zvětšit fotku: {caption}",
+  /** Prohlížeč obrázků přes celou obrazovku (fotky, karty pravidel). */
+  lightbox: {
+    close: "Zavřít",
+    prev: "Předchozí obrázek",
+    next: "Další obrázek",
+    /** Počítadlo „03 z 18“ (pro čtečky; na obrazovce je lomítko). */
     of: "z",
-    close: "Zavřít galerii",
-    prev: "Předchozí fotka",
-    next: "Další fotka",
   },
 
   archiveError: {
@@ -426,21 +427,25 @@ const cs = {
     moreInfo: "Více informací",
   },
 
+  /** Stránka /pravidla a tlačítko „Pravidla“ na úvodní stránce. */
   rules: {
-    title: "Přečti si naše pravidla!",
-    alwaysOver: "Platí vždy",
+    title: "Pravidla",
+    metaDescription: "Obecná, speciální, aktivní i neaktivní pravidla Clutch League na jednom místě.",
     generalTitle: "Obecná pravidla",
-    generalSub: "Platí pro všechny turnaje Clutch League, ať je zrovna jakákoli kampaň.",
+    specialTitle: "Speciální pravidla",
+    activeTitle: "Aktivní pravidla",
+    inactiveTitle: "Neaktivní pravidla",
     generalPdfTitle: "Pravidla Clutch League Cup 2026",
     generalPdfMeta: "PDF, 8 stran, 219 kB",
-    download: "Stáhnout pravidla",
+    hint: "Klikni na kartu pro zvětšení",
+    /** Popis karty módu: „Karta 01 Turbo Mode, 3 min“. */
+    cardAlt: "Karta {number} {name}, {minutes} min",
+    enlarge: "Zvětšit kartu: {caption}",
+    open: "Otevřít",
+    empty: "Zatím tu nic není.",
+    // Další dva texty používají stránky Winter Clutch a Odehrané turnaje.
     campaignOver: "Aktuální kampaň",
-    campaignTitle: "Pravidla {name}",
-    campaignSub: "Platí jen pro tuhle kampaň, navíc k obecným pravidlům.",
-    campaignSoon: "Pravidla {name} zveřejníme před turnajem.",
     previewLabel: "Rozpis zápasů a týmy",
-    previewMeta: "Kdo s kým hraje, kdy, skupiny a soupisky týmů.",
-    previewButton: "Zobrazit rozpis",
   },
 
   testimonials: {
@@ -453,7 +458,6 @@ const cs = {
   played: {
     over: "Výsledky",
     title: "Odehrané zápasy",
-    sub: "Poslední turnaje Clutch League. Klikni na turnaj a uvidíš konečné pořadí, tabulky, střelce i všechny výsledky.",
     tournaments: "Odehraných turnajů",
     matches: "Zápasů",
     goals: "Gólů",
@@ -464,13 +468,12 @@ const cs = {
 
   photos: {
     over: "Fotky",
-    title: "Cup 2026 ve fotkách",
-    hint: "Klikni na fotku pro zvětšení",
+    title: "Clutch League ve fotkách",
     galleryLabel: "Fotky z Clutch League Cupu 2026",
+    enlarge: "Zvětšit fotku: {caption}",
     alts: {
       team: "Tým Žlutý balet s medailemi a trofejí před brankou",
       keeper: "Brankář Žlutého baletu v oranžovém dresu na hřišti",
-      banner: "Banner Clutch League s Clutch kostkou na plotě hřiště",
       match: "Zápas na turnaji Clutch League",
       award: "Hráč Žlutého baletu s oceněním pro nejlepšího hráče turnaje",
       player: "Hráč Žlutého baletu na hřišti",
@@ -506,7 +509,6 @@ const cs = {
 
   tournament: {
     notFound: "Turnaj nenalezen",
-    allTournaments: "Všechny turnaje",
     completed: "Odehráno",
     date: "Datum",
     venue: "Místo",
@@ -627,7 +629,6 @@ const cs = {
     teamNotFound: "Tým nenalezen",
     teamMetaTitle: "{team} — soupiska | {name}",
     teamMetaDescription: "Soupiska a zápasy týmu {team} ve skupině {group}.",
-    allTeams: "Všechny týmy",
     teamOver: "{name} · Skupina {group}",
     teamPlaceholderWhat: "Název týmu i jména hráčů",
     playersOf: "Hráči týmu {team}",
@@ -917,7 +918,7 @@ const cs = {
     matchLength: "Délka zápasu (nepovinné)",
     matchLengthHint: "Např. 15 min",
     summary: "Krátký popis (nepovinné)",
-    summaryHint: "Ukáže se v přehledu turnajů a na stránce turnaje — jen v české verzi webu, ostatní jazyky ho vynechají.",
+    summaryHint: "Na webu se neukazuje. Použije se jen jako popis stránky turnaje pro vyhledávače a sdílení odkazu (v české verzi).",
     minRoster: "Nejmenší soupiska",
     minRosterHint: "Kolik hráčů musí tým mít.",
     maxRoster: "Největší soupiska",

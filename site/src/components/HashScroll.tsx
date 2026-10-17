@@ -4,14 +4,29 @@ import { useEffect } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PAGE_REVEALED_EVENT, PAGE_TRANSITION_ATTR } from "@/components/PageTransition";
 import { useHomePath } from "@/i18n/client";
+import { cameFromHistory } from "@/lib/navHistory";
 import { clearRememberedSection, peekRememberedSection, scrollToSection } from "@/lib/sectionScroll";
+
+/**
+ * Úvodní stránka je ta, kterou prohlížeč načetl znovu (obnovení) nebo
+ * z historie (zpět z jiného webu) — pozici obnoví prohlížeč.
+ */
+function restoredLoad(): boolean {
+  const entry = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  if (entry?.type !== "reload" && entry?.type !== "back_forward") return false;
+  return new URL(entry.name).pathname === window.location.pathname;
+}
 
 /**
  * Doskočí na sekci po příchodu na úvodní stránku:
  *
  *  - z navigace na podstránce (cíl uložený v sessionStorage) → plynule sjede,
  *    až zmizí přechodová animace,
- *  - z adresy s kotvou (/#pravidla, sdílený odkaz) → skočí rovnou.
+ *  - z adresy s kotvou (/#fotky, sdílený odkaz) → skočí rovnou.
+ *
+ * Při návratu (zpět/vpřed, „Zpět“ na webu, obnovení stránky) se kotva
+ * v adrese ignoruje: návštěvník má zůstat přesně tam, kde byl. Pozici vrací
+ * lib/navHistory (při obnovení stránky prohlížeč).
  *
  * Next sám na kotvu skočí hned po načtení. Tady se posun pro jistotu zopakuje
  * po přepočtu ScrollTriggeru (animace nadpisů SplitText), kdyby se rozvržení
@@ -24,6 +39,7 @@ export default function HashScroll() {
     // Cíl se smaže až po posunu: React efekt ve vývoji spustí dvakrát a
     // první (hned zrušený) běh nesmí cíl spotřebovat.
     const remembered = peekRememberedSection();
+    if (!remembered && (cameFromHistory() || restoredLoad())) return;
     const id = remembered ?? decodeURIComponent(window.location.hash.slice(1));
     if (!id) return;
 

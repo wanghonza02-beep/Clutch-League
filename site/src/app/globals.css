@@ -1268,187 +1268,47 @@ a.cl-footer-meta:hover {
   color: var(--text-heading);
 }
 
-/* „Jak funguje Clutch League?“ + pravidla (HowItWorksSection).
-   Pod lg jeden sloupec: text, pod ním pravidla, nic se nepřilepuje.
-   Od lg dva sloupce, obojí sticky pod lištou: vlevo krátké řádky přes celou
-   výšku okna, vpravo pravidla. Scroll přes .hiw__swap přeroluje řádky shora
-   dolů (ScrollSwapStack), .hiw__hold je prodleva, pak sekce odjede.
-   Sekce ani její předci nesmí mít overflow jiný než visible / clip — hidden
-   by sticky vypnulo. */
+/* „Jak funguje Clutch League?“ (HowItWorksSection): tři věty přes celou
+   šířku okna, bez animací, pod nimi uprostřed velké tlačítko „Pravidla“. */
 .hiw {
+  padding: var(--section-y) var(--gutter);
   background: var(--black);
-  overflow-x: clip;
 }
-.hiw__grid {
-  display: grid;
-  gap: var(--sp-16);
-  padding-block: var(--section-y);
+/* Šířka obsahu je měřítko písma (cqi = 1 % šířky .hiw__body). */
+.hiw__body {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-12);
+  text-align: center;
 }
-.hiw__swap,
-.hiw__hold {
-  display: none;
-}
-/* Krátké řádky těsně pod sebou; věty (skupiny) odděluje malá mezera.
-   Mezery se řídí velikostí písma. */
+/* Nejdelší věta ze všech jazyků („How does Clutch League work?“) je široká
+   asi 16,8 em, 5,8cqi ji tak vejde na jeden řádek. Na úzkém displeji je písmo
+   aspoň 10vw (nejvýš 48 px) a věty se vyváženě zalomí. */
 .hiw__lines {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 0.25em;
-  font-size: clamp(32px, 10vw, 48px);
-}
-.hiw__group {
   margin: 0;
-  font-size: inherit;
+  font-size: max(5.8cqi, min(10vw, 48px));
   font-style: italic;
   line-height: var(--lh-heading);
 }
-.hiw__group .swap-text {
+.hiw__line {
   display: block;
-  width: fit-content;
+  text-wrap: balance;
 }
-.hiw__group--accent {
+.hiw__line--accent {
   color: var(--gold);
   filter: var(--glow-drop);
 }
-.hiw-rules {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-12);
-}
-.hiw-rules__title {
-  margin: 0;
-  font-size: var(--fs-display-2);
-  font-style: italic;
-  line-height: var(--lh-heading);
-}
-.hiw-rules__part {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-6);
-}
-.hiw-rules__part-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--fw-display);
-  font-style: italic;
-  font-size: var(--fs-h3);
-  line-height: var(--lh-heading);
-  letter-spacing: var(--ls-display);
-  text-transform: uppercase;
-  color: var(--text-heading);
-}
-.hiw-rules__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-}
-
-@media (min-width: 1024px) {
-  /* Text vlevo je blíž k levému okraji než obsah jinde na webu (zhruba
-     třetina volného okraje) a je široký, jak potřebuje. Pravidla vpravo
-     zaberou zbytek až k pravému okraji okna. */
-  .hiw__grid {
-    grid-template-columns: max-content minmax(0, 1fr);
-    column-gap: clamp(var(--sp-16), 6vw, 128px);
-    max-width: none;
-    padding-left: max(var(--gutter), calc((100% - var(--container)) * 0.3 + var(--gutter)));
-    padding-right: var(--gutter);
-    padding-block: 0;
-  }
-  /* Délka vlny přerolování (scroll přes ni řídí průběh). */
-  .hiw__swap {
-    display: block;
-    height: calc((100dvh - var(--nav-h)) * 1.1);
-  }
-  /* Prodleva na konci: text i pravidla stojí, než stránka pokračuje. */
-  .hiw__hold {
-    display: block;
-    height: calc((100dvh - var(--nav-h)) * 0.8);
-  }
-  /* Řádky vyplní výšku okna: řádek = 1,05 em + 2 × 0,12 em odsazení
-     (.swap-text__size), plus dvě mezery mezi větami po 0,25 em. --rows nastaví
-     komponenta podle počtu řádků v daném jazyce. Šířku hlídá druhá mez (vw). */
-  .hiw__lines {
-    position: sticky;
-    top: var(--nav-h);
-    min-height: calc(100dvh - var(--nav-h));
-    padding-block: var(--sp-6);
-    font-size: min(
-      calc((100dvh - var(--nav-h) - 2 * var(--sp-6)) / (var(--rows) * 1.29 + 0.5)),
-      5.2vw
-    );
-  }
-  /* Pravidla na celou výšku jako text vlevo (stejné odsazení shora i zdola):
-     nadpis nahoře, kampaň dole, obecná pravidla mezi nimi. Písmo roste
-     s výškou okna (dvh), ať mezi bloky nevznikají díry. Musí se vejít i do
-     okna 1280×720 (644 px pod lištou). */
-  .hiw__sticky {
-    position: sticky;
-    top: var(--nav-h);
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100dvh - var(--nav-h));
-    padding-block: var(--sp-6);
-  }
-  .hiw-rules {
-    flex: 1 0 auto;
-    justify-content: space-between;
-    gap: var(--sp-6);
-  }
-  .hiw-rules__title {
-    font-size: clamp(32px, 7dvh, 84px);
-  }
-  .hiw-rules__part {
-    gap: clamp(12px, 2.2dvh, 24px);
-  }
-  .hiw-rules__part-title {
-    font-size: clamp(22px, 3.4dvh, 36px);
-  }
-  .hiw-rules .cl-sectionhead {
-    gap: var(--sp-2);
-  }
-  .hiw-rules .cl-sectionhead__sub {
-    max-width: none;
-    font-size: clamp(15px, 2.3dvh, 21px);
-  }
-  /* Široká karta: název souboru vlevo, tlačítko vpravo (když se nevejde, spadne pod). */
-  .hiw-rules__card {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    column-gap: var(--sp-8);
-    padding: clamp(16px, 2.8dvh, 28px);
-  }
-  .hiw-rules__card > .cl-btn {
-    align-self: center;
-  }
-}
-
-/* Scroll and Swap (ScrollSwapStack): řádek a jeho kopie nad sebou, ořez na
-   výšku textu. Do stran se neořezává — kurzíva přesahuje. Odsazení nahoře a
-   dole dává místo háčkům a čárkám nad velkými písmeny. */
-.swap-text {
-  position: relative;
-  display: inline-block;
-  max-width: 100%;
-  vertical-align: top;
-  overflow: hidden;
-  overflow: visible clip;
-}
-.swap-text__size,
-.swap-text__layer {
-  display: block;
-  padding-block: 0.12em;
-}
-.swap-text__size {
-  visibility: hidden;
-}
-.swap-text__layer {
-  position: absolute;
-  inset: 0;
-  will-change: transform;
+/* Jediné tlačítko sekce, větší než cl-btn--lg. */
+.hiw__cta {
+  min-width: min(320px, 100cqi);
+  height: 72px;
+  padding: 0 var(--sp-12);
+  font-size: var(--fs-h4);
 }
 
 /* Hero fills the viewport below the 76px nav on every device. */
@@ -1772,164 +1632,11 @@ a.cl-footer-meta:hover {
   border-top: 1px solid var(--border-subtle);
 }
 
-/* ---- Fotky: 3D galerie (ParallaxGallery) ----
-   Sekce je vysoká několik oken; uvnitř je přilepená scéna pod lištou. Scroll přes
-   sekci rozbalí rámeček (scale + clip-path) a natočí stěnu fotek (jen transform).
-   overflow-x: clip místo hidden, jinak by nefungovalo sticky. */
-.photos {
-  padding-top: var(--section-y);
-  overflow-x: clip;
-}
-.photos__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-10);
-}
-/* .pgal__track = dráha animace, .pgal o 80svh delší = pauza na konci. */
-.pgal {
-  position: relative;
-  height: 580svh;
-}
-.pgal__track {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 500svh;
-  visibility: hidden;
-  pointer-events: none;
-}
-.pgal__stage {
-  position: sticky;
-  top: var(--nav-h);
-  height: calc(100svh - var(--nav-h));
-  overflow: hidden;
-}
-.pgal__frame {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--bg-page);
-  will-change: transform;
-}
-/* Obrys rámečku na začátku; zmizí, než se rámeček roztáhne. */
-.pgal__ring {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: 48px;
-  box-shadow: inset 0 0 0 3px var(--border-strong);
-  pointer-events: none;
-}
-.pgal__view {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 1000px;
-  pointer-events: none;
-}
-/* Ztmavení okrajů, ať stěna fotek vyjíždí ze tmy. */
-.pgal__vignette {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  /* Na úzké obrazovce menší, jinak by ztmavil skoro všechno. */
-  --pgal-fade: 48px;
-  box-shadow:
-    inset 0 var(--pgal-fade) var(--pgal-fade) calc(var(--pgal-fade) / -3) var(--bg-page),
-    inset 0 calc(-1 * var(--pgal-fade)) var(--pgal-fade) calc(var(--pgal-fade) / -3) var(--bg-page),
-    inset var(--pgal-fade) 0 var(--pgal-fade) calc(var(--pgal-fade) / -3) var(--bg-page),
-    inset calc(-1 * var(--pgal-fade)) 0 var(--pgal-fade) calc(var(--pgal-fade) / -3) var(--bg-page);
-}
-@media (min-width: 768px) {
-  .pgal__vignette {
-    --pgal-fade: 150px;
-  }
-}
-.pgal__plane {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-4);
-  width: 120vw;
-  height: 150svh;
-  flex: none;
-  transform-style: preserve-3d;
-  will-change: transform;
-}
-.pgal__col {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: var(--sp-4);
-  width: 22vw;
-  min-width: 200px;
-  pointer-events: auto;
-  will-change: transform;
-}
-.pgal__card {
-  position: relative;
-  display: block;
-  flex: none;
-  width: 100%;
-  height: 200px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  cursor: zoom-in;
-  background: var(--bg-elevated);
-  transition: transform var(--dur-base) var(--ease-out);
-}
-.pgal__card img {
-  object-fit: cover;
-  opacity: 0.82;
-  transition: opacity var(--dur-base) var(--ease-out);
-  user-select: none;
-}
-.pgal__card:hover,
-.pgal__card:focus-visible {
-  transform: scale(1.02);
-}
-.pgal__card:hover img,
-.pgal__card:focus-visible img {
-  opacity: 1;
-}
-.pgal__card:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-@media (min-width: 640px) {
-  .pgal__card {
-    height: 300px;
-  }
-}
-@media (min-width: 768px) {
-  .pgal {
-    height: 680svh;
-  }
-  .pgal__track {
-    height: 600svh;
-  }
-  .pgal__plane,
-  .pgal__col {
-    gap: var(--sp-6);
-  }
-  .pgal__card {
-    height: 400px;
-  }
-}
-
-/* „Omezit pohyb“: místo 3D obyčejná mřížka fotek. */
-.pgal-static-wrap {
-  padding-bottom: var(--section-y);
-}
-.pgal-static {
+/* ---- Fotky: prostá mřížka (PhotosSection) ----
+   Bez animací. Náhledy mají pevný poměr 3 : 4 (ořez object-fit), ať se při
+   líném načítání nic neposouvá. 2 sloupce na mobilu, 3 na tabletu, 6 od lg
+   (18 fotek = vždy plné řádky). Klik ukáže fotku v prohlížeči (.lightbox). */
+.photos__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-3);
@@ -1937,21 +1644,115 @@ a.cl-footer-meta:hover {
   padding: 0;
   list-style: none;
 }
-@media (min-width: 768px) {
-  .pgal-static {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+@media (min-width: 640px) {
+  .photos__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-.pgal__card--static {
-  height: auto;
+@media (min-width: 1024px) {
+  .photos__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+.photos__item {
+  position: relative;
+  display: block;
+  width: 100%;
   aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  cursor: zoom-in;
+}
+.photos__item img {
+  object-fit: cover;
+}
+.photos__item:hover,
+.rules-card:hover {
+  outline: 1px solid var(--border-accent);
+  outline-offset: 2px;
 }
 
-/* Fotka na celou obrazovku. Stránka pod ní se neposouvá. */
-html:has(.pgal-lightbox[open]) {
+/* ---- Pravidla (stránka /pravidla) ----
+   Sekce pod sebou: nadpis a obsah. Obecná pravidla = karta s PDF (tlačítko
+   „Otevřít“ na mobilu pod názvem, od 640 px vpravo). Karty módů jsou vidět
+   rovnou: pod lg jeden sloupec, od lg dva (karta ~560 px, text na ní je
+   čitelný). Klik ukáže kartu v prohlížeči (.lightbox). */
+.rules-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+.rules-section__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.rules-doc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.rules-doc__file {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.rules-doc__title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-size: var(--fs-h5);
+  line-height: var(--lh-snug);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+@media (min-width: 640px) {
+  .rules-doc {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+.rules-cards {
+  display: grid;
+  gap: var(--grid-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 1024px) {
+  .rules-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.rules-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+.rules-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---- Prohlížeč obrázků (ZoomGallery) ----
+   Obrázek přes celou obrazovku, šipky po stranách, bez animací. Stránka pod
+   ním se neposouvá. */
+html:has(.lightbox[open]) {
   overflow: hidden;
 }
-.pgal-lightbox {
+.lightbox {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -1964,19 +1765,13 @@ html:has(.pgal-lightbox[open]) {
   background: rgba(0, 0, 0, 0.94);
   color: var(--text-heading);
 }
-.pgal-lightbox[open] {
+.lightbox[open] {
   display: block;
-  animation: pgal-fade var(--dur-base) var(--ease-out);
 }
-.pgal-lightbox::backdrop {
+.lightbox::backdrop {
   background: rgba(0, 0, 0, 0.6);
 }
-@keyframes pgal-fade {
-  from {
-    opacity: 0;
-  }
-}
-.pgal-lightbox__stage {
+.lightbox__stage {
   position: absolute;
   inset: 64px var(--sp-2) var(--sp-6);
   display: flex;
@@ -1984,7 +1779,7 @@ html:has(.pgal-lightbox[open]) {
   justify-content: center;
   touch-action: pan-y;
 }
-.pgal-lightbox__img {
+.lightbox__img {
   width: auto;
   height: auto;
   max-width: 100%;
@@ -1992,7 +1787,7 @@ html:has(.pgal-lightbox[open]) {
   object-fit: contain;
   user-select: none;
 }
-.pgal-lightbox__count {
+.lightbox__count {
   position: absolute;
   top: 22px;
   left: var(--gutter);
@@ -2000,12 +1795,12 @@ html:has(.pgal-lightbox[open]) {
   letter-spacing: var(--ls-label);
   color: var(--text-muted);
 }
-.pgal-lightbox__close {
+.lightbox__close {
   position: absolute;
   top: 10px;
   right: var(--gutter);
 }
-.pgal-lightbox__arrow {
+.lightbox__arrow {
   position: absolute;
   top: 50%;
   display: grid;
@@ -2018,36 +1813,29 @@ html:has(.pgal-lightbox[open]) {
   color: var(--text-heading);
   cursor: pointer;
   translate: 0 -50%;
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
 }
-.pgal-lightbox__arrow:hover {
+.lightbox__arrow:hover {
   background: rgba(245, 179, 0, 0.16);
   color: var(--gold);
 }
-.pgal-lightbox__arrow:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.pgal-lightbox__arrow--prev {
+.lightbox__arrow--prev {
   left: var(--sp-2);
 }
-.pgal-lightbox__arrow--next {
+.lightbox__arrow--next {
   right: var(--sp-2);
 }
 @media (min-width: 768px) {
-  .pgal-lightbox__stage {
+  .lightbox__stage {
     inset: 72px 96px var(--sp-8);
   }
-  .pgal-lightbox__arrow {
+  .lightbox__arrow {
     width: 72px;
     height: 144px;
   }
-  .pgal-lightbox__arrow--prev {
+  .lightbox__arrow--prev {
     left: var(--sp-4);
   }
-  .pgal-lightbox__arrow--next {
+  .lightbox__arrow--next {
     right: var(--sp-4);
   }
 }
@@ -2148,11 +1936,13 @@ html:has(.pgal-lightbox[open]) {
    Staví výhradně na tokenech výše; žádné nové barvy ani fonty.
    ========================================================================== */
 
-/* Mřížka odehraných turnajů. */
+/* Mřížka odehraných turnajů: na počítači 3 sloupce, tablet 2, mobil 1.
+   auto-fill (ne auto-fit) nechá prázdné sloupce, takže jeden turnaj
+   zabere jen svůj sloupec a nepřetáhne se přes celou šířku. */
 .trn-grid {
   display: grid;
   gap: var(--grid-gap);
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 /* Dlaždice turnaje: celá plocha je odkaz do detailu. */
@@ -2225,13 +2015,6 @@ html:has(.pgal-lightbox[open]) {
   font-family: var(--font-body);
   font-size: var(--fs-caption);
   color: var(--text-faint);
-}
-.trn-card__desc {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: var(--fs-body-sm);
-  line-height: var(--lh-body);
-  color: var(--text-muted);
 }
 .trn-card__winner {
   display: flex;

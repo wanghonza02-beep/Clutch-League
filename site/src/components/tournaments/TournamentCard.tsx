@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ArrowRight, Trophy } from "lucide-react";
-import { czechOnly, editionLabel } from "@/i18n/data";
+import { editionLabel } from "@/i18n/data";
 import { fmt, plural } from "@/i18n/format";
 import Link from "@/i18n/Link";
 import { getI18n } from "@/i18n/server";
@@ -51,10 +51,6 @@ export default async function TournamentCard({ tournament }: { tournament: Tourn
                 {stats.matches > 0 && ` · ${plural(locale, stats.matches, t.counts.matches)}`}
               </span>
             </span>
-
-            {czechOnly(tournament.summary, locale) && (
-              <p className="trn-card__desc">{tournament.summary}</p>
-            )}
 
             <span className="trn-card__winner">
               {champion ? (

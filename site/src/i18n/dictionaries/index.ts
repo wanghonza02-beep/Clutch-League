@@ -23,7 +23,7 @@ export const CLIENT_NAMESPACES = [
   "labels",
   "nav",
   "teamButton",
-  "gallery",
+  "lightbox",
   "archiveError",
   "portalNav",
   "authForms",

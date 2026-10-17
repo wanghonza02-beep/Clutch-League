@@ -25,10 +25,10 @@ type NavLink = {
   match?: string[];
 };
 
-// Pořadí odpovídá sekcím na úvodní stránce. „Pravidla“ vedou na sekci
-// „Jak to funguje“ (text vlevo, pravidla vpravo) — samostatný odkaz na ni není.
+// Pořadí odpovídá sekcím na úvodní stránce. „Pravidla“ vedou na samostatnou
+// stránku /pravidla (na úvodní stránce je k ní tlačítko).
 const LINKS: NavLink[] = [
-  { key: "rules", section: "pravidla" },
+  { key: "rules", href: "/pravidla", match: ["/pravidla"] },
   // Sekce s recenzemi se bez nich neukazuje, tak ani odkaz na ni.
   ...(REVIEWS.length > 0 ? [{ key: "whyUs" as const, section: "proc-clutch-league" }] : []),
   { key: "played", section: "odehrane-zapasy", match: ["/turnaje"] },

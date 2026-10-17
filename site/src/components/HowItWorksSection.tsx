@@ -1,39 +1,30 @@
-import RulesSection from "@/components/RulesSection";
-import ScrollSwapStack from "@/components/ui/ScrollSwapStack";
+import Link from "@/i18n/Link";
 import { getDictionary } from "@/i18n/server";
 
 /**
- * „Jak funguje Clutch League?“ + pravidla v jedné sekci. Navigace na ni vede
- * přes „Pravidla“.
+ * „Jak funguje Clutch League?“ na úvodní stránce: tři věty přes celou šířku
+ * okna, bez animací, a pod nimi uprostřed velké tlačítko „Pravidla“ na
+ * stránku /pravidla. Velikost písma je v globals.css (.hiw).
  *
- * Od lg (≥ 1024 px) dva sloupce, obojí přilepené pod lištou (CSS sticky):
- *   1. Vlevo krátké řádky přes celou výšku okna, vpravo pravidla.
- *   2. Při scrollu přeběhne textem shora dolů vlna přerolování (ScrollSwapStack).
- *   3. Prodleva: všechno chvíli stojí, pak sekce odjede a stránka pokračuje.
- *   Délky drží .hiw__swap a .hiw__hold v globals.css.
- * Pod lg jeden sloupec: text, pod ním pravidla, nic se nepřilepuje.
- *
- * Kotvy: #jak-to-funguje = začátek sekce, #pravidla = buňka s pravidly
- * (na počítači začíná nahoře u sekce, na mobilu pod textem). Kotva je na
- * buňce, ne na přilepeném bloku — jeho poloha se při scrollu mění.
+ * Kotvy: #jak-to-funguje = začátek sekce (vede na ni „Více informací“ v úvodu),
+ * #pravidla = tlačítko, ať fungují starší odkazy /#pravidla.
  */
 export default async function HowItWorksSection() {
-  const t = (await getDictionary()).scrolly;
+  const { howItWorks: t, rules } = await getDictionary();
 
   return (
     <section id="jak-to-funguje" aria-labelledby="jak-to-funguje-title" className="hiw">
-      {/* Text pro čtečky jen jednou; viditelné řádky jsou aria-hidden. */}
-      <h2 id="jak-to-funguje-title" className="sr-only">
-        {[...t.run, ...t.ask, ...t.answer].join(" ")}
-      </h2>
+      <div className="hiw__body">
+        <h2 id="jak-to-funguje-title" className="hiw__lines cl-display">
+          <span className="hiw__line">{t.run}</span>{" "}
+          <span className="hiw__line">{t.ask}</span>{" "}
+          <span className="hiw__line hiw__line--accent">{t.answer}</span>
+        </h2>
 
-      <div className="cl-container hiw__grid">
-        <ScrollSwapStack groups={[{ rows: t.run }, { rows: t.ask }, { rows: t.answer, accent: true }]} />
-
-        <div id="pravidla" className="hiw__rules">
-          <div className="hiw__sticky">
-            <RulesSection />
-          </div>
+        <div id="pravidla">
+          <Link href="/pravidla" className="cl-btn cl-btn--primary cl-btn--lg hiw__cta">
+            <span>{rules.title}</span>
+          </Link>
         </div>
       </div>
     </section>

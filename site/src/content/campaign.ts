@@ -1,37 +1,16 @@
-// Aktuální kampaň (turnajová sezóna) — PDF s jejími pravidly se ukazuje na
-// úvodní stránce v sekci Pravidla, hned pod obecnými pravidly.
-//
-// Při další kampani (např. Summer Clutch League) nahraj nové PDF do
-// public/docs/ a přepiš jen tenhle soubor. Obecná pravidla jsou v
-// src/components/RulesSection.tsx a zůstávají beze změny. Popisky („Aktuální
-// kampaň“, „Rozpis zápasů a týmy“) jsou ve slovnících jazyků (část rules).
+// Aktuální kampaň (turnajová sezóna). Pravidla jsou na stránce /pravidla
+// (src/content/rules.ts); tady je jen odkaz na rozpis zápasů a soupisky,
+// který ukazuje archiv odehraných turnajů. Popisek („Rozpis zápasů a týmy“)
+// je ve slovnících jazyků (část rules).
 
 import { WINTER_PREVIEW } from "@/content/winter-clutch-preview";
 
 export type Campaign = {
-  /** Název kampaně, jak se ukazuje v nadpisu (stejný ve všech jazycích). */
-  name: string;
-  /** PDF s pravidly kampaně. Bez něj web napíše, že pravidla zveřejníme před turnajem. */
-  pdf?: {
-    /** Cesta k PDF ve složce public (např. /docs/soubor.pdf). */
-    href: string;
-    /** Název souboru po stažení. */
-    fileName: string;
-    /** Popisek pod názvem, např. „PDF, 4 strany, 180 kB“. */
-    meta: string;
-  };
   /** Stránka s rozpisem zápasů a soupiskami týmů (data v winter-clutch-preview.ts). */
   previewHref?: string;
 };
 
 export const CAMPAIGN: Campaign = {
-  name: "Winter Clutch League",
-  // Až budou pravidla, nahraj PDF do public/docs/ a doplň:
-  //   pdf: {
-  //     href: "/docs/pravidla-winter-clutch-league.pdf",
-  //     fileName: "Pravidla_Winter_Clutch_League.pdf",
-  //     meta: "PDF, 4 strany, 180 kB",
-  //   },
   // Odkaz na rozpis jen tehdy, když v něm jsou skutečné týmy.
   previewHref: WINTER_PREVIEW.teams.length > 0 ? "/winter-clutch" : undefined,
 };

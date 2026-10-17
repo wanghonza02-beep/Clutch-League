@@ -10,8 +10,8 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 export const revalidate = 300;
 
 // Pořadí sekcí (kotvy v navigaci):
-//   kampaň (hero) → #jak-to-funguje (vlevo text, vpravo #pravidla) → #proc-clutch-league
-//   → #odehrane-zapasy → #fotky
+//   kampaň (hero) → #jak-to-funguje (vlevo text, vpravo tlačítko na /pravidla)
+//   → #proc-clutch-league → #odehrane-zapasy → #fotky
 export default function Home() {
   return (
     <main>
