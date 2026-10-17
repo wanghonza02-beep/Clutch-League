@@ -4,7 +4,7 @@ import { FileText } from "lucide-react";
 import BackButton from "@/components/BackButton";
 import Notice from "@/components/ui/Notice";
 import ZoomGallery from "@/components/ui/ZoomGallery";
-import { ACTIVE_RULES, GENERAL_RULES_PDF, INACTIVE_RULES, SPECIAL_RULES, type RuleCard } from "@/content/rules";
+import { ACTIVE_RULES, GENERAL_RULES_PDF, type RuleCard } from "@/content/rules";
 import type { Dictionary } from "@/i18n/dictionaries";
 import { fmt } from "@/i18n/format";
 import { getDictionary, pageTitle } from "@/i18n/server";
@@ -68,8 +68,8 @@ function Cards({
   );
 }
 
-// Pravidla bez animací. Karty módů jsou vidět rovnou (src/content/rules.ts),
-// obecná pravidla jsou PDF, které se otevře v nové záložce.
+// Pravidla bez animací: obecná pravidla (PDF, otevře se v nové záložce)
+// a aktivní pravidla — karty módů vidět rovnou (src/content/rules.ts).
 export default async function Pravidla() {
   const t = (await getDictionary()).rules;
 
@@ -114,14 +114,8 @@ export default async function Pravidla() {
           </div>
         </Section>
 
-        <Section id="specialni-pravidla" title={t.specialTitle}>
-          <Cards cards={SPECIAL_RULES} label={t.specialTitle} t={t} eager={2} />
-        </Section>
         <Section id="aktivni-pravidla" title={t.activeTitle}>
-          <Cards cards={ACTIVE_RULES} label={t.activeTitle} t={t} />
-        </Section>
-        <Section id="neaktivni-pravidla" title={t.inactiveTitle}>
-          <Cards cards={INACTIVE_RULES} label={t.inactiveTitle} t={t} />
+          <Cards cards={ACTIVE_RULES} label={t.activeTitle} t={t} eager={2} />
         </Section>
       </div>
     </main>

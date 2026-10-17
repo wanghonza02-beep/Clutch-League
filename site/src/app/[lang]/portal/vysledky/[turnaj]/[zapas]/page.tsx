@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import BackButton from "@/components/BackButton";
 import PortalHeader from "@/components/portal/PortalHeader";
 import MatchResultForm from "@/components/admin/MatchResultForm";
 import { stageLabel } from "@/i18n/data";
 import { fmt } from "@/i18n/format";
-import Link from "@/i18n/Link";
-import { getDictionary, getI18n, portalTitle } from "@/i18n/server";
+import { getDictionary, getI18n, localeHref, portalTitle } from "@/i18n/server";
 import { getMatchForResult } from "@/lib/admin/data";
 import { maxMinute } from "@/lib/admin/result";
 import { formatDateTime } from "@/lib/format";
@@ -17,23 +16,21 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: portalTitle(t, t.admin.matchMetaTitle) };
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export default async function PortalVysledekZapasu({ params }: PageProps<"/[lang]/portal/vysledky/[id]">) {
+/** Zápis výsledku jednoho zápasu (z výsledků turnaje nebo z rozpisu v detailu turnaje). */
+export default async function VysledekZapasu({ params }: PageProps<"/[lang]/portal/vysledky/[turnaj]/[zapas]">) {
   const { locale, t: dict } = await getI18n();
   const t = dict.admin;
   await requireRole("admin", locale);
-  const { id } = await params;
-  const match = UUID.test(id) ? await getMatchForResult(id) : null;
+  const { turnaj, zapas } = await params;
+  const match = await getMatchForResult(zapas);
   if (!match) notFound();
+  // Zápas z jiného turnaje: správná adresa, ať „Zpět“ vede k jeho turnaji.
+  if (match.tournament.id !== turnaj) redirect(await localeHref(`/portal/vysledky/${match.tournament.id}/${match.id}`));
 
   return (
     <>
       <div>
-        <Link href={`/portal/vysledky?turnaj=${match.tournament.id}`} className="cl-btn cl-btn--ghost cl-btn--sm cl-back">
-          <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-          <span>{t.tournamentMatches}</span>
-        </Link>
+        <BackButton fallback={`/portal/vysledky/${match.tournament.id}`} />
       </div>
 
       <PortalHeader

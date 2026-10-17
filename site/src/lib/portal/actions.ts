@@ -15,6 +15,7 @@ import {
   enterTournament,
   getCaptainTeam,
   getOpenTournament,
+  getTeamEntry,
   registerTeam,
   removePlayer,
   updatePlayer,
@@ -29,6 +30,7 @@ import { DEFAULT_MAX_ROSTER, type Position } from "./types";
 import {
   accountFormValues,
   confirmationValues,
+  confirmedKeys,
   fail,
   foundedYearValue,
   ok,
@@ -124,6 +126,9 @@ function dbFailure(
   }
   if (error.message.includes("registration_closed")) {
     return fail(m.registrationClosed, {}, values);
+  }
+  if (error.message.includes("confirmations_missing")) {
+    return fail(m.checkConfirmations, {}, values);
   }
   // Trigger players_roster_limit: „roster_full:10“ — číslo je limit soupisky.
   const rosterFull = error.message.match(/roster_full:(\d+)/);
@@ -315,14 +320,19 @@ export async function updateProfileAction(_prev: FormState, formData: FormData):
 }
 
 /**
- * Označí oznámení jako přečtená — jedno konkrétní (pole id), nebo všechna.
- * Odznaky v navigaci se tím vynulují.
+ * Označí oznámení jako přečtená — jedno konkrétní (pole id), všechna k jednomu
+ * turnaji (pole tournament), nebo všechna. Odznaky v navigaci se tím vynulují.
  */
 export async function markNotificationsReadAction(formData: FormData): Promise<void> {
   const { locale } = formI18n(formData);
   const user = await requireUser(locale);
   const ids = formData.getAll("id").filter((v): v is string => typeof v === "string" && v.length > 0);
-  await markNotificationsRead(user.id, ids.length ? ids : undefined);
+  const tournament = formData.get("tournament");
+  await markNotificationsRead(
+    user.id,
+    ids.length ? ids : undefined,
+    typeof tournament === "string" && tournament ? tournament : undefined
+  );
   revalidateRoute(PATHS.portal, "layout");
 }
 
@@ -339,7 +349,19 @@ export async function logoutAction(formData: FormData): Promise<void> {
 /*  Tým                                                                       */
 /* -------------------------------------------------------------------------- */
 
-/** Přihláška nového týmu na otevřený turnaj. Projde jen kapitánovi bez týmu. */
+/**
+ * Startovné, které kapitán v kroku platby viděl (skryté pole entryFee), musí
+ * sedět s tím, co má turnaj teď — databáze uloží k přihlášce právě tuhle částku.
+ */
+function feeChanged(formData: FormData, entryFee: number): boolean {
+  return text(formData, "entryFee") !== String(entryFee);
+}
+
+/**
+ * Přihláška nového týmu na otevřený turnaj. Projde jen kapitánovi bez týmu.
+ * Formulář má dva kroky (údaje týmu → platba startovného a podmínky účasti),
+ * akce dostane obojí najednou a zkontroluje obojí.
+ */
 export async function registerTeamAction(
   _prev: FormState,
   formData: FormData
@@ -347,22 +369,32 @@ export async function registerTeamAction(
   const { locale, t, href } = formI18n(formData);
   const user = await requireRole("captain", locale);
 
+  const tournament = await getOpenTournament();
+  if (!tournament) return fail(t.actions.registrationClosed);
+
   const values = readTeam(formData);
   const formValues = { ...values, ...confirmationValues(formData) };
-  const errors = { ...validateTeam(values, t.validation), ...validateConfirmations(formData, t.validation) };
+  const errors = {
+    ...validateTeam(values, t.validation),
+    ...validateConfirmations(formData, tournament.entryFee, t.validation),
+  };
   if (Object.keys(errors).length > 0) return fail(t.actions.checkFields, errors, formValues);
+  if (feeChanged(formData, tournament.entryFee)) return fail(t.actions.feeChanged, {}, formValues);
 
   // Druhé odeslání (dvojklik, zpět v prohlížeči) tým nezaloží podruhé.
   if (await getCaptainTeam(user.id)) redirect(href(PATHS.teamRegistration));
 
-  const { error } = await registerTeam({ ...values, foundedYear: foundedYearValue(values) });
+  const { error } = await registerTeam(
+    { ...values, foundedYear: foundedYearValue(values) },
+    confirmedKeys(tournament.entryFee)
+  );
   if (error) return dbFailure(error, { t, locale }, formValues);
 
   refreshTeamViews();
   redirect(href(PATHS.teamRegistration));
 }
 
-/** Přihláška už existujícího týmu na další turnaj. */
+/** Přihláška už existujícího týmu na další turnaj — jen krok platby a podmínek. */
 export async function enterTournamentAction(
   _prev: FormState,
   formData: FormData
@@ -370,29 +402,30 @@ export async function enterTournamentAction(
   const { locale, t, href } = formI18n(formData);
   const user = await requireRole("captain", locale);
 
-  const errors = validateConfirmations(formData, t.validation);
-  if (Object.keys(errors).length > 0) {
-    return fail(t.actions.checkConfirmations, errors, confirmationValues(formData));
-  }
-
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
   if (!team) redirect(href(PATHS.teamRegistration));
   if (!tournament) return fail(t.actions.registrationClosed);
 
-  const { error } = await enterTournament(team.id, tournament.id);
+  const errors = validateConfirmations(formData, tournament.entryFee, t.validation);
+  if (Object.keys(errors).length > 0) {
+    return fail(t.actions.checkConfirmations, errors, confirmationValues(formData));
+  }
+  if (feeChanged(formData, tournament.entryFee)) return fail(t.actions.feeChanged, {}, confirmationValues(formData));
+
+  const { error } = await enterTournament(team.id, tournament.id, confirmedKeys(tournament.entryFee));
   if (error) return dbFailure(error, { t, locale }, confirmationValues(formData));
 
   refreshTeamViews();
   redirect(href(PATHS.teamRegistration));
 }
 
-// Tým spravuje jeho vlastník (teams.owner_id) — kapitán, ale i organizátor, který
-// má vlastní tým. Nový tým a přihláška na turnaj zůstávají jen kapitánům.
+// Tým a soupisku spravuje jen kapitán (vlastník týmu s rolí captain). Organizátor
+// vlastní tým nemá — stráž ho pošle na jeho přehled; totéž hlídá RLS (migrace č. 10).
 
 /** Odhlášení týmu z turnaje, na který se právě přihlašuje. */
 export async function withdrawTeamAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t, href } = formI18n(formData);
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
 
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
   if (!team) redirect(href(PATHS.teamRegistration));
@@ -401,6 +434,9 @@ export async function withdrawTeamAction(_prev: FormState, formData: FormData): 
   if (!tournament || tournament.id !== text(formData, "tournamentId")) {
     return fail(t.actions.withdrawClosed);
   }
+  // Po zaplacení je registrace závazná (podmínky účasti) — hlídá i databáze.
+  const entry = await getTeamEntry(team.id, tournament.id);
+  if (entry?.paidAt) return fail(t.actions.withdrawPaid);
 
   const { error, removed } = await withdrawEntry(team.id, tournament.id);
   if (error) return dbFailure(error, { t, locale });
@@ -413,7 +449,7 @@ export async function withdrawTeamAction(_prev: FormState, formData: FormData): 
 /** Úprava údajů týmu. */
 export async function saveTeamAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t, href } = formI18n(formData);
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
   if (!team) redirect(href(PATHS.teamRegistration));
 
@@ -449,7 +485,7 @@ function takenNumbers(players: { id: string; number: number | null }[], exceptId
 
 export async function addPlayerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t } = formI18n(formData);
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
   const [team, tournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
   if (!team) return fail(t.actions.registerTeamFirst);
 
@@ -483,7 +519,7 @@ export async function updatePlayerAction(
   formData: FormData
 ): Promise<FormState> {
   const { locale, t } = formI18n(formData);
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
   if (!team) return fail(t.actions.registerTeamFirst);
 
@@ -505,7 +541,7 @@ export async function updatePlayerAction(
 
 export async function removePlayerAction(formData: FormData): Promise<void> {
   const { locale } = formI18n(formData);
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
   if (!team) return;
 

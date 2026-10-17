@@ -3,9 +3,11 @@ import type { Dictionary } from "./dictionaries";
 import { fmt } from "./format";
 
 // Údaje, které organizátor píše do databáze česky a mají pevný tvar (fáze
-// zápasu, sezóna, formát), se do ostatních jazyků přeloží. Volný český text
-// (popis turnaje, popisek fotky) se ukazuje jen v češtině — viz czechOnly().
-// Místo a názvy týmů jsou vlastní jména a zůstávají, jak je organizátor napsal.
+// zápasu, sezóna, formát), se do ostatních jazyků přeloží. Popis turnaje píše
+// organizátor pro každý jazyk zvlášť (lib/tournamentModel.ts). Jiný volný český
+// text (popisek fotky) se ukazuje jen v češtině — viz czechOnly().
+// Název turnaje, místo a názvy týmů jsou vlastní jména a zůstávají, jak je
+// organizátor napsal.
 
 const STAGES: [RegExp, keyof Omit<Dictionary["stages"], "group">][] = [
   [/^osmifin[aá]le/i, "round16"],
@@ -16,8 +18,8 @@ const STAGES: [RegExp, keyof Omit<Dictionary["stages"], "group">][] = [
 ];
 
 /**
- * Volný text, který organizátor píše česky (popis turnaje). V ostatních
- * jazycích by stránka byla napůl česky — tam se nezobrazí (vrací "").
+ * Volný text, který organizátor píše jen česky (popisek fotky turnaje).
+ * V ostatních jazycích by stránka byla napůl česky — tam se nezobrazí (vrací "").
  */
 export function czechOnly(text: string, locale: Locale): string {
   return locale === DEFAULT_LOCALE ? text : "";

@@ -142,7 +142,11 @@ export function TextInput({
   type = "text",
   inputMode,
   placeholder,
-}: BaseProps & { type?: "text" | "date" | "datetime-local"; inputMode?: "numeric" | "text"; placeholder?: string }) {
+}: BaseProps & {
+  type?: "text" | "date" | "time" | "datetime-local";
+  inputMode?: "numeric" | "text";
+  placeholder?: string;
+}) {
   const { errors, values, idPrefix } = useForm();
   const id = `${idPrefix}-${name}`;
   return (
@@ -159,6 +163,39 @@ export function TextInput({
         className="cl-field__input"
       />
     </Field>
+  );
+}
+
+/**
+ * Malé číselné pole v buňce tabulky (statistiky hráčů). Popisek nese
+ * `label` (pro čtečky), chybu jen zvýraznění — souhrnná hláška je pod tabulkou.
+ */
+export function CellInput({
+  name,
+  label,
+  fallback,
+}: {
+  name: string;
+  label: string;
+  fallback?: string | number | null;
+}) {
+  const { errors, values, idPrefix } = useForm();
+  return (
+    <span className="cl-field__wrap stat-input">
+      <input
+        id={`${idPrefix}-${name}`}
+        name={name}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="0"
+        aria-label={label}
+        title={errors[name] ?? label}
+        defaultValue={values[name] ?? (fallback ?? "").toString()}
+        aria-invalid={errors[name] ? true : undefined}
+        className="cl-field__input"
+      />
+    </span>
   );
 }
 

@@ -9,7 +9,7 @@ import Link from "@/i18n/Link";
 import { getDictionary, getI18n, pageTitle } from "@/i18n/server";
 import { formatDate } from "@/lib/format";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { getTournaments, getUpcomingTournament, tournamentSummaryStats } from "@/lib/tournaments";
+import { getActiveTournaments, getTournaments, tournamentSummaryStats } from "@/lib/tournaments";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getDictionary();
@@ -24,11 +24,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export const revalidate = 300;
 
 export default async function Turnaje() {
-  const [{ locale, t: dict }, tournaments, upcoming] = await Promise.all([
+  const [{ locale, t: dict }, tournaments, active] = await Promise.all([
     getI18n(),
     getTournaments(),
-    getUpcomingTournament(),
+    getActiveTournaments(),
   ]);
+  // „Další na řadě“: nejbližší neodehraný turnaj (stejný jako v kampani na úvodu).
+  const upcoming = active[0] ?? null;
   const t = dict.archive;
   const totals = tournaments.map(tournamentSummaryStats);
   const totalMatches = totals.reduce((sum, s) => sum + s.matches, 0);

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardPen, ExternalLink, Trash2 } from "lucide-react";
+import { ClipboardPen, ExternalLink, Trash2 } from "lucide-react";
+import BackButton from "@/components/BackButton";
 import ActionForm, { SelectInput, SubmitButton, TextInput } from "@/components/ui/ActionForm";
-import EntryRankingForm from "@/components/admin/EntryRankingForm";
 import PortalHeader from "@/components/portal/PortalHeader";
+import TournamentBadges from "@/components/admin/TournamentBadges";
 import TournamentForm from "@/components/admin/TournamentForm";
 import Notice from "@/components/ui/Notice";
 import type { Dictionary } from "@/i18n/dictionaries";
@@ -57,11 +58,13 @@ function teamOptions(
 
 function MatchRow({
   match,
+  tournamentId,
   teams,
   warnings,
   t,
 }: {
   match: AdminMatch;
+  tournamentId: string;
   teams: Option[];
   warnings: string[];
   t: Dictionary["admin"];
@@ -78,7 +81,7 @@ function MatchRow({
         <span className={played ? "cl-badge" : "cl-badge cl-badge--neutral"}>
           {played ? fmt(t.result, { score: `${match.homeGoals}:${match.awayGoals}` }) : t.noResult}
         </span>
-        <Link href={`/portal/vysledky/${match.id}`} className="cl-btn cl-btn--ghost cl-btn--sm">
+        <Link href={`/portal/vysledky/${tournamentId}/${match.id}`} className="cl-btn cl-btn--ghost cl-btn--sm">
           <ClipboardPen size={14} strokeWidth={2} aria-hidden />
           <span>{played ? t.editResult : t.writeResult}</span>
         </Link>
@@ -142,7 +145,7 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
   const data = await getAdminTournament(id);
   if (!data) notFound();
 
-  const { tournament, entries, matches, scorers } = data;
+  const { tournament, info, entries, matches, scorers } = data;
   // Do rozpisu, střelců a ocenění jen schválené týmy — jen ty web ukazuje.
   const approved = entries.filter((e) => e.status === "approved");
   const teams: Option[] = approved.map((e) => ({
@@ -173,26 +176,23 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
   return (
     <>
       <div>
-        <Link href="/portal/turnaje" className="cl-btn cl-btn--ghost cl-btn--sm cl-back">
-          <ArrowLeft size={16} strokeWidth={2} aria-hidden />
-          <span>{t.allTournaments}</span>
-        </Link>
+        <BackButton fallback="/portal/turnaje" />
       </div>
 
       <PortalHeader
         over={
           <div className="flex flex-wrap items-center gap-[var(--sp-3)]">
-            <span className={tournament.status === "upcoming" ? "cl-badge" : "cl-badge cl-badge--neutral"}>
-              {tournament.status === "upcoming" ? t.upcoming : t.completed}
-            </span>
-            {tournament.registration_open && <span className="cl-badge">{t.registrationOpen}</span>}
+            <TournamentBadges tournament={info} />
           </div>
         }
         title={tournament.name}
         sub={
           <>
-            <span className="cl-num">{formatDate(tournament.starts_on, locale)}</span>
-            {tournament.status === "completed" && (
+            <span className="cl-num">
+              {formatDate(tournament.starts_on, locale)}
+              {info.startTime && ` · ${info.startTime}`}
+            </span>
+            {tournament.status === "completed" && info.published && (
               <>
                 {" "}
                 ·{" "}
@@ -219,40 +219,9 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
         </div>
       </section>
 
-      {/* ---- týmy, skupiny a konečné pořadí ---- */}
-      <section aria-labelledby="tymy" className="flex flex-col gap-[var(--sp-5)]">
-        <h2 id="tymy" className="portal-h2">
-          {t.teamsTitle}
-        </h2>
-        <p className="cl-sectionhead__sub" style={{ margin: 0 }}>
-          {t.teamsSub}
-        </p>
-        {/* Skupinu a pořadí mají jen schválené týmy; o ostatních se rozhoduje v Přihláškách. */}
-        {entries.length > approved.length && (
-          <p className="adm-meta" style={{ margin: 0 }}>
-            {fmt(t.notApprovedSummary, {
-              pending: entries.filter((e) => e.status === "pending").length,
-              rejected: entries.filter((e) => e.status === "rejected").length,
-            })}{" "}
-            <Link href="/portal/prihlasky">{t.notApprovedLink}</Link>
-          </p>
-        )}
-        {approved.length === 0 ? (
-          <Notice tone="info">{entries.length === 0 ? t.noTeams : t.noApprovedTeams}</Notice>
-        ) : (
-          <div className="cl-card">
-            <div className="cl-card__in">
-              <ul className="cl-card__body" aria-label={t.teamsLabel}>
-                {approved.map((e) => (
-                  <EntryRankingForm key={e.teamId} tournamentId={tournament.id} entry={e} />
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* ---- zápasy ---- */}
+      {/* ---- zápasy ----
+          Skupinu, konečné pořadí a postup týmů organizátor zapisuje v Zapsat
+          výsledky (karta týmu) — tady by byly podruhé. */}
       <section aria-labelledby="zapasy" className="flex flex-col gap-[var(--sp-5)]">
         <h2 id="zapasy" className="portal-h2">
           {t.matchesTitle}
@@ -260,6 +229,16 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
         <p className="cl-sectionhead__sub" style={{ margin: 0 }}>
           {t.matchesSub}
         </p>
+        {/* Zápas hrají jen schválené týmy; o ostatních se rozhoduje v Přihláškách. */}
+        {entries.length > approved.length && (
+          <p className="adm-meta" style={{ margin: 0 }}>
+            {fmt(t.notApprovedSummary, {
+              pending: entries.filter((e) => e.status === "pending").length,
+              rejected: entries.filter((e) => e.status === "rejected").length,
+            })}{" "}
+            <Link href={`/portal/prihlasky/${tournament.id}`}>{t.notApprovedLink}</Link>
+          </p>
+        )}
 
         {matches.length > 0 && (
           <div className="cl-card">
@@ -269,6 +248,7 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
                   <MatchRow
                     key={m.id}
                     match={m}
+                    tournamentId={tournament.id}
                     teams={teamOptions(teams, entries, [m.homeTeamId, m.awayTeamId], dict)}
                     warnings={matchWarnings(m, locale)}
                     t={t}
@@ -419,30 +399,38 @@ export default async function PortalTurnajDetail({ params }: PageProps<"/[lang]/
         </div>
       </section>
 
-      {/* ---- smazání ---- */}
+      {/* ---- smazání ----
+          Jen turnaj bez přihlášek a zápasů (hlídá i akce a databáze). Jinak by
+          s ním zmizely přihlášky týmů i výsledky. */}
       <section aria-labelledby="smazat" className="flex flex-col gap-[var(--sp-4)]">
         <h2 id="smazat" className="portal-h2">
           {t.deleteTitle}
         </h2>
-        <Notice tone="error">{t.deleteWarning}</Notice>
-        <ActionForm
-          action={deleteTournamentAction}
-          idPrefix="trn-del"
-          hidden={{ id: tournament.id }}
-          className="flex flex-col gap-[var(--sp-2)]"
-        >
-          <div>
-            <SubmitButton
-              variant="secondary"
-              confirm={fmt(t.deleteTournamentConfirm, {
-                name: tournament.name,
-              })}
-              icon={<Trash2 size={16} strokeWidth={2} aria-hidden />}
+        {entries.length > 0 || matches.length > 0 ? (
+          <Notice tone="info">{fmt(t.deleteBlocked, { entries: entries.length, matches: matches.length })}</Notice>
+        ) : (
+          <>
+            <Notice tone="error">{t.deleteWarning}</Notice>
+            <ActionForm
+              action={deleteTournamentAction}
+              idPrefix="trn-del"
+              hidden={{ id: tournament.id }}
+              className="flex flex-col gap-[var(--sp-2)]"
             >
-              {t.deleteTournament}
-            </SubmitButton>
-          </div>
-        </ActionForm>
+              <div>
+                <SubmitButton
+                  variant="secondary"
+                  confirm={fmt(t.deleteTournamentConfirm, {
+                    name: tournament.name,
+                  })}
+                  icon={<Trash2 size={16} strokeWidth={2} aria-hidden />}
+                >
+                  {t.deleteTournament}
+                </SubmitButton>
+              </div>
+            </ActionForm>
+          </>
+        )}
       </section>
     </>
   );

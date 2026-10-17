@@ -56,6 +56,8 @@ export type OpenTournament = {
   format: string;
   minRoster: number;
   maxRoster: number;
+  /** Startovné v Kč za tým (0 = bez startovného). */
+  entryFee: number;
 };
 
 /** Přihláška týmu na konkrétní turnaj. */
@@ -68,6 +70,8 @@ export type Entry = {
   statusChangedAt: string | null;
   /** Kdy kapitán přihlášku poslal. */
   createdAt: string;
+  /** Kdy organizátor označil startovné jako přijaté; null = zatím nezaplaceno. */
+  paidAt: string | null;
 };
 
 /** Přihláška týmu i s turnajem — kapitán ji vidí v přehledu i po uzávěrce přihlášek. */

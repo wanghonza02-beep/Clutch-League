@@ -1,10 +1,14 @@
-// Typy databáze podle supabase/migrations (č. 1–8).
+// Typy databáze podle supabase/migrations (č. 1–11).
 // Při změně schématu je uprav ručně, nebo je přegeneruj:
 //   npx supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts
 
 export type UserRole = "captain" | "admin";
 export type EntryStatus = "pending" | "approved" | "rejected";
-export type TournamentStatus = "upcoming" | "completed";
+/**
+ * Stav turnaje; in_progress = probíhá (migrace č. 10). Otevřené přihlášky jsou
+ * zvlášť (registration_open) — dohromady čtyři stavy, viz lib/tournamentModel.ts.
+ */
+export type TournamentStatus = "upcoming" | "in_progress" | "completed";
 export type PlayerPosition = "goalkeeper" | "defender" | "midfielder" | "forward";
 export type MatchEventKind = "goal" | "yellow_card" | "red_card";
 export type Locale = "cs" | "en" | "uk" | "sk";
@@ -16,6 +20,11 @@ export type NotificationKind =
   | "entry_rejected"
   | "entry_returned"
   | "entry_removed";
+/**
+ * Co kapitán potvrdil při odeslání přihlášky (migrace č. 11): payment = startovné
+ * uhradí, terms = podmínky účasti a pravidla, team = seznámil s nimi tým.
+ */
+export type EntryConfirmation = "payment" | "terms" | "team";
 
 /** Sloupce turnaje, které smí zapisovat administrátor. */
 export type TournamentWrite = {
@@ -26,13 +35,19 @@ export type TournamentWrite = {
   venue?: string;
   format?: string;
   match_length?: string;
+  start_time?: string | null;
   summary?: string;
+  summary_en?: string;
+  summary_uk?: string;
+  summary_sk?: string;
+  published?: boolean;
   photo_src?: string | null;
   photo_alt?: string | null;
   status?: TournamentStatus;
   registration_open?: boolean;
   min_roster?: number;
   max_roster?: number;
+  entry_fee?: number;
   mvp_player?: string | null;
   mvp_team_id?: string | null;
   best_keeper_player?: string | null;
@@ -70,13 +85,24 @@ export type Database = {
           venue: string;
           format: string;
           match_length: string;
+          /** Čas začátku "HH:MM:SS" v pražském čase, null = nezadaný (migrace č. 10). */
+          start_time: string | null;
+          /** Popis česky. */
           summary: string;
+          /** Popis v dalších jazycích (migrace č. 10); prázdný = v tom jazyce se neukáže. */
+          summary_en: string;
+          summary_uk: string;
+          summary_sk: string;
+          /** Zobrazit na webu — veřejnost vidí jen zobrazené turnaje (migrace č. 10). */
+          published: boolean;
           photo_src: string | null;
           photo_alt: string | null;
           status: TournamentStatus;
           registration_open: boolean;
           min_roster: number;
           max_roster: number;
+          /** Startovné v Kč za tým, 0 = bez startovného (migrace č. 11). */
+          entry_fee: number;
           mvp_player: string | null;
           mvp_team_id: string | null;
           best_keeper_player: string | null;
@@ -136,11 +162,23 @@ export type Database = {
           status_note: string;
           /** Kdy organizátor naposledy změnil stav (migrace č. 8). */
           status_changed_at: string | null;
+          /** Co kapitán při odeslání potvrdil (migrace č. 11); prázdné u starších přihlášek. */
+          confirmations: EntryConfirmation[];
+          /** Kdy kapitán přihlášku s potvrzeními odeslal (doplní databáze). */
+          confirmed_at: string | null;
+          /** Startovné, které kapitán při odeslání viděl (doplní databáze). */
+          confirmed_fee: number | null;
+          /** Kdy organizátor označil startovné jako přijaté; null = nezaplaceno. */
+          paid_at: string | null;
+          /** Organizátor, který platbu označil (doplní databáze). */
+          paid_by: string | null;
           created_at: string;
         };
         Insert: {
           tournament_id: string;
           team_id: string;
+          /** Databáze přihlášku od kapitána bez všech potvrzení nepřijme. */
+          confirmations?: EntryConfirmation[];
         };
         Update: {
           /** Stav mění organizátor přes admin_set_entry_status (oznámení, pojistky). */
@@ -148,6 +186,8 @@ export type Database = {
           group_label?: string | null;
           final_rank?: number | null;
           advanced?: boolean;
+          /** Startovné přijato (organizátor). */
+          paid_at?: string | null;
         };
         Relationships: [
           {
@@ -321,6 +361,68 @@ export type Database = {
         };
         Relationships: [];
       };
+      player_stats: {
+        Row: {
+          id: string;
+          tournament_id: string;
+          team_id: string;
+          player_id: string | null;
+          first_name: string;
+          last_name: string;
+          shirt_number: number | null;
+          minutes: number;
+          goals: number;
+          yellow_cards: number;
+          red_cards: number;
+          updated_at: string;
+        };
+        Insert: {
+          tournament_id: string;
+          team_id: string;
+          player_id?: string | null;
+          first_name: string;
+          last_name: string;
+          shirt_number?: number | null;
+          minutes?: number;
+          goals?: number;
+          yellow_cards?: number;
+          red_cards?: number;
+          updated_at?: string;
+        };
+        Update: {
+          first_name?: string;
+          last_name?: string;
+          shirt_number?: number | null;
+          minutes?: number;
+          goals?: number;
+          yellow_cards?: number;
+          red_cards?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_stats_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_stats_tournament_id_fkey";
+            columns: ["tournament_id"];
+            isOneToOne: false;
+            referencedRelation: "tournaments";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_stats_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -365,6 +467,8 @@ export type Database = {
           p_founded_year: number | null;
           p_colors: string;
           p_note: string;
+          /** Potvrzení z kroku platby a podmínek (migrace č. 11). */
+          p_confirmations?: EntryConfirmation[];
         };
         Returns: string;
       };

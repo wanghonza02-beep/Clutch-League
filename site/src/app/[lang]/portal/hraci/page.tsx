@@ -8,7 +8,7 @@ import { fmt, plural } from "@/i18n/format";
 import { getDictionary, getI18n, portalTitle } from "@/i18n/server";
 import { getCaptainEntries, getCaptainTeam, getOpenTournament } from "@/lib/portal/data";
 import { PATHS } from "@/lib/portal/paths";
-import { requireUser } from "@/lib/portal/session";
+import { requireRole } from "@/lib/portal/session";
 import { DEFAULT_MAX_ROSTER } from "@/lib/portal/types";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,14 +16,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: portalTitle(t, t.portal.playersMetaTitle) };
 }
 
+/** Soupiska — jen pro kapitána. Organizátora stráž pošle na jeho přehled. */
 export default async function PortalHraci() {
   const { locale, t: dict } = await getI18n();
   const t = dict.portal;
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
   const [team, openTournament] = await Promise.all([getCaptainTeam(user.id), getOpenTournament()]);
   // Soupiska patří k týmu — bez přihlášky ho kapitán nejdřív přihlásí.
-  // Organizátor bez vlastního týmu sem nepatří.
-  if (!team) redirect(localePath(locale, user.role === "captain" ? PATHS.teamRegistration : PATHS.portal));
+  if (!team) redirect(localePath(locale, PATHS.teamRegistration));
 
   // Limity soupisky: turnaj s otevřenými přihláškami, jinak nadcházející turnaj,
   // na který je tým přihlášený (i po uzávěrce přihlášek). Zamítnutá přihláška se nepočítá.

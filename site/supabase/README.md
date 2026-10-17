@@ -9,18 +9,20 @@ jsou v databázi Supabase. Tenhle návod projdeš jednou.
 | --- | --- | --- |
 | `auth.users` | přihlašovací údaje (e-mail, hash hesla) | Supabase Auth — registrace na webu |
 | `profiles` | jméno, telefon, e-mail, role (kapitán / organizátor) | vzniká sám při registraci; roli mění organizátor |
-| `tournaments` | turnaje — nadcházející i odehrané | organizátor (web → Portál → Turnaje) |
+| `tournaments` | turnaje — stav (připravuje se / otevřené přihlášky / probíhá / odehráno), termín a čas, místo, formát, popis ve 4 jazycích, zobrazení na webu | organizátor (web → Portál → Rozpis turnajů) |
 | `teams` | týmy, kód týmu, poznámka | kapitán (přihláška) |
-| `tournament_entries` | přihláška týmu na turnaj: stav, skupina, konečné pořadí, postup ze skupiny | kapitán podá, organizátor schvaluje |
+| `tournament_entries` | přihláška týmu na turnaj: stav, skupina, konečné pořadí, postup ze skupiny, co kapitán potvrdil (startovné, podmínky účasti), zaplacení startovného | kapitán podá, organizátor označí platbu a schvaluje |
 | `players` | soupisky | kapitán |
-| `matches` | rozpis a skóre | organizátor (Turnaje, Zapsat výsledky) |
+| `matches` | rozpis a skóre | organizátor (Rozpis turnajů, Zapsat výsledky) |
 | `match_events` | góly a karty u zápasu: kdo, za který tým, v jaké minutě | organizátor (Zapsat výsledky) |
 | `scorers` | ruční seznam střelců (jen pro turnaje bez rozepsaných gólů) | organizátor |
+| `player_stats` | statistiky hráčů za turnaj: minuty, góly, karty | organizátor (Zapsat výsledky → karta týmu) |
 
 Co kdo smí, hlídá databáze sama (Row Level Security). Kapitán vidí jen svůj tým,
-výsledky zapisuje jen organizátor (admin) a veřejnost vidí jen schválené týmy a výsledky.
+výsledky zapisuje jen organizátor (admin) a veřejnost vidí jen schválené týmy, výsledky
+a turnaje, které organizátor zobrazil na webu.
 
-## 1. Databáze (osm migrací + výchozí data)
+## 1. Databáze (jedenáct migrací + výchozí data)
 
 SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen jednou, v tomto pořadí:**
 
@@ -37,8 +39,16 @@ SQL Editor → New query → vlož obsah souboru → Run. **Každý soubor jen j
    oznámení pro kapitány i organizátora (tabulka `notifications`), pojistky rozpisu: tým se zápasy
    nejde z turnaje vyřadit, zápas jen se schválenými týmy a nejdřív v den turnaje. Na konci vypíše,
    kolik zápasů má tým bez schválené přihlášky.
-9. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
-10. `prvni-turnaj-2026.sql` — skutečný první turnaj (23. 8. 2026): týmy a umístění, bez zápasů
+9. `migrations/20261017120000_statistiky_hracu.sql` — statistiky hráčů za turnaj (tabulka `player_stats`)
+10. `migrations/20261018120000_rozpis_turnaju.sql` — Rozpis turnajů: stav „probíhá“, čas začátku,
+    popis turnaje ve 4 jazycích, příznak „Zobrazit na webu“ (veřejnost vidí jen zobrazené turnaje),
+    turnaj s přihláškami nebo zápasy nejde z webu smazat, tým a soupisku spravuje jen kapitán.
+    Na konci vypíše turnaje a týmy, které vlastní organizátor.
+11. `migrations/20261019120000_startovne_platba.sql` — startovné turnaje (Winter Clutch 2027: 2 700 Kč),
+    potvrzení startovného a podmínek účasti u přihlášky, „Startovné přijato“ (schválit jde až po zaplacení,
+    zaplacenou přihlášku kapitán sám neodhlásí). Na konci vypíše startovné a přihlášky u turnajů.
+12. `seed.sql` — turnaj **Winter Clutch 2027** s otevřenou registrací
+13. `prvni-turnaj-2026.sql` — skutečný první turnaj (23. 8. 2026): týmy a umístění, bez zápasů
 
 Pokud databáze ještě obsahuje ukázkový archiv ze starší verze `seed.sql` (vymyšlené
 týmy a výsledky), smaž ho: spusť `smazat-ukazkova-data.sql`. Skutečné týmy a turnaje nezasáhne.
@@ -95,18 +105,26 @@ Sign In / Providers → Email → **Confirm email** (účet se pak přihlásí h
 
 ## Práce organizátora (web → Portál po přihlášení)
 
-- **Přihlášky:** schválit, vrátit ke schválení nebo odmítnout; vidíš kontakt na kapitána.
+- **Přihlášky:** u turnaje se startovným nejdřív označ „Startovné přijato“ (až platba dorazí na účet
+  5815434013/0800, ve zprávě název týmu), pak schval. Vrátit ke schválení nebo odmítnout jde kdykoli;
+  vidíš kontakt na kapitána a co při odeslání potvrdil.
   Schválený tým se objeví ve veřejných výsledcích turnaje.
-- **Turnaje:** založit, upravit termín a popis, otevřít/zavřít přihlášky (otevřené
-  smí být vždy jen na jednom turnaji), nastavit nejmenší a největší soupisku, smazat.
-- **U každého turnaje:** skupiny, konečné pořadí a postup týmů, rozpis zápasů (čas v pražském
-  čase, Clutch Time), ruční seznam střelců, ocenění hráče turnaje a brankáře.
-  Zápasy fáze „Skupina…“ se samy počítají do tabulky.
+- **Rozpis turnajů:** založit, upravit termín, čas začátku, místo, formát, popis (pro každý
+  jazyk zvlášť; název se nepřekládá), startovné (Kč na tým), stav (nadcházející / probíhá /
+  odehráno), „Zobrazit na webu“, nejmenší a největší soupisku. Smazat jde jen turnaj bez
+  přihlášek a zápasů. Úvodní stránka ukazuje turnaje odsud: nejbližší v kampani s odpočtem,
+  další pod ní.
+- **Přehled turnaje:** přepínač „Přihlášky otevřené / zavřené“ (otevřené smí mít vždy jen
+  jeden turnaj; otevřít jde jen nadcházející turnaj zobrazený na webu).
+- **U každého turnaje (Rozpis turnajů):** rozpis zápasů (čas v pražském čase, Clutch Time),
+  ruční seznam střelců, ocenění hráče turnaje a brankáře. Zápasy fáze „Skupina…“ se samy
+  počítají do tabulky.
 - **Zapsat výsledky:** vybereš zápas a zapíšeš skóre, góly (jméno, příjmení, minuta) a žluté
   či červené karty. Body se počítají samy (výhra 3, remíza 1, prohra 0). Když góly rozepíšeš,
-  musí sedět se skóre. Střelci a karty na webu se pak spočítají ze zápasů. Tamtéž nastavíš
-  umístění a „Postoupil ze skupiny“.
-- **Po turnaji:** u turnaje nastav stav **Odehraný** a objeví se v archivu na `/turnaje`.
+  musí sedět se skóre. Střelci a karty na webu se pak spočítají ze zápasů. Tamtéž (karta týmu)
+  nastavíš skupinu, umístění, „Postoupil ze skupiny“ a statistiky hráčů.
+- **Po turnaji:** u turnaje nastav stav **Odehráno** a objeví se v archivu na `/turnaje`.
+- **Organizátor nemá vlastní tým.** Kdo chce hrát, má na to samostatný účet s rolí kapitán.
 - **Uživatelé:** přehled všech účtů s kontakty a rolí (jen pro čtení; role se mění v Supabase).
 
 Úvodní stránka, přehled turnajů i detaily výsledků se obnovují samy (nejpozději do

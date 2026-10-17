@@ -5,6 +5,7 @@ import { Search, X } from "lucide-react";
 import { useLocale, useT } from "@/i18n/client";
 import { fmt } from "@/i18n/format";
 import { formatDate, formatPhone } from "@/lib/format";
+import { matchesSearch } from "@/lib/search";
 import type { EntryStatus, Role } from "@/lib/portal/types";
 
 export type BrowserUser = {
@@ -20,26 +21,9 @@ export type BrowserUser = {
 type Filter = "vse" | "kapitani" | "organizatori" | "bez-tymu";
 const FILTERS: Filter[] = ["vse", "kapitani", "organizatori", "bez-tymu"];
 
-/** Bez diakritiky a velikosti písmen: „Novák“ najde i „novak“. */
-const norm = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-const digits = (s: string) => s.replace(/\D/g, "");
-
 function matches(u: BrowserUser, query: string): boolean {
-  const q = norm(query).trim();
-  if (!q) return true;
-
-  // Telefon: stačí kus čísla, mezery a předvolba nevadí („777 123“, „+420777…“).
-  const qDigits = digits(q);
-  if (qDigits.length >= 3 && /^[\d\s+()/-]+$/.test(q)) {
-    const phone = digits(u.phone);
-    return phone.includes(qDigits) || phone.includes(qDigits.replace(/^420/, ""));
-  }
-
-  const hay = norm(
-    [u.name, u.email, u.team?.name ?? "", u.team?.code ?? "", (u.team?.code ?? "").replace("-", "")].join(" ")
-  );
-  // Víc slov = všechna musí sedět („novak leakers“).
-  return q.split(/\s+/).every((word) => hay.includes(word));
+  const code = u.team?.code ?? "";
+  return matchesSearch(query, [u.name, u.email, u.team?.name ?? "", code, code.replace("-", "")].join(" "), [u.phone]);
 }
 
 function byFilter(u: BrowserUser, filter: Filter): boolean {
@@ -105,8 +89,8 @@ export default function UsersBrowser({
   return (
     <div className="users">
       <div className="users__bar">
-        <div className="users__search">
-          <Search size={18} strokeWidth={2} aria-hidden className="users__search-icon" />
+        <div className="search-field">
+          <Search size={18} strokeWidth={2} aria-hidden className="search-field__icon" />
           <label htmlFor="users-q" className="sr-only">
             {t.searchLabel}
           </label>
@@ -118,10 +102,10 @@ export default function UsersBrowser({
             placeholder={t.searchPlaceholder}
             autoComplete="off"
             spellCheck={false}
-            className="cl-field__input users__input"
+            className="cl-field__input search-field__input"
           />
           {query && (
-            <button type="button" className="users__clear" onClick={() => update("", filter)} aria-label={t.clear}>
+            <button type="button" className="search-field__clear" onClick={() => update("", filter)} aria-label={t.clear}>
               <X size={16} strokeWidth={2} aria-hidden />
             </button>
           )}

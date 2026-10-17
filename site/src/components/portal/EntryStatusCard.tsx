@@ -1,8 +1,8 @@
-import { Ban, Check, Clock3, CalendarDays, Users } from "lucide-react";
+import { Ban, Banknote, CalendarDays, Check, Clock3, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CONTACT } from "@/content/contact";
 import { stageLabel } from "@/i18n/data";
-import { fmt, plural } from "@/i18n/format";
+import { fmt, formatMoney, plural } from "@/i18n/format";
 import Link from "@/i18n/Link";
 import { getI18n } from "@/i18n/server";
 import { formatDate, formatDateTime, formatTime, pragueIsoDay } from "@/lib/format";
@@ -44,7 +44,7 @@ function Step({
 }
 
 /**
- * Stav přihlášky týmu na turnaj tak, jak ho vidí kapitán: odeslání →
+ * Stav přihlášky týmu na turnaj tak, jak ho vidí kapitán: odeslání → startovné →
  * rozhodnutí organizátora → soupiska → rozpis zápasů. Každý krok říká,
  * jestli je hotový a co dál.
  */
@@ -61,6 +61,7 @@ export default async function EntryStatusCard({
   const t = dict.entryStatus;
   const { tournament } = entry;
   const decidedOn = entry.statusChangedAt ? formatDate(entry.statusChangedAt.slice(0, 10), locale) : "";
+  const fee = formatMoney(locale, tournament.entryFee, dict.common.money);
 
   const missing = Math.max(0, tournament.minRoster - playerCount);
   const extra = Math.max(0, playerCount - tournament.maxRoster);
@@ -98,6 +99,15 @@ export default async function EntryStatusCard({
             <Step state="done" title={t.sentTitle}>
               {fmt(t.sentText, { date: formatDateTime(entry.createdAt, locale) })}
             </Step>
+
+            {/* Startovné: organizátor ho označí jako připsané, teprve pak přihlášku schválí. */}
+            {entry.status !== "rejected" && tournament.entryFee > 0 && (
+              <Step state={entry.paidAt ? "done" : "current"} title={t.feeTitle} icon={entry.paidAt ? Check : Banknote}>
+                {entry.paidAt
+                  ? fmt(t.feePaid, { amount: fee, date: formatDate(entry.paidAt.slice(0, 10), locale) })
+                  : fmt(t.feeWaiting, { amount: fee })}
+              </Step>
+            )}
 
             {entry.status === "pending" && (
               <Step state="current" title={t.decisionTitle}>

@@ -8,20 +8,21 @@ import { rich } from "@/i18n/rich";
 import { getDictionary, getI18n, portalTitle } from "@/i18n/server";
 import { getCaptainTeam } from "@/lib/portal/data";
 import { PATHS } from "@/lib/portal/paths";
-import { requireUser } from "@/lib/portal/session";
+import { requireRole } from "@/lib/portal/session";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getDictionary();
   return { title: portalTitle(t, t.portal.teamMetaTitle) };
 }
 
+/** Údaje týmu — jen pro kapitána. Organizátora stráž pošle na jeho přehled. */
 export default async function PortalTym() {
   const { locale, t: dict } = await getI18n();
   const t = dict.portal;
-  const user = await requireUser(locale);
+  const user = await requireRole("captain", locale);
   const team = await getCaptainTeam(user.id);
   // Tým vzniká jen přihláškou — bez ní není co upravovat.
-  if (!team) redirect(localePath(locale, user.role === "captain" ? PATHS.teamRegistration : PATHS.portal));
+  if (!team) redirect(localePath(locale, PATHS.teamRegistration));
 
   return (
     <>

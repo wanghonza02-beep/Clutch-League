@@ -37,3 +37,8 @@ export function formatDecimal(locale: Locale, value: number, digits = 1): string
     maximumFractionDigits: digits,
   });
 }
+
+/** Celé koruny podle jazyka: „2 700 Kč“, „CZK 2,700“. Šablona je ve slovníku (common.money). */
+export function formatMoney(locale: Locale, amount: number, template: string): string {
+  return fmt(template, { amount: formatDecimal(locale, amount, 0) });
+}

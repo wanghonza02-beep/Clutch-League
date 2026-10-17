@@ -40,9 +40,12 @@ const MAX_BANNERS = 3;
 export default async function NotificationList({
   items,
   variant,
+  tournamentId,
 }: {
   items: AppNotification[];
   variant: "banners" | "feed";
+  /** Seznam jednoho turnaje — „Označit vše jako přečtené“ se týká jen jeho oznámení. */
+  tournamentId?: string;
 }) {
   const { locale, t: dict } = await getI18n();
   const t = dict.notifications;
@@ -92,6 +95,7 @@ export default async function NotificationList({
       {(variant === "feed" ? unread.length > 0 : unread.length > 1) && (
         <form action={markNotificationsReadAction} className="notif__all">
           <LocaleField />
+          {tournamentId && <input type="hidden" name="tournament" value={tournamentId} />}
           {hidden > 0 && <span className="adm-meta">{plural(locale, hidden, t.more)}</span>}
           <button type="submit" className="cl-btn cl-btn--ghost cl-btn--sm cl-btn--flush">
             <Check size={14} strokeWidth={2.5} aria-hidden />

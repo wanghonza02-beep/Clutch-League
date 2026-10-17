@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import PortalHeader from "@/components/portal/PortalHeader";
+import TournamentCards from "@/components/admin/TournamentCards";
 import TournamentForm from "@/components/admin/TournamentForm";
-import Notice from "@/components/ui/Notice";
-import { editionLabel } from "@/i18n/data";
-import Link from "@/i18n/Link";
 import { getDictionary, getI18n, portalTitle } from "@/i18n/server";
-import { listTournaments } from "@/lib/admin/data";
-import { formatDate } from "@/lib/format";
+import { listTournamentSummaries } from "@/lib/admin/data";
 import { requireRole } from "@/lib/portal/session";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,43 +11,23 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: portalTitle(t, t.admin.tournamentsMetaTitle) };
 }
 
+/**
+ * Rozpis turnajů: všechny turnaje jako karty (probíhající a nadcházející
+ * nahoře) a založení nového. Karta vede na stránku turnaje — údaje, stav,
+ * zobrazení na webu, rozpis zápasů, střelci, ocenění a smazání. Úvodní stránka
+ * webu ukazuje turnaje odsud (jen zobrazené na webu).
+ */
 export default async function PortalTurnaje() {
   const { locale, t: dict } = await getI18n();
   const t = dict.admin;
   await requireRole("admin", locale);
-  const tournaments = await listTournaments();
+  const tournaments = await listTournamentSummaries();
 
   return (
     <>
       <PortalHeader over={t.over} title={t.tournamentsTitle} sub={t.tournamentsSub} />
 
-      {tournaments.length === 0 ? (
-        <Notice tone="info">{t.tournamentsEmpty}</Notice>
-      ) : (
-        <div className="cl-card">
-          <div className="cl-card__in">
-            <ul className="cl-card__body" aria-label={t.tournamentsTitle}>
-              {tournaments.map((tournament) => (
-                <li key={tournament.id} className="adm-item" style={{ gap: "var(--sp-3)" }}>
-                  <div className="adm-item__head">
-                    <Link href={`/portal/turnaje/${tournament.id}`} className="adm-item__title">
-                      {tournament.name}
-                    </Link>
-                    <span className={tournament.status === "upcoming" ? "cl-badge" : "cl-badge cl-badge--neutral"}>
-                      {tournament.status === "upcoming" ? t.upcoming : t.completed}
-                    </span>
-                    {tournament.registrationOpen && <span className="cl-badge">{t.registrationOpen}</span>}
-                  </div>
-                  <div className="adm-meta">
-                    <span className="cl-num">{formatDate(tournament.startsOn, locale)}</span>
-                    {tournament.edition && <span>{editionLabel(tournament.edition, dict)}</span>}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+      <TournamentCards tournaments={tournaments} basePath="/portal/turnaje" empty={t.tournamentsEmpty} />
 
       <section aria-labelledby="novy-turnaj" className="flex flex-col gap-[var(--sp-5)]">
         <h2 id="novy-turnaj" className="portal-h2">

@@ -13,8 +13,11 @@ import { requireRole } from "@/lib/portal/session";
 import { DEFAULT_MAX_ROSTER } from "@/lib/portal/types";
 import { fail, ok, checkbox, text, type FormState } from "@/lib/portal/validation";
 import { revalidateRoute } from "@/lib/revalidate";
-import type { EntryStatus, TournamentStatus, TournamentWrite } from "@/lib/supabase/database.types";
+import type { EntryStatus, TournamentWrite } from "@/lib/supabase/database.types";
+import { missingTable } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
+import { isPublished, isStatus } from "@/lib/tournamentModel";
+import { isUuid } from "./data";
 import { intOrNull, pragueLocalToIso, slugify, textOrNull } from "./helpers";
 
 // Zápisy organizátora. Každá akce nejdřív ověří roli admin, ale skutečnou
@@ -23,6 +26,7 @@ import { intOrNull, pragueLocalToIso, slugify, textOrNull } from "./helpers";
 
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 /** Změna se projeví na veřejném webu, v přihlášce týmu i v portálu — ve všech jazycích. */
 function refreshEverything() {
@@ -53,8 +57,8 @@ function dbFailure(
   if (error.code === "23505" && constraint === "tournaments_single_open_registration") {
     return fail(m.singleOpen, errors, values);
   }
-  if (error.code === "23514" && constraint === "tournaments_check") {
-    return fail(m.completedOpen, errors, values);
+  if (error.code === "23514" && constraint === "tournaments_registration_check") {
+    return fail(m.registrationNeedsPublished, errors, values);
   }
   if (error.code === "23514" && constraint === "tournaments_roster_range") {
     return fail(m.rosterRange, { ...errors, maxRoster: m.maxBelowMin }, values);
@@ -66,9 +70,18 @@ function dbFailure(
   if (error.message.includes("kickoff_before_tournament")) return fail(m.kickoffBeforeDay, errors, values);
   if (error.message.includes("match_has_events")) return fail(m.matchHasEvents, errors, values);
   if (error.message.includes("entry_has_matches")) return fail(m.entryHasMatches, errors, values);
+  if (error.message.includes("tournament_has_data")) return fail(m.tournamentHasData, errors, values);
   if (error.code === "42501") return fail(t.actions.forbidden, errors, values);
   // Web je novější než databáze: chybí migrace 20261013120000 (sloupec max_roster).
   if (error.message.includes("max_roster")) return fail(m.migrationMissing, errors, values);
+  // Chybí migrace č. 10 (stav „probíhá“, čas začátku, popis v jazycích, zobrazení na webu).
+  if (/in_progress|start_time|summary_(en|uk|sk)|published/.test(error.message)) {
+    return fail(m.migration10Missing, errors, values);
+  }
+  // Chybí migrace č. 11 (startovné, potvrzení a platba u přihlášky).
+  if (/entry_fee|paid_at|confirmations/.test(error.message)) return fail(m.migration11Missing, errors, values);
+  if (error.message.includes("entry_not_paid")) return fail(m.entryNotPaid, errors, values);
+  if (error.message.includes("entry_paid_approved")) return fail(m.entryPaidApproved, errors, values);
 
   console.error("[admin]", error.code, error.message);
   return fail(t.actions.saveFailed, errors, values);
@@ -208,6 +221,31 @@ export async function removeEntryAction(_prev: FormState, formData: FormData): P
   return ok(decisionMessage(m.entryRemoved, deleted ?? 0, mailed, t, locale));
 }
 
+/**
+ * Startovné přijato / zrušit zaplacení. Schválit přihlášku na turnaj se
+ * startovným jde až po zaplacení a schválené přihlášce zaplacení zrušit nejde
+ * — obojí hlídá databáze (trigger tournament_entries_guard_payment, migrace
+ * č. 11), kdo platbu označil, si zapíše sama.
+ */
+export async function setEntryPaidAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { locale, t } = formI18n(formData);
+  const m = t.adminActions;
+  const supabase = await adminClient(locale);
+  const paid = text(formData, "paid") === "1";
+
+  const { data, error } = await supabase
+    .from("tournament_entries")
+    .update({ paid_at: paid ? new Date().toISOString() : null })
+    .eq("tournament_id", text(formData, "tournamentId"))
+    .eq("team_id", text(formData, "teamId"))
+    .select("team_id");
+  if (error) return dbFailure(error, t);
+  if (data.length === 0) return fail(m.entryMissing);
+
+  refreshEverything();
+  return ok(paid ? m.feeMarkedPaid : m.feeMarkedUnpaid);
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Turnaje                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -223,14 +261,19 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
     slug: text(formData, "slug"),
     edition: text(formData, "edition"),
     startsOn: text(formData, "startsOn"),
+    startTime: text(formData, "startTime"),
     venue: text(formData, "venue"),
     format: text(formData, "format"),
     matchLength: text(formData, "matchLength"),
     summary: text(formData, "summary"),
+    summaryEn: text(formData, "summaryEn"),
+    summaryUk: text(formData, "summaryUk"),
+    summarySk: text(formData, "summarySk"),
     minRoster: text(formData, "minRoster") || "6",
     maxRoster: text(formData, "maxRoster") || String(DEFAULT_MAX_ROSTER),
-    status: text(formData, "status") || "upcoming",
-    registrationOpen: checkbox(formData, "registrationOpen") ? "on" : "",
+    entryFee: text(formData, "entryFee"),
+    status: text(formData, "status"),
+    published: checkbox(formData, "published") ? "on" : "",
   };
 
   const errors: Record<string, string> = {};
@@ -243,6 +286,7 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
   if (!DATE_RE.test(values.startsOn) || Number.isNaN(Date.parse(values.startsOn))) {
     errors.startsOn = m.dateMissing;
   }
+  if (values.startTime && !TIME_RE.test(values.startTime)) errors.startTime = m.timeInvalid;
 
   const minRoster = Number(values.minRoster);
   if (!Number.isInteger(minRoster) || minRoster < 1 || minRoster > 30) {
@@ -254,28 +298,37 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
   } else if (!errors.minRoster && maxRoster < minRoster) {
     errors.maxRoster = m.maxBelowMin;
   }
-  const status: TournamentStatus | null =
-    values.status === "completed" || values.status === "upcoming" ? values.status : null;
+  for (const field of ["summary", "summaryEn", "summaryUk", "summarySk"] as const) {
+    if (values[field].length > 600) errors[field] = m.summaryLong;
+  }
+  // Startovné je povinné: celé Kč, 0 = turnaj bez startovného.
+  const entryFee = values.entryFee === "" ? Number.NaN : Number(values.entryFee.replace(/\s/g, ""));
+  if (!Number.isInteger(entryFee) || entryFee < 0 || entryFee > 100_000) errors.entryFee = m.feeInvalid;
+
+  const published = values.published === "on";
+  const status = isStatus(values.status) ? values.status : null;
   if (!status) errors.status = m.statusMissing;
-  if (values.summary.length > 600) errors.summary = m.summaryLong;
 
   if (Object.keys(errors).length > 0 || !status) return fail(t.actions.checkFields, errors, values);
 
-  // Odehraný turnaj nemůže přijímat přihlášky.
-  const registrationOpen = values.registrationOpen === "on" && status === "upcoming";
-
-  // Přihlášky smí být otevřené jen na jeden turnaj — ostatní nejdřív zavřeme
-  // a organizátorovi to řekneme (jinak by se o tom nedozvěděl).
+  // Přihlášky otevírá a zavírá přepínač v přehledu turnaje, formulář je nemění.
+  // Jen když turnaj přestane být nadcházející, zavřou se (hlídá i databáze).
   const notes: string[] = [];
-  if (registrationOpen) {
-    let open = supabase.from("tournaments").select("name").eq("registration_open", true);
-    if (id) open = open.neq("id", id);
-    const { data: others } = await open;
-    let close = supabase.from("tournaments").update({ registration_open: false }).eq("registration_open", true);
-    if (id) close = close.neq("id", id);
-    const { error } = await close;
+  let closeRegistration = false;
+  if (id) {
+    const { data: current, error } = await supabase
+      .from("tournaments")
+      .select("registration_open")
+      .eq("id", id)
+      .maybeSingle();
     if (error) return dbFailure(error, t, {}, values);
-    for (const other of others ?? []) notes.push(fmt(m.closedOther, { name: other.name }));
+    if (!current) return fail(m.tournamentMissing);
+    if (current.registration_open && status !== "upcoming") {
+      closeRegistration = true;
+      notes.push(m.registrationClosedByStatus);
+    } else if (current.registration_open && !published) {
+      return fail(m.hideNeedsClosed, {}, values);
+    }
   }
 
   const row: TournamentWrite = {
@@ -283,14 +336,21 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
     name: values.name,
     edition: values.edition,
     starts_on: values.startsOn,
+    start_time: values.startTime || null,
     venue: values.venue,
     format: values.format,
     match_length: values.matchLength,
     summary: values.summary,
+    summary_en: values.summaryEn,
+    summary_uk: values.summaryUk,
+    summary_sk: values.summarySk,
+    published,
     min_roster: minRoster,
     max_roster: maxRoster,
+    entry_fee: entryFee,
     status,
-    registration_open: registrationOpen,
+    // Nový turnaj má přihlášky zavřené, otevírají se v přehledu turnaje.
+    ...(!id || closeRegistration ? { registration_open: false } : {}),
   };
 
   if (!id) {
@@ -304,8 +364,6 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
   if (error) return dbFailure(error, t, {}, values);
   if (data.length === 0) return fail(m.tournamentMissing);
 
-  if (values.registrationOpen === "on" && !registrationOpen) notes.push(m.keptClosed.trim());
-
   // Zápasy, které po změně data turnaje leží v jiný den (svítí v rozpisu).
   const { data: matches } = await supabase.from("matches").select("kickoff").eq("tournament_id", id);
   const offDay = (matches ?? []).filter((match) => pragueIsoDay(match.kickoff) !== values.startsOn).length;
@@ -315,11 +373,72 @@ export async function saveTournamentAction(_prev: FormState, formData: FormData)
   return ok([m.tournamentSaved, ...notes].join(" "));
 }
 
+/**
+ * Přihlášky otevřené / zavřené (přepínač v přehledu turnaje — jediné místo,
+ * kde se mění). Otevřít jde jen nadcházející turnaj zobrazený na webu a jen
+ * jeden najednou: ostatním se přihlášky zavřou a organizátor se to dozví.
+ * Zavřené přihlášky blokuje i databáze (politika přihlášek, register_team).
+ */
+export async function setRegistrationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { locale, t } = formI18n(formData);
+  const m = t.adminActions;
+  const supabase = await adminClient(locale);
+  const id = text(formData, "tournamentId");
+  const open = text(formData, "open") === "1";
+  if (!isUuid(id)) return fail(m.tournamentMissing);
+
+  const { data: tournament, error } = await supabase
+    .from("tournaments")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return dbFailure(error, t);
+  if (!tournament) return fail(m.tournamentMissing);
+
+  const notes: string[] = [];
+  if (open) {
+    if (tournament.status !== "upcoming") return fail(m.registrationNotUpcoming);
+    if (!isPublished(tournament)) return fail(m.registrationNeedsPublished);
+    const { data: others, error: closeError } = await supabase
+      .from("tournaments")
+      .update({ registration_open: false })
+      .eq("registration_open", true)
+      .neq("id", id)
+      .select("name");
+    if (closeError) return dbFailure(closeError, t);
+    for (const other of others) notes.push(fmt(m.closedOther, { name: other.name }));
+  }
+
+  const { error: saveError } = await supabase.from("tournaments").update({ registration_open: open }).eq("id", id);
+  if (saveError) return dbFailure(saveError, t);
+
+  refreshEverything();
+  return ok([open ? m.registrationOpened : m.registrationClosed, ...notes].join(" "));
+}
+
+/**
+ * Smazání turnaje. Jde jen u turnaje bez přihlášek a zápasů — kaskáda by jinak
+ * potichu smazala přihlášky týmů (kapitáni by se nic nedozvěděli) i výsledky.
+ * Totéž hlídá databáze (trigger tournaments_guard_delete, migrace č. 10).
+ */
 export async function deleteTournamentAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { locale, t, href } = formI18n(formData);
+  const m = t.adminActions;
   const supabase = await adminClient(locale);
-  const { error } = await supabase.from("tournaments").delete().eq("id", text(formData, "id"));
+  const id = text(formData, "id");
+  if (!isUuid(id)) return fail(m.tournamentMissing);
+
+  const [entries, matches] = await Promise.all([
+    supabase.from("tournament_entries").select("team_id", { count: "exact", head: true }).eq("tournament_id", id),
+    supabase.from("matches").select("id", { count: "exact", head: true }).eq("tournament_id", id),
+  ]);
+  if (entries.error) return dbFailure(entries.error, t);
+  if (matches.error) return dbFailure(matches.error, t);
+  if ((entries.count ?? 0) > 0 || (matches.count ?? 0) > 0) return fail(m.tournamentHasData);
+
+  const { data, error } = await supabase.from("tournaments").delete().eq("id", id).select("id");
   if (error) return dbFailure(error, t);
+  if (data.length === 0) return fail(m.tournamentMissing);
 
   refreshEverything();
   redirect(href(`${PATHS.portal}/turnaje`));
@@ -492,6 +611,99 @@ export async function saveEntryRankingAction(_prev: FormState, formData: FormDat
 
   refreshEverything();
   return ok(m.saved);
+}
+
+/** Sloupce statistik hráče: pole formuláře → sloupec v databázi a nejvyšší hodnota. */
+const PLAYER_STAT_FIELDS = [
+  { field: "min", column: "minutes", max: 2000 },
+  { field: "goals", column: "goals", max: 200 },
+  { field: "yellow", column: "yellow_cards", max: 50 },
+  { field: "red", column: "red_cards", max: 50 },
+] as const;
+
+type StatColumns = Record<(typeof PLAYER_STAT_FIELDS)[number]["column"], number>;
+
+/**
+ * Statistiky hráčů jednoho týmu za celý turnaj (karta týmu v Zapsat výsledky).
+ * Řádky formuláře jsou p{i}_…: p{i}_player = hráč ze soupisky, p{i}_stat =
+ * už uložená statistika hráče, který na soupisce není. Prázdné pole = 0.
+ * Uloží se všichni hráči ze soupisky — i s nulami, ať je vidět, že tým má
+ * statistiky zapsané. Smazaný hráč se samými nulami ze statistik zmizí.
+ */
+export async function savePlayerStatsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const { locale, t } = formI18n(formData);
+  const m = t.adminActions;
+  const supabase = await adminClient(locale);
+  const tournamentId = text(formData, "tournamentId");
+  const teamId = text(formData, "teamId");
+  const count = Math.min(Number(text(formData, "count")) || 0, 60);
+
+  const values: Record<string, string> = {};
+  const errors: Record<string, string> = {};
+  const roster = new Map<string, StatColumns>();
+  const others = new Map<string, StatColumns>();
+
+  for (let i = 0; i < count; i++) {
+    const numbers = {} as StatColumns;
+    for (const { field, column, max } of PLAYER_STAT_FIELDS) {
+      const name = `p${i}_${field}`;
+      const raw = text(formData, name);
+      values[name] = raw;
+      const value = raw === "" ? 0 : intOrNull(raw);
+      if (value === null || Number.isNaN(value) || value < 0 || value > max) errors[name] = fmt(m.statRange, { max });
+      else numbers[column] = value;
+    }
+    const playerId = text(formData, `p${i}_player`);
+    const statId = text(formData, `p${i}_stat`);
+    if (isUuid(playerId)) roster.set(playerId, numbers);
+    else if (isUuid(statId)) others.set(statId, numbers);
+  }
+
+  if (Object.keys(errors).length > 0) return fail(m.statsCheck, errors, values);
+  if (roster.size === 0 && others.size === 0) return fail(m.statsNoPlayers, {}, values);
+
+  // Jméno a číslo bere databáze ze soupisky — jen hráči tohohle týmu.
+  const { data: players, error: playersError } = roster.size
+    ? await supabase
+        .from("players")
+        .select("id, first_name, last_name, shirt_number")
+        .eq("team_id", teamId)
+        .in("id", [...roster.keys()])
+    : { data: [], error: null };
+  if (playersError) return dbFailure(playersError, t, {}, values);
+
+  const updatedAt = new Date().toISOString();
+  if (players.length > 0) {
+    const { error } = await supabase.from("player_stats").upsert(
+      players.map((p) => ({
+        tournament_id: tournamentId,
+        team_id: teamId,
+        player_id: p.id,
+        first_name: p.first_name,
+        last_name: p.last_name,
+        shirt_number: p.shirt_number,
+        ...roster.get(p.id)!,
+        updated_at: updatedAt,
+      })),
+      { onConflict: "tournament_id,player_id" }
+    );
+    if (missingTable(error)) return fail(m.migration9Missing, {}, values);
+    if (error) return dbFailure(error, t, {}, values);
+  }
+
+  for (const [statId, numbers] of others) {
+    const row = supabase.from("player_stats");
+    const empty = Object.values(numbers).every((n) => n === 0);
+    const { error } = await (empty ? row.delete() : row.update({ ...numbers, updated_at: updatedAt }))
+      .eq("id", statId)
+      .eq("tournament_id", tournamentId)
+      .eq("team_id", teamId);
+    if (missingTable(error)) return fail(m.migration9Missing, {}, values);
+    if (error) return dbFailure(error, t, {}, values);
+  }
+
+  refreshEverything();
+  return ok(m.statsSaved);
 }
 
 export async function addScorerAction(_prev: FormState, formData: FormData): Promise<FormState> {

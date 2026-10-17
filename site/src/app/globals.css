@@ -1379,6 +1379,21 @@ a.cl-footer-meta:hover {
   margin: 0;
   color: var(--text-body);
 }
+/* Místo a formát turnaje pod datem. */
+.hero-stage__meta {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-body-sm);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+/* Popis turnaje (v jazyce stránky) — krátký odstavec, ne přes celou šířku. */
+.hero-stage__summary {
+  max-width: 60ch;
+  text-wrap: pretty;
+}
 .hero-countdown {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1425,6 +1440,10 @@ a.cl-footer-meta:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     width: max-content;
     max-width: 100%;
+  }
+  /* Přihlášky zavřené — jen „Více informací“, uprostřed. */
+  .hero-stage__actions--single {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 /* Rozpis zápasů pod tlačítky: vypnuté tlačítko s vysvětlením, nebo rozbalovací seznam. */
@@ -2041,6 +2060,15 @@ html:has(.lightbox[open]) {
 .trn-card:focus-visible .trn-card__go {
   color: var(--text-heading);
   transform: translateX(3px);
+}
+
+/* Další turnaje na úvodní stránce (UpcomingTournamentsSection): karta bez
+   odkazu, jen stav, název, termín, místo a popis. */
+.upcoming-card__summary {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-body);
 }
 
 /* Stupně vítězů v detailu turnaje. */
@@ -3071,12 +3099,275 @@ a.adm-item__title:hover {
   opacity: 0.8;
 }
 
-/* ---- Přihlášky: oddíl turnaje a karta týmu ---- */
-.entry-group {
+/* ---- Hledání (přihlášky, uživatelé): lupa vlevo, křížek vpravo ---- */
+.search-field {
+  position: relative;
+  max-width: 560px;
+}
+.search-field__icon {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: var(--sp-4);
+  translate: 0 -50%;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.search-field__input {
+  width: 100%;
+  padding-left: calc(var(--sp-4) + 26px);
+  padding-right: 44px;
+}
+.search-field__input::-webkit-search-cancel-button {
+  display: none;
+}
+.search-field__clear {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  translate: 0 -50%;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.search-field__clear:hover {
+  color: var(--text-heading);
+}
+
+/* ---- Turnaje jako karty (TournamentCards) ----
+   Seznam turnajů v sekcích portálu organizátora. Celá karta je odkaz na
+   stránku turnaje v dané sekci; obrys zezlátne při najetí (cl-card--interactive). */
+.tcards {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
+.tcard {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-6);
+  color: inherit;
+  text-decoration: none;
+}
+.tcard__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.tcard__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+.tcard__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.tcard__alert {
+  color: var(--gold);
+}
+.tcard__go {
+  flex: none;
+  color: var(--text-muted);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.cl-card--interactive:hover .tcard__go,
+.tcard:focus-visible .tcard__go {
+  color: var(--gold);
+}
+
+/* ---- Zapsat výsledky: karta týmu (TeamResultCard) ----
+   Zavřená vypadá jako karta turnaje; rozklikne se přes <details>. Obrys
+   zezlátne jen při najetí na hlavičku, ne na formuláře uvnitř. */
+.team-res {
+  scroll-margin-top: calc(var(--nav-h) + var(--sp-6));
+}
+.team-res:has(.team-res__summary:hover) {
+  background: var(--border-accent);
+}
+.team-res__summary {
+  cursor: pointer;
+  list-style: none;
+}
+.team-res__summary::-webkit-details-marker {
+  display: none;
+}
+.team-res__summary:hover .tcard__go {
+  color: var(--gold);
+}
+.team-res__summary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+.team-res__chevron {
+  transition: transform var(--dur-base) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.team-res__details[open] .team-res__chevron {
+  transform: rotate(180deg);
+}
+.team-res__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  border-top: 1px solid var(--border-subtle);
+}
+.team-res__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.team-res__block > h4 {
+  margin: 0;
+}
+
+/* Tabulka statistik hráčů s políčky. Na úzkém displeji se řádek zalomí:
+   číslo a jméno nahoře, čtyři políčka s popiskem pod nimi. */
+.stats-table {
+  min-width: 0;
+}
+.stats-table th,
+.stats-table td {
+  padding: var(--sp-2);
+  vertical-align: middle;
+}
+.stats-table tbody tr:hover {
+  background: transparent;
+}
+.stats-table__num {
+  width: 2.5rem;
+  color: var(--text-muted);
+}
+.stats-table__player {
+  font-weight: var(--fw-semibold);
+  color: var(--text-heading);
+}
+.stats-table__note {
+  display: block;
+  font-size: var(--fs-caption);
+  font-weight: normal;
+  color: var(--text-faint);
+}
+.stats-table__cell {
+  width: 5.5rem;
+}
+/* flow-root: 1px okraj políčka nepropadne ven, rámeček je vidět kolem dokola. */
+.stat-input {
+  display: flow-root;
+  width: 4.5rem;
+  margin: 0 auto;
+}
+.stat-input .cl-field__input {
+  height: 36px;
+  padding: 0 var(--sp-2);
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.stat-input:has([aria-invalid="true"]) {
+  background: var(--danger);
+}
+@media (max-width: 559.98px) {
+  .team-res__body {
+    padding: var(--sp-4);
+  }
+  .stats-table,
+  .stats-table tbody {
+    display: block;
+  }
+  .stats-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .stats-table tr {
+    display: grid;
+    grid-template-columns: 2rem repeat(4, minmax(0, 1fr));
+    gap: var(--sp-2);
+    padding: var(--sp-3) 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .stats-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+  .stats-table th,
+  .stats-table td {
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+  .stats-table__player {
+    grid-column: 2 / -1;
+  }
+  /* První políčko pod jménem, ne pod číslem. */
+  .stats-table td:nth-of-type(2) {
+    grid-column-start: 2;
+  }
+  .stats-table__cell::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-family: var(--font-display);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-micro);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--text-faint);
+  }
+  .stat-input {
+    width: 100%;
+  }
+}
+
+/* ---- Přihlášky: filtr stavu vlevo, hledání vpravo na jednom řádku ----
+   Pole je stejně vysoké jako filtry. Když se nevejdou vedle sebe, spadne
+   hledání pod filtry přes celou šířku. */
+.entries-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3) var(--sp-6);
+}
+.entries-bar__search {
+  flex: 1 1 240px;
+  max-width: 320px;
+}
+.entries-bar__search .search-field__input {
+  height: 34px;
+  font-size: var(--fs-body-sm);
+}
+@media (max-width: 639px) {
+  .entries-bar__search {
+    max-width: none;
+  }
+}
+
+/* ---- Přihlášky turnaje: hlavička a karta týmu ---- */
 .entry-group__head {
   display: flex;
   flex-direction: column;
@@ -3095,24 +3386,22 @@ a.adm-item__title:hover {
   text-transform: uppercase;
   color: var(--text-accent);
 }
+/* Každá přihláška je vlastní karta, mezi kartami mezera. */
 .entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
   margin: 0;
+  padding: 0;
   list-style: none;
+}
+.entry-card {
+  scroll-margin-top: calc(var(--nav-h) + var(--sp-6));
 }
 .entry {
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
-  padding: var(--sp-6) 0;
-  border-bottom: 1px solid var(--border-subtle);
-  scroll-margin-top: calc(var(--nav-h) + var(--sp-6));
-}
-.entry:first-child {
-  padding-top: 0;
-}
-.entry:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
 }
 .entry__head {
   display: flex;
@@ -3256,16 +3545,6 @@ a.adm-item__title:hover {
 }
 
 /* ---- Přehled organizátora ---- */
-.ov-focus__link {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 6px;
-}
-.ov-focus__link:hover {
-  color: var(--gold);
-  text-decoration-color: var(--gold);
-}
 .ov-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -3444,6 +3723,113 @@ a.adm-item__title:hover {
   color: var(--gold);
 }
 
+/* ---- Přihláška týmu: platba startovného a podmínky účasti (EntryPaymentStep) ----
+   QR kód je černý na bílém (jinak by ho banky nenačetly), vedle něj údaje
+   k platbě; na mobilu pod sebou. */
+.pay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+.pay__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-display);
+  font-style: italic;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--ls-display);
+  text-transform: uppercase;
+  color: var(--text-heading);
+}
+.pay__amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-h5);
+  line-height: 1.2;
+  color: var(--gold);
+}
+.pay__grid {
+  display: grid;
+  gap: var(--sp-5);
+  align-items: start;
+}
+@media (min-width: 560px) {
+  .pay__grid {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+}
+.pay__qr {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.pay__qr-img {
+  width: 200px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  background: #fff;
+}
+.pay__qr-img svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pay__facts {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+}
+.pay__facts dd {
+  margin: 2px 0 0;
+}
+.pay__value {
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+  color: var(--text-heading);
+}
+.pay__text {
+  margin: 0;
+  line-height: var(--lh-body);
+  color: var(--text-body);
+}
+.pay__text strong {
+  color: var(--text-heading);
+}
+/* Podmínky účasti: číslované body přesně podle textu pořadatele. */
+.terms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-left: 1.6em;
+  list-style: decimal;
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--text-body);
+}
+.terms li::marker {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ---- Přehled turnaje: přepínač přihlášek (RegistrationToggle) ---- */
+.reg-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.reg-toggle__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
 /* ---- Uživatelé: hledání a filtr ---- */
 .users {
   display: flex;
@@ -3454,46 +3840,6 @@ a.adm-item__title:hover {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
-}
-.users__search {
-  position: relative;
-  max-width: 560px;
-}
-.users__search-icon {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: var(--sp-4);
-  translate: 0 -50%;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-.users__input {
-  width: 100%;
-  padding-left: calc(var(--sp-4) + 26px);
-  padding-right: 44px;
-}
-.users__input::-webkit-search-cancel-button {
-  display: none;
-}
-.users__clear {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  right: 6px;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  translate: 0 -50%;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.users__clear:hover {
-  color: var(--text-heading);
 }
 .users__empty {
   display: flex;
@@ -3517,16 +3863,6 @@ a.adm-item__title:hover {
 }
 
 /* Zápis výsledku — skóre vedle sebe, řádky gólů a karet. */
-.res-picker {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--sp-3);
-}
-.res-picker > .cl-field {
-  flex: 1 1 260px;
-  max-width: 480px;
-}
 .res-score {
   display: grid;
   grid-template-columns: minmax(0, 200px) auto minmax(0, 200px);

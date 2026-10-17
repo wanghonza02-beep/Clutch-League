@@ -19,7 +19,8 @@ function refreshResults() {
   revalidateRoute("/turnaje");
   revalidateRoute("/turnaje/[slug]");
   revalidateRoute(`${PATHS.portal}/vysledky`);
-  revalidateRoute(`${PATHS.portal}/vysledky/[id]`);
+  revalidateRoute(`${PATHS.portal}/vysledky/[turnaj]`);
+  revalidateRoute(`${PATHS.portal}/vysledky/[turnaj]/[zapas]`);
   revalidateRoute(PATHS.portal, "layout");
 }
 

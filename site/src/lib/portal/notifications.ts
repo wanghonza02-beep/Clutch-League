@@ -1,5 +1,5 @@
-import type { PostgrestError } from "@supabase/supabase-js";
 import type { NotificationKind } from "@/lib/supabase/database.types";
+import { missingTable } from "@/lib/supabase/errors";
 import { createClient } from "@/lib/supabase/server";
 
 // Oznámení pro přihlášeného uživatele (tabulka notifications, migrace č. 8).
@@ -22,14 +22,14 @@ export type AppNotification = {
   read: boolean;
 };
 
-/** Chybí tabulka (migrace č. 8 ještě neproběhla) — tváříme se, že oznámení nejsou. */
-function missingTable(error: PostgrestError | null): boolean {
-  return error?.code === "42P01" || error?.code === "PGRST205";
-}
-
+/** `tournamentId`: jen oznámení k jednomu turnaji (přehled turnaje v portálu organizátora). */
 export async function getNotifications(
   userId: string,
-  { limit = 20, unreadOnly = false }: { limit?: number; unreadOnly?: boolean } = {}
+  {
+    limit = 20,
+    unreadOnly = false,
+    tournamentId,
+  }: { limit?: number; unreadOnly?: boolean; tournamentId?: string } = {}
 ): Promise<AppNotification[]> {
   const supabase = await createClient();
   let query = supabase
@@ -39,6 +39,7 @@ export async function getNotifications(
     .order("created_at", { ascending: false })
     .limit(limit);
   if (unreadOnly) query = query.is("read_at", null);
+  if (tournamentId) query = query.eq("tournament_id", tournamentId);
 
   const { data, error } = await query;
   if (missingTable(error)) return [];
@@ -75,8 +76,28 @@ export async function countUnreadNotifications(userId: string): Promise<number> 
   return count ?? 0;
 }
 
-/** Označí oznámení jako přečtená — konkrétní, nebo všechna nepřečtená. */
-export async function markNotificationsRead(userId: string, ids?: string[]): Promise<void> {
+/** Nepřečtená oznámení po turnajích (karty turnajů v přehledu organizátora). */
+export async function countUnreadByTournament(userId: string): Promise<Map<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("tournament_id")
+    .eq("user_id", userId)
+    .is("read_at", null);
+  const counts = new Map<string, number>();
+  if (error) {
+    if (!missingTable(error)) console.error("[oznámení] počty po turnajích se nenačetly", error.code, error.message);
+    return counts;
+  }
+  for (const n of data) if (n.tournament_id) counts.set(n.tournament_id, (counts.get(n.tournament_id) ?? 0) + 1);
+  return counts;
+}
+
+/**
+ * Označí oznámení jako přečtená — konkrétní (ids), všechna k jednomu turnaji
+ * (tournamentId), nebo všechna nepřečtená.
+ */
+export async function markNotificationsRead(userId: string, ids?: string[], tournamentId?: string): Promise<void> {
   const supabase = await createClient();
   let query = supabase
     .from("notifications")
@@ -84,6 +105,7 @@ export async function markNotificationsRead(userId: string, ids?: string[]): Pro
     .eq("user_id", userId)
     .is("read_at", null);
   if (ids?.length) query = query.in("id", ids);
+  if (tournamentId) query = query.eq("tournament_id", tournamentId);
   const { error } = await query;
   if (error && !missingTable(error)) console.error("[oznámení] neoznačila se", error.code, error.message);
 }

@@ -1,17 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
-import { Send } from "lucide-react";
+import { useActionState, type ReactNode } from "react";
+import { ArrowRight } from "lucide-react";
 import Notice from "@/components/ui/Notice";
-import RegistrationConfirmations from "./RegistrationConfirmations";
+import { EntryFormProvider } from "./EntryForm";
 import { useT } from "@/i18n/client";
-import { fmt } from "@/i18n/format";
 import LocaleField from "@/i18n/LocaleField";
 import { enterTournamentAction } from "@/lib/portal/actions";
 import { IDLE } from "@/lib/portal/validation";
 
-/** Přihláška týmu, který už existuje (hrál dřív), na nový turnaj. */
-export default function EnterTournamentForm({ tournament }: { tournament: string }) {
+/**
+ * Přihláška týmu, který už existuje (hrál dřív), na nový turnaj: jen krok
+ * platby startovného a podmínek účasti (`paymentStep`, vykreslí server).
+ */
+export default function EnterTournamentForm({ teamName, paymentStep }: { teamName: string; paymentStep: ReactNode }) {
   const t = useT().teamForms;
   const [state, action, pending] = useActionState(enterTournamentAction, IDLE);
 
@@ -24,7 +26,9 @@ export default function EnterTournamentForm({ tournament }: { tournament: string
         </Notice>
       )}
 
-      <RegistrationConfirmations errors={state.errors} values={state.values} />
+      <EntryFormProvider errors={state.errors} values={state.values} teamName={teamName}>
+        {paymentStep}
+      </EntryFormProvider>
 
       <div>
         <button
@@ -33,8 +37,8 @@ export default function EnterTournamentForm({ tournament }: { tournament: string
           aria-disabled={pending || undefined}
           aria-busy={pending || undefined}
         >
-          <Send size={18} strokeWidth={2} aria-hidden />
-          <span className="cl-btn-label">{fmt(t.enterTournament, { tournament })}</span>
+          <span className="cl-btn-label">{t.submitEntry}</span>
+          <ArrowRight size={18} strokeWidth={2} aria-hidden />
         </button>
       </div>
     </form>

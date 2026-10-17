@@ -17,7 +17,8 @@ type Mode = "approve" | "pending" | "reject" | "remove";
  * Rozhodnutí o přihlášce. Každý krok, který tým z turnaje vyřadí (zamítnout,
  * vrátit ke schválení, smazat), se nejdřív zeptá a řekne, co se stane —
  * hlavně se zápasy týmu. Schválení je na jedno kliknutí, jen když soupiska
- * nesedí s limity turnaje, se taky zeptá.
+ * nesedí s limity turnaje, se taky zeptá. Na turnaj se startovným jde schválit
+ * až po označení „Startovné přijato“ (hlídá i databáze).
  */
 export default function EntryDecision({
   tournamentId,
@@ -27,6 +28,7 @@ export default function EntryDecision({
   matches,
   playedMatches,
   rosterIssue,
+  paymentMissing,
 }: {
   tournamentId: string;
   teamId: string;
@@ -36,6 +38,8 @@ export default function EntryDecision({
   playedMatches: number;
   /** Text, proč soupiska nesedí (prázdné = sedí). */
   rosterIssue: string;
+  /** Turnaj má startovné a to ještě není přijaté — schválit zatím nejde. */
+  paymentMissing: boolean;
 }) {
   const { decision: t, common } = useT();
   const [mode, setMode] = useState<Mode | null>(null);
@@ -150,7 +154,17 @@ export default function EntryDecision({
       {panel || (
         <div className="adm-actions">
           {status !== "approved" &&
-            (rosterIssue ? (
+            (paymentMissing ? (
+              <button
+                type="button"
+                className="cl-btn cl-btn--primary cl-btn--sm"
+                disabled
+                aria-describedby={`pay-hint-${teamId}`}
+              >
+                <Check size={14} strokeWidth={2.5} aria-hidden />
+                <span>{t.approve}</span>
+              </button>
+            ) : rosterIssue ? (
               <button type="button" className="cl-btn cl-btn--primary cl-btn--sm" onClick={() => setMode("approve")}>
                 <Check size={14} strokeWidth={2.5} aria-hidden />
                 <span>{t.approve}</span>
@@ -197,6 +211,12 @@ export default function EntryDecision({
             </>
           )}
         </div>
+      )}
+
+      {!panel && status !== "approved" && paymentMissing && (
+        <p id={`pay-hint-${teamId}`} className="adm-meta">
+          {t.needsPayment}
+        </p>
       )}
 
       {state.status === "error" && state.message && (

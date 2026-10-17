@@ -1,5 +1,5 @@
 import type { PostgrestError } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database, EntryConfirmation } from "@/lib/supabase/database.types";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -65,6 +65,8 @@ export async function getOpenTournament(): Promise<OpenTournament | null> {
     format: data.format,
     minRoster: data.min_roster,
     maxRoster: data.max_roster ?? DEFAULT_MAX_ROSTER,
+    // Před migrací č. 11 sloupec chybí — bez startovného.
+    entryFee: data.entry_fee ?? 0,
   };
 }
 
@@ -106,6 +108,8 @@ function toEntry(row: EntryRow): Entry {
     statusNote: row.status_note ?? "",
     statusChangedAt: row.status_changed_at ?? null,
     createdAt: row.created_at,
+    // Před migrací č. 11 sloupec chybí.
+    paidAt: row.paid_at ?? null,
   };
 }
 
@@ -124,8 +128,9 @@ export async function getTeamEntry(teamId: string, tournamentId: string): Promis
 }
 
 /**
- * Přihlášky týmu na nadcházející turnaje — nejdřív turnaj s otevřenými
- * přihláškami, pak podle data. Kapitán tak vidí stav přihlášky i po uzávěrce.
+ * Přihlášky týmu na turnaje, které ještě nejsou odehrané (nadcházející
+ * i probíhající) — nejdřív turnaj s otevřenými přihláškami, pak podle data.
+ * Kapitán tak vidí stav přihlášky i po uzávěrce.
  */
 export async function getCaptainEntries(teamId: string): Promise<CaptainEntry[]> {
   const supabase = await createClient();
@@ -133,7 +138,7 @@ export async function getCaptainEntries(teamId: string): Promise<CaptainEntry[]>
     .from("tournament_entries")
     .select("*, tournament:tournaments!inner(*)")
     .eq("team_id", teamId)
-    .eq("tournament.status", "upcoming");
+    .neq("tournament.status", "completed");
   if (error) throw error;
 
   return data
@@ -150,6 +155,7 @@ export async function getCaptainEntries(teamId: string): Promise<CaptainEntry[]>
             format: t.format,
             minRoster: t.min_roster,
             maxRoster: t.max_roster ?? DEFAULT_MAX_ROSTER,
+            entryFee: t.entry_fee ?? 0,
             registrationOpen: t.registration_open,
           },
         } satisfies CaptainEntry,
@@ -201,8 +207,12 @@ export type TeamInput = {
   note: string;
 };
 
-/** Nový tým + přihláška na otevřený turnaj v jedné transakci (RPC register_team). */
-export async function registerTeam(input: TeamInput): Promise<WriteResult> {
+/**
+ * Nový tým + přihláška na otevřený turnaj v jedné transakci (RPC register_team).
+ * `confirmations`: co kapitán potvrdil v kroku platby a podmínek — bez nich
+ * databáze přihlášku nepřijme; čas a startovné k nim doplní sama.
+ */
+export async function registerTeam(input: TeamInput, confirmations: EntryConfirmation[]): Promise<WriteResult> {
   const supabase = await createClient();
   const { error } = await supabase.rpc("register_team", {
     p_name: input.name,
@@ -210,16 +220,21 @@ export async function registerTeam(input: TeamInput): Promise<WriteResult> {
     p_founded_year: input.foundedYear,
     p_colors: input.colors,
     p_note: input.note,
+    p_confirmations: confirmations,
   });
   return { error };
 }
 
-/** Přihláška už existujícího týmu na otevřený turnaj. */
-export async function enterTournament(teamId: string, tournamentId: string): Promise<WriteResult> {
+/** Přihláška už existujícího týmu na otevřený turnaj (potvrzení jako u registerTeam). */
+export async function enterTournament(
+  teamId: string,
+  tournamentId: string,
+  confirmations: EntryConfirmation[]
+): Promise<WriteResult> {
   const supabase = await createClient();
   const { error } = await supabase
     .from("tournament_entries")
-    .insert({ team_id: teamId, tournament_id: tournamentId });
+    .insert({ team_id: teamId, tournament_id: tournamentId, confirmations });
   return { error };
 }
 

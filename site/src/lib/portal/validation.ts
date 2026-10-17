@@ -1,5 +1,6 @@
 import type { Dictionary } from "@/i18n/dictionaries";
 import { fmt } from "@/i18n/format";
+import type { EntryConfirmation } from "@/lib/supabase/database.types";
 import { POSITIONS, type Position } from "./types";
 
 /** Hlášky kontrol ve zvoleném jazyce (slovník, část validation). */
@@ -204,22 +205,40 @@ export function validateTeam(values: TeamValues, v: ValidationMessages): Record<
   return errors;
 }
 
-/** Povinná potvrzení u přihlášky týmu. Klíč = name checkboxu. */
-export const REGISTRATION_CONFIRMATIONS = ["confirmRules", "confirmHealth", "confirmAuthority"] as const;
+/**
+ * Povinná potvrzení v kroku „Platba startovného a podmínky účasti“ přihlášky
+ * týmu: name checkboxu → klíč, pod kterým ho uloží databáze (confirmations).
+ * Úhradu startovného potvrzuje tým jen u turnaje se startovným.
+ */
+export const ENTRY_CONFIRMATIONS = [
+  { field: "confirmPayment", key: "payment" },
+  { field: "confirmTerms", key: "terms" },
+  { field: "confirmTeam", key: "team" },
+] as const satisfies readonly { field: string; key: EntryConfirmation }[];
 
-export function validateConfirmations(formData: FormData, v: ValidationMessages): Record<string, string> {
+const requiredConfirmations = (entryFee: number) =>
+  ENTRY_CONFIRMATIONS.filter((c) => c.key !== "payment" || entryFee > 0);
+
+export function validateConfirmations(
+  formData: FormData,
+  entryFee: number,
+  v: ValidationMessages
+): Record<string, string> {
   const errors: Record<string, string> = {};
-  for (const field of REGISTRATION_CONFIRMATIONS) {
+  for (const { field } of requiredConfirmations(entryFee)) {
     if (!checkbox(formData, field)) errors[field] = v.confirmationMissing;
   }
   return errors;
 }
 
+/** Potvrzení pro databázi — volat až po validateConfirmations. */
+export function confirmedKeys(entryFee: number): EntryConfirmation[] {
+  return requiredConfirmations(entryFee).map((c) => c.key);
+}
+
 /** Zaškrtnutá potvrzení pro znovunaplnění formuláře po chybě. */
 export function confirmationValues(formData: FormData): Record<string, string> {
-  return Object.fromEntries(
-    REGISTRATION_CONFIRMATIONS.map((field) => [field, checkbox(formData, field) ? "on" : ""])
-  );
+  return Object.fromEntries(ENTRY_CONFIRMATIONS.map(({ field }) => [field, checkbox(formData, field) ? "on" : ""]));
 }
 
 /* -------------------------------------------------------------------------- */

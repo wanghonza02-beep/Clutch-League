@@ -5,10 +5,11 @@ import BackButton from "@/components/BackButton";
 import SplitText from "@/components/ui/SplitText";
 import Notice from "@/components/ui/Notice";
 import EnterTournamentForm from "@/components/portal/EnterTournamentForm";
+import EntryPaymentStep from "@/components/portal/EntryPaymentStep";
 import RegistrationSteps from "@/components/portal/RegistrationSteps";
 import TeamRegistrationForm from "@/components/portal/TeamRegistrationForm";
 import ActionForm, { SubmitButton } from "@/components/ui/ActionForm";
-import { fmt, plural } from "@/i18n/format";
+import { fmt, formatMoney, plural } from "@/i18n/format";
 import Link from "@/i18n/Link";
 import LocaleField from "@/i18n/LocaleField";
 import { rich } from "@/i18n/rich";
@@ -155,12 +156,9 @@ export default async function PrihlasitTym() {
     );
   }
 
-  const team = await getCaptainTeam(user.id);
-  const entry = team ? await getTeamEntry(team.id, tournament.id) : null;
-
-  /* ---- organizátor: tým nepřihlašuje. Výjimka: organizátor s vlastním
-     týmem, který už přihlášený je — ten vidí stav jako kapitán. ---- */
-  if (user.role !== "captain" && !(team && entry)) {
+  /* ---- organizátor: tým nepřihlašuje ani nespravuje (na to má kapitán
+     vlastní účet) ---- */
+  if (user.role !== "captain") {
     return (
       <Page tournament={tournament} sub={t.adminSub}>
         <Notice tone="error">
@@ -176,6 +174,9 @@ export default async function PrihlasitTym() {
       </Page>
     );
   }
+
+  const team = await getCaptainTeam(user.id);
+  const entry = team ? await getTeamEntry(team.id, tournament.id) : null;
 
   /* ---- přihláška zamítnutá: důvod a na koho se obrátit ---- */
   if (team && entry?.status === "rejected") {
@@ -216,6 +217,7 @@ export default async function PrihlasitTym() {
     const count = team.players.length;
     const overMax = count > tournament.maxRoster;
     const rosterReady = count >= tournament.minRoster && !overMax;
+    const fee = formatMoney(locale, tournament.entryFee, dict.common.money);
 
     return (
       <Page tournament={tournament} sub={overMax ? t.overSub : rosterReady ? t.readySub : t.missingSub}>
@@ -239,6 +241,13 @@ export default async function PrihlasitTym() {
                 {fmt(t.arrived, { tournament: tournament.name })}{" "}
                 {entry.status === "approved" ? t.approved : t.pending}
               </p>
+              {tournament.entryFee > 0 && (
+                <p style={{ margin: 0, color: "var(--text-body)" }}>
+                  {entry.paidAt
+                    ? fmt(t.feePaid, { amount: fee, date: formatDate(entry.paidAt.slice(0, 10), locale) })
+                    : fmt(t.feeWaiting, { amount: fee })}
+                </p>
+              )}
 
               <dl className="hist-timeline__stats">
                 <div className={`cl-stat${rosterReady ? "" : " cl-stat--accent"}`}>
@@ -269,33 +278,42 @@ export default async function PrihlasitTym() {
           </div>
         </div>
 
-        {/* Odhlášení z turnaje. Databáze ho pustí jen při otevřených přihláškách
-            a dokud tým nemá zápas v rozpisu, jinak se ukáže hláška proč. */}
+        {/* Odhlášení z turnaje. Databáze ho pustí jen při otevřených přihláškách,
+            dokud tým nemá zápas v rozpisu a nezaplatil startovné (pak je registrace
+            závazná), jinak se ukáže hláška proč. */}
         <section id="odhlasit" aria-labelledby="odhlasit-title" className="flex flex-col gap-[var(--sp-3)]">
           <h2 id="odhlasit-title" className="cl-stat__label">
             {t.cantPlay}
           </h2>
-          <ActionForm
-            action={withdrawTeamAction}
-            idPrefix="withdraw"
-            hidden={{ tournamentId: tournament.id }}
-            className="flex flex-col gap-[var(--sp-3)]"
-          >
-            <div>
-              <SubmitButton
-                variant="ghost"
-                size="sm"
-                flush
-                confirm={fmt(t.withdrawConfirm, { team: team.name, tournament: tournament.name })}
-                icon={<LogOut size={14} strokeWidth={2} aria-hidden />}
+          {entry.paidAt ? (
+            <p className="cl-field__hint" style={{ margin: 0 }}>
+              {fmt(t.withdrawPaidNote, { email: CONTACT.email })}
+            </p>
+          ) : (
+            <>
+              <ActionForm
+                action={withdrawTeamAction}
+                idPrefix="withdraw"
+                hidden={{ tournamentId: tournament.id }}
+                className="flex flex-col gap-[var(--sp-3)]"
               >
-                {t.withdraw}
-              </SubmitButton>
-            </div>
-          </ActionForm>
-          <p className="cl-field__hint" style={{ margin: 0 }}>
-            {t.withdrawNote}
-          </p>
+                <div>
+                  <SubmitButton
+                    variant="ghost"
+                    size="sm"
+                    flush
+                    confirm={fmt(t.withdrawConfirm, { team: team.name, tournament: tournament.name })}
+                    icon={<LogOut size={14} strokeWidth={2} aria-hidden />}
+                  >
+                    {t.withdraw}
+                  </SubmitButton>
+                </div>
+              </ActionForm>
+              <p className="cl-field__hint" style={{ margin: 0 }}>
+                {t.withdrawNote}
+              </p>
+            </>
+          )}
         </section>
       </Page>
     );
@@ -348,26 +366,20 @@ export default async function PrihlasitTym() {
                   ),
                 })}
               </p>
-              <EnterTournamentForm tournament={tournament.name} />
             </div>
           </div>
         </div>
+        <EnterTournamentForm teamName={team.name} paymentStep={<EntryPaymentStep tournament={tournament} />} />
       </Page>
     );
   }
 
-  /* ---- kapitán bez týmu: přihláška nového týmu ---- */
+  /* ---- kapitán bez týmu: přihláška nového týmu (údaje týmu → platba a podmínky) ---- */
   return (
     <Page tournament={tournament} sub={t.newTeamSub}>
       <RegistrationSteps current={2} />
       {captainCard}
-      <div className="cl-card">
-        <div className="cl-card__in">
-          <div className="cl-card__body">
-            <TeamRegistrationForm />
-          </div>
-        </div>
-      </div>
+      <TeamRegistrationForm paymentStep={<EntryPaymentStep tournament={tournament} />} />
     </Page>
   );
 }

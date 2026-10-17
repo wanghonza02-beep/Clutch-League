@@ -8,6 +8,7 @@ import CardsTable from "@/components/tournaments/CardsTable";
 import FinalStandings from "@/components/tournaments/FinalStandings";
 import Podium from "@/components/tournaments/Podium";
 import ResultsTable from "@/components/tournaments/ResultsTable";
+import PlayerStatsTable from "@/components/tournaments/PlayerStatsTable";
 import ScorersTable from "@/components/tournaments/ScorersTable";
 import StandingsTable from "@/components/tournaments/StandingsTable";
 import { czechOnly, editionLabel, formatLabel } from "@/i18n/data";
@@ -34,7 +35,7 @@ export async function generateMetadata({
 
   return {
     title: pageTitle(t, `${tournament.name} ${formatDate(tournament.dateIso, locale)}`),
-    description: czechOnly(tournament.summary, locale) || t.archive.metaDescription,
+    description: tournament.summary[locale] || t.archive.metaDescription,
   };
 }
 
@@ -201,25 +202,43 @@ export default async function TurnajDetail({ params }: PageProps<"/[lang]/turnaj
           </section>
         )}
 
-        {/* ---- střelci a karty ---- */}
-        {(tournament.scorers.length > 0 || tournament.cards.length > 0) && (
+        {/* ---- statistiky hráčů, nebo střelci a karty ze zápasů ---- */}
+        {tournament.playerStats.length > 0 ? (
           <section aria-labelledby="strelci" className="flex flex-col gap-[var(--sp-6)]">
             <div className="cl-sectionhead">
               <span className="cl-sectionhead__over">{t.statsOver}</span>
               <h2 id="strelci" style={sectionTitle}>
-                {tournament.cards.length > 0 ? t.scorersAndCards : t.scorers}
+                {t.playerStatsTitle}
               </h2>
-              {tournament.scorersFromMatches && <p className="cl-sectionhead__sub">{t.statsSub}</p>}
             </div>
             <div className="cl-card">
               <div className="cl-card__in">
-                <div className="cl-card__body flex flex-col gap-[var(--sp-8)]">
-                  {tournament.scorers.length > 0 && <ScorersTable tournament={tournament} />}
-                  {tournament.cards.length > 0 && <CardsTable tournament={tournament} />}
+                <div className="cl-card__body">
+                  <PlayerStatsTable tournament={tournament} />
                 </div>
               </div>
             </div>
           </section>
+        ) : (
+          (tournament.scorers.length > 0 || tournament.cards.length > 0) && (
+            <section aria-labelledby="strelci" className="flex flex-col gap-[var(--sp-6)]">
+              <div className="cl-sectionhead">
+                <span className="cl-sectionhead__over">{t.statsOver}</span>
+                <h2 id="strelci" style={sectionTitle}>
+                  {tournament.cards.length > 0 ? t.scorersAndCards : t.scorers}
+                </h2>
+                {tournament.scorersFromMatches && <p className="cl-sectionhead__sub">{t.statsSub}</p>}
+              </div>
+              <div className="cl-card">
+                <div className="cl-card__in">
+                  <div className="cl-card__body flex flex-col gap-[var(--sp-8)]">
+                    {tournament.scorers.length > 0 && <ScorersTable tournament={tournament} />}
+                    {tournament.cards.length > 0 && <CardsTable tournament={tournament} />}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )
         )}
 
         {/* ---- kompletní výsledky ---- */}
